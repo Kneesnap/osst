@@ -43,6 +43,7 @@ const char * osst_version = "0.9.0p1";
 #include <linux/ioctl.h>
 #include <linux/fcntl.h>
 #include <linux/spinlock.h>
+#include <linux/vmalloc.h>
 #include <asm/uaccess.h>
 #include <asm/dma.h>
 #include <asm/system.h>
@@ -2689,7 +2690,7 @@ static ssize_t osst_write(struct file * filp, const char * buf, size_t count, lo
 
 	/* Write must be integral number of blocks */
 	if (STp->block_size != 0 && (count % STp->block_size) != 0) {
-		printk(KERN_WARNING "osst%d: Write (%d bytes) not multiple of tape block size (32k).\n",
+		printk(KERN_WARNING "osst%d: Write (%ld bytes) not multiple of tape block size (32k).\n",
 				       dev, count);
 		retval = (-EINVAL);
 		goto out;
@@ -3032,7 +3033,7 @@ static ssize_t osst_read(struct file * filp, char * buf, size_t count, loff_t *p
 	}
 
 	if ((count % STp->block_size) != 0) {
-		printk(KERN_WARNING "osst%d: Use multiple of %d bytes as block size (%d requested)\n",
+		printk(KERN_WARNING "osst%d: Use multiple of %d bytes as block size (%ld requested)\n",
 			  dev, STp->block_size, count);
 		retval = (-EINVAL);	/* Read must be integral number of blocks */
 		goto out;
