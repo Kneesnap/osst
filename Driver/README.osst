@@ -85,7 +85,8 @@ and the device nodes have been created.
     COMPILED KERNELS.
 
 cd /usr/src/linux
-patch -p1 < /path/to/onstream/driver/osst-22.diff	# REPLACE
+patch -p1 < /path/to/onstream/driver/osst-22.diff	# USE REAL PATH!
+cp -p /path/to/onstream/driver/osst.? drivers/scsi/	# Install drv srcs
 make oldconfig			# or menuconfig / xconfig if you prefer
 				# enable the OSST driver!
 make dep
