@@ -204,10 +204,10 @@ For the DI-30, compile the SCSI layer and ide-scsi into the kernel and pass
 hdX=scsi as boot parameter to your kernel, with hdX corresponding to your
 OnStream device.
 
-For the USB support, you need the usb-sotrage driver of 2.4.0 kernel or
+For the USB support, you need the usb-storage driver of 2.4.0 kernel or
 newer and you have to enable the Freecom support. For news, check
 http://www.linux-usb.org/
-http://sourceforge.net/cvs/?group_id=3581
+http://sourceforge.net/projects/linux-usb/
 
 Note that the ide-tape driver as of 1.16f uses a slightly outdated on-tape
 format and therefore is not completely interoperable with osst tapes.
