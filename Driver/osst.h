@@ -2,6 +2,7 @@
  *	$Header$
  */
 
+#include <asm/byteorder.h>
 #include <linux/config.h>
 #ifdef CONFIG_DEVFS_FS
 #include <linux/devfs_fs_kernel.h>
@@ -133,16 +134,40 @@ typedef struct {
  *      The Data Compression Page, as returned by the MODE SENSE packet command.
  */
 typedef struct {
-        unsigned        page_code       :6;     /* Page Code - Should be 0xf */
+#if   defined(__BIG_ENDIAN_BITFIELD)
+        unsigned        ps              :1;
+        unsigned        reserved0       :1;     /* Reserved */
+	unsigned        page_code       :6;     /* Page Code - Should be 0xf */
+#elif defined(__LITTLE_ENDIAN_BITFIELD)
+	unsigned        page_code       :6;     /* Page Code - Should be 0xf */
         unsigned        reserved0       :1;     /* Reserved */
         unsigned        ps              :1;
+#else
+#error "Please fix <asm/byteorder.h>"
+#endif
         u8              page_length;            /* Page Length - Should be 14 */
-        unsigned        reserved2       :6;     /* Reserved */
+#if   defined(__BIG_ENDIAN_BITFIELD)
+        unsigned        dce             :1;     /* Data Compression Enable */
+        unsigned        dcc             :1;     /* Data Compression Capable */
+	unsigned        reserved2       :6;     /* Reserved */
+#elif defined(__LITTLE_ENDIAN_BITFIELD)
+	unsigned        reserved2       :6;     /* Reserved */
         unsigned        dcc             :1;     /* Data Compression Capable */
         unsigned        dce             :1;     /* Data Compression Enable */
-        unsigned        reserved3       :5;     /* Reserved */
+#else
+#error "Please fix <asm/byteorder.h>"
+#endif
+#if   defined(__BIG_ENDIAN_BITFIELD)
+        unsigned        dde             :1;     /* Data Decompression Enable */
+        unsigned        red             :2;     /* Report Exception on Decompression */
+	unsigned        reserved3       :5;     /* Reserved */
+#elif defined(__LITTLE_ENDIAN_BITFIELD)
+	unsigned        reserved3       :5;     /* Reserved */
         unsigned        red             :2;     /* Report Exception on Decompression */
         unsigned        dde             :1;     /* Data Decompression Enable */
+#else
+#error "Please fix <asm/byteorder.h>"
+#endif
         u32             ca;                     /* Compression Algorithm */
         u32             da;                     /* Decompression Algorithm */
         u8              reserved[4];            /* Reserved */
@@ -152,17 +177,35 @@ typedef struct {
  *      The Medium Partition Page, as returned by the MODE SENSE packet command.
  */
 typedef struct {
-        unsigned        page_code       :6;     /* Page Code - Should be 0x11 */
+#if   defined(__BIG_ENDIAN_BITFIELD)
+        unsigned        ps              :1;
+        unsigned        reserved1_6     :1;     /* Reserved */
+	unsigned        page_code       :6;     /* Page Code - Should be 0x11 */
+#elif defined(__LITTLE_ENDIAN_BITFIELD)
+	unsigned        page_code       :6;     /* Page Code - Should be 0x11 */
         unsigned        reserved1_6     :1;     /* Reserved */
         unsigned        ps              :1;
+#else
+#error "Please fix <asm/byteorder.h>"
+#endif
         u8              page_length;            /* Page Length - Should be 6 */
         u8              map;                    /* Maximum Additional Partitions - Should be 0 */
         u8              apd;                    /* Additional Partitions Defined - Should be 0 */
-        unsigned        reserved4_012   :3;     /* Reserved */
+#if   defined(__BIG_ENDIAN_BITFIELD)
+        unsigned        fdp             :1;     /* Fixed Data Partitions */
+        unsigned        sdp             :1;     /* Should be 0 */
+        unsigned        idp             :1;     /* Should be 0 */
+        unsigned        psum            :2;     /* Should be 0 */
+	unsigned        reserved4_012   :3;     /* Reserved */
+#elif defined(__LITTLE_ENDIAN_BITFIELD)
+	unsigned        reserved4_012   :3;     /* Reserved */
         unsigned        psum            :2;     /* Should be 0 */
         unsigned        idp             :1;     /* Should be 0 */
         unsigned        sdp             :1;     /* Should be 0 */
         unsigned        fdp             :1;     /* Fixed Data Partitions */
+#else
+#error "Please fix <asm/byteorder.h>"
+#endif
         u8              mfr;                    /* Medium Format Recognition */
         u8              reserved[2];            /* Reserved */
 } osst_medium_partition_page_t;
@@ -171,33 +214,83 @@ typedef struct {
  *      Capabilities and Mechanical Status Page
  */
 typedef struct {
-        unsigned        page_code       :6;     /* Page code - Should be 0x2a */
+#if   defined(__BIG_ENDIAN_BITFIELD)
         unsigned        reserved1_67    :2;
+	unsigned        page_code       :6;     /* Page code - Should be 0x2a */
+#elif defined(__LITTLE_ENDIAN_BITFIELD)
+	unsigned        page_code       :6;     /* Page code - Should be 0x2a */
+        unsigned        reserved1_67    :2;
+#else
+#error "Please fix <asm/byteorder.h>"
+#endif
         u8              page_length;            /* Page Length - Should be 0x12 */
         u8              reserved2, reserved3;
-        unsigned        ro              :1;     /* Read Only Mode */
+#if   defined(__BIG_ENDIAN_BITFIELD)
+        unsigned        reserved4_67    :2;
+        unsigned        sprev           :1;     /* Supports SPACE in the reverse direction */
+        unsigned        reserved4_1234  :4;
+	unsigned        ro              :1;     /* Read Only Mode */
+#elif defined(__LITTLE_ENDIAN_BITFIELD)
+	unsigned        ro              :1;     /* Read Only Mode */
         unsigned        reserved4_1234  :4;
         unsigned        sprev           :1;     /* Supports SPACE in the reverse direction */
         unsigned        reserved4_67    :2;
-        unsigned        reserved5_012   :3;
+#else
+#error "Please fix <asm/byteorder.h>"
+#endif
+#if   defined(__BIG_ENDIAN_BITFIELD)
+        unsigned        reserved5_67    :2;
+        unsigned        qfa             :1;     /* Supports the QFA two partition formats */
+        unsigned        reserved5_4     :1;
+        unsigned        efmt            :1;     /* Supports ERASE command initiated formatting */
+	unsigned        reserved5_012   :3;
+#elif defined(__LITTLE_ENDIAN_BITFIELD)
+	unsigned        reserved5_012   :3;
         unsigned        efmt            :1;     /* Supports ERASE command initiated formatting */
         unsigned        reserved5_4     :1;
         unsigned        qfa             :1;     /* Supports the QFA two partition formats */
         unsigned        reserved5_67    :2;
-        unsigned        lock            :1;     /* Supports locking the volume */
+#else
+#error "Please fix <asm/byteorder.h>"
+#endif
+#if   defined(__BIG_ENDIAN_BITFIELD)
+        unsigned        cmprs           :1;     /* Supports data compression */
+        unsigned        ecc             :1;     /* Supports error correction */
+	unsigned        reserved6_45    :2;     /* Reserved */  
+        unsigned        eject           :1;     /* The device can eject the volume */
+        unsigned        prevent         :1;     /* The device defaults in the prevent state after power up */
+        unsigned        locked          :1;     /* The volume is locked */
+	unsigned        lock            :1;     /* Supports locking the volume */
+#elif defined(__LITTLE_ENDIAN_BITFIELD)
+	unsigned        lock            :1;     /* Supports locking the volume */
         unsigned        locked          :1;     /* The volume is locked */
         unsigned        prevent         :1;     /* The device defaults in the prevent state after power up */
         unsigned        eject           :1;     /* The device can eject the volume */
 	unsigned        reserved6_45    :2;     /* Reserved */  
         unsigned        ecc             :1;     /* Supports error correction */
         unsigned        cmprs           :1;     /* Supports data compression */
-        unsigned        reserved7_0     :1;
+#else
+#error "Please fix <asm/byteorder.h>"
+#endif
+#if   defined(__BIG_ENDIAN_BITFIELD)
+        unsigned        blk32768        :1;     /* slowb - the device restricts the byte count for PIO */
+                                                /* transfers for slow buffer memory ??? */
+                                                /* Also 32768 block size in some cases */
+        unsigned        reserved7_3_6   :4;
+        unsigned        blk1024         :1;     /* Supports 1024 bytes block size */
+        unsigned        blk512          :1;     /* Supports 512 bytes block size */
+	unsigned        reserved7_0     :1;
+#elif defined(__LITTLE_ENDIAN_BITFIELD)
+	unsigned        reserved7_0     :1;
         unsigned        blk512          :1;     /* Supports 512 bytes block size */
         unsigned        blk1024         :1;     /* Supports 1024 bytes block size */
         unsigned        reserved7_3_6   :4;
         unsigned        blk32768        :1;     /* slowb - the device restricts the byte count for PIO */
                                                 /* transfers for slow buffer memory ??? */
                                                 /* Also 32768 block size in some cases */
+#else
+#error "Please fix <asm/byteorder.h>"
+#endif
         u16             max_speed;              /* Maximum speed supported in KBps */
         u8              reserved10, reserved11;
         u16             ctl;                    /* Continuous Transfer Limit in blocks */
@@ -210,27 +303,55 @@ typedef struct {
  *      Block Size Page
  */
 typedef struct {
-        unsigned        page_code       :6;     /* Page code - Should be 0x30 */
+#if   defined(__BIG_ENDIAN_BITFIELD)
+        unsigned        ps              :1;
+        unsigned        reserved1_6     :1;
+	unsigned        page_code       :6;     /* Page code - Should be 0x30 */
+#elif defined(__LITTLE_ENDIAN_BITFIELD)
+	unsigned        page_code       :6;     /* Page code - Should be 0x30 */
         unsigned        reserved1_6     :1;
         unsigned        ps              :1;
+#else
+#error "Please fix <asm/byteorder.h>"
+#endif
         u8              page_length;            /* Page Length - Should be 2 */
         u8              reserved2;
-        unsigned        play32          :1;
+#if   defined(__BIG_ENDIAN_BITFIELD)
+        unsigned        one             :1;
+        unsigned        reserved2_6     :1;
+        unsigned        record32_5      :1;
+        unsigned        record32        :1;
+        unsigned        reserved2_23    :2;
+        unsigned        play32_5        :1;
+	unsigned        play32          :1;
+#elif defined(__LITTLE_ENDIAN_BITFIELD)
+	unsigned        play32          :1;
         unsigned        play32_5        :1;
         unsigned        reserved2_23    :2;
         unsigned        record32        :1;
         unsigned        record32_5      :1;
         unsigned        reserved2_6     :1;
         unsigned        one             :1;
+#else
+#error "Please fix <asm/byteorder.h>"
+#endif
 } osst_block_size_page_t;
 
 /*
  *	Tape Parameters Page
  */
 typedef struct {
-        unsigned        page_code       :6;     /* Page code - Should be 0x2b */
+#if   defined(__BIG_ENDIAN_BITFIELD)
+        unsigned        ps              :1;
+        unsigned        reserved1_6     :1;
+	unsigned        page_code       :6;     /* Page code - Should be 0x2b */
+#elif defined(__LITTLE_ENDIAN_BITFIELD)
+	unsigned        page_code       :6;     /* Page code - Should be 0x2b */
         unsigned        reserved1_6     :1;
         unsigned        ps              :1;
+#else
+#error "Please fix <asm/byteorder.h>"
+#endif
 	u8		reserved2;
 	u8		density;
 	u8		reserved3,reserved4;
