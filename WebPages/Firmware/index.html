@@ -1,0 +1,52 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<Head>
+<Title>Linux tools for Firmware updates of OnStream tape drives</Title>
+	<Link HRef="mailto:osst@www.linux1onstream.nl">
+	<Meta HTTP-Equiv="Content-Type" Content="text/html; charset=iso-8859-1">
+	<Meta Name="Author" Content="garloff@suse.de">
+	<Meta Name="Generator" Content="Text Editor (xemacs/jed, Linux)">
+	<Meta Name="Keywords" Content="OnStream SCSI IDE USB ADR Tapes">
+	<Meta Name="Description" Content="OnStream Firmware updaters for Linux">
+</Head>
+<Body Background="" BGColor=#e0c0f0>
+<A HRef="/"><Img Src="/gif/left.gif" Align=middle Alt="Back" Width=16 Height=16>
+Back</A>
+<Center><H1>OnStream Firmware update tools for Linux</H1></Center>
+<P>
+<A HRef="mailto:Jack.Bombeeck@onstream.com">Jack Bombeeck</A> wrote programs
+to update the firmware of OnStream tapes under Linux. These tools are
+unfortunately not released with source code, but just as binaries, with the
+intention to prevent people from playing with the progam and destroying their
+firmware this way. This is not optimal, but I can confirm that those tools
+do what they are designed for and did work in my tests. At this moment,
+tools are only available for Linux under intel. Feel free to ask Jack or me
+for binaries for other platforms.
+</P><P>
+Those tools use the generic SCSI interface (<TT>/dev/sgX</TT>), but via SCSI
+emulation layers they can be used to update IDE (via ide-scsi) and USB (via
+usb-storage) drives as well. The binaries have been compiled with
+glibc-2.1.2 and libstdc++-libc6.1-2.so.3 (gcc-2.95.2) and should work on
+glibc-2.1.3 systems as well (SuSE Linux-6.3, 6.4, 7.0; RH Linux 6.x).
+Otherwise you may use the statically linked binaries.
+You also need to get the appropriate firmware.
+</P><P>
+<B>Before you go any further please note: These tools are provided as is
+without any warranty neither explicit nor implicit. It is probably possible
+to render your OnStream tape devices inoperational by using the tools
+inappropriately or by hitting a bug in them. <Em>Use at your own
+risk!</Em></B>
+</P>
+<H3>Download</H3>
+<DL>
+<DT>SCSI drive SC-30, SC-50</DT>
+<DD><A HRef="sc30fix">Update tool</A> 
+(<A HRef="sc30fix_static">statically linked</A>)
+<A HRef="SCSI109.bin">Firmware 1.09</A></DD>
+
+</DL>
+<!--<Img Src="/gif/construction.gif" Alt="under construction" Width=40 Height=32>-->
+<HR>
+<I>(w) by <A HRef="mailto:garloff@suse.de">KG</A>, $Id$</I>
+</Body>
+</HTML>
