@@ -146,12 +146,16 @@ the error is detected when waiting to skip the config partition (2990-3000).
 Fixed off by one in block numbering after [bf]sr and seek.
 Rationalized printk log statement severities (see READMEs).
 Reflected the ability to use multiple blocksizes in READMEs.</DD>
+<DT>2001-10-10: (osst 0.8.14 / 0.9.9)</DT>
+<DD>Made changes required to have Arkeia work with osst.
+Have 'mt load' open door and wait for medium to be inserted when there is no tape in the drive.
+A few minor bug fixes. Tested with kernels 2.2.20pre10 and 2.4.9ac18 respectively.
 </DL></P>
 
-<H3>Known problems as of <B>0.8.13 / 0.9.8</B></H3>
+<H3>Known problems as of <B>0.8.14 / 0.9.9</B></H3>
 <UL>
-<LI>Arkeia has its own handling of filemarks which breaks osst. Some patches
-to work around this are tested at the moment.</LI>
+<LI>None.
+</LI>
 </UL>
 
 <H3>Feedback</H3>
@@ -190,14 +194,14 @@ There are several possibilities to get the <TT>osst</TT>-driver. For your
 convenience, the archives also contain Terry's userspace driver <TT>osg</TT> 
 and some tools.
 <OL>
-<LI>(recommended) Get the very latest <A HRef="onstream-20010603.tar.gz">sources</A>, unpack
+<LI>(recommended) Get the very latest <A HRef="onstream-20011010.tar.gz">sources</A>, unpack
 them (<TT>tar xvzf onstream-200*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux source
 tree (recent 2.4.x kernel trees are fine, otherwise apply patch osst-22.diff 
 resp. osst-24.diff first) installed in
 <TT>/usr/src/linux/</TT>. Alternatively, here are the 
 <A HRef="onstream-0861-0943.tar.gz">sources for 0.8.6.1/0.9.4.3</A>, the
-latest stable versions with a fixed blocksize of 32k used in the RPMS below.
+versions with a fixed blocksize of 32k used in the RPMS below.
 <Br>
 To install the driver, do a <TT>make install</TT>, and the driver will be
 copied to <TT>/lib/modules/2.2.1?/scsi/</TT> resp.
