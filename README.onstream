@@ -4,7 +4,8 @@ This is a collection of tools to allow access to OnStream SC-x0 SCSI tapes.
 It's needed, because they don't have a SCSI2 compliant command interface,
 so that the standard kernel's st driver fails to operate them.
 
-Note that the tools here are not yet production quality!
+The osst driver nowadays is very stable and soon to be integrated into the
+mainstream kernel.
 
 They are mainly provided to get you started, if you already have such
 a device. If you want to help development, you are welcome: Testing,
@@ -15,15 +16,15 @@ The same holds, if you meet a bug. But please be prepared to work on it
 together with the developers ...
 
 The following programs are included in this package:
+* osst: Kernel module which can be loaded instead of st in order to access
+   the OnStream tapes by the /dev/stX device nodes. Note: This module can
+   coexist with the existing standard SCSI tape driver "st". It's pretty
+   stable nowadays.
 * osg (onstreamsg): Userspace program that uses the sg interface to access
    the OnStream tape. Beta quality.
    Look at ftp://ftp.orcas.net/pub/linux/onstream/
    for updates.
 * os_dump, os_write: Access to the raw data on the tape.
 * stream: Userspace buffering tool (like buffer)
-* osst: Kernel module which can be loaded instead of st in order to access
-   the OnStream tapes by the /dev/stX device nodes. Note: This module can
-   coexist with the existing standard SCSI tape driver "st". It can be
-   considered beta.
 
 Credits go to Willem Riede, Terry Hardie and Kurt Garloff for these tools.
