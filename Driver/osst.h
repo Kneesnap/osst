@@ -582,6 +582,8 @@ typedef struct {
   int min_block;
   int max_block;
   int recover_count;            /* from tape opening */
+  int write_count;
+  int read_count;
   int recover_erreg;            /* from last status call */
   /*
    * OnStream specific data
