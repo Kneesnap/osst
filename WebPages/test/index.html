@@ -85,9 +85,13 @@ This should make volume spanning work now. The 164 blocks allows for two
 write errors to be recovered at the end of tape.</DD>
 <DT>2000-07-24: (osst 0.8.1 / 0.9.0p1)</DT>
 <DD>The 2.4 test version is out there (0.9.0p1)!</DD>
+<DT>2000-08-12: (osst 0.8.2 / 0.9.0p2)</DT>
+<DD>osst_int_ioctl now uses the Scsi_Cmnd structure allocated by the
+caller, as allocating a new one hangs the driver on resource
+challenged installations.</DD>
 </DL></P>
 
-<H3>Known problems as of <B>0.8.1</B></H3>
+<H3>Known problems as of <B>0.8.2</B></H3>
 <UL>
 <LI>Currently none.</LI>
 </UL>
@@ -128,7 +132,7 @@ There are several possibilities to get the <TT>osst</TT>-driver. For your
 convenience, the archives also contain Terry's userspace driver <TT>osg</TT> 
 and some tools.
 <OL>
-<LI>(recommended) Get the <A HRef="onstream-20000724.tar.gz">sources</A>, unpack
+<LI>(recommended) Get the <A HRef="onstream-20000812.tar.gz">sources</A>, unpack
 them (<TT>tar xvzf onstream-2000*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux source
 tree (apply patch osst-22.diff resp. osst-24.diff first) installed in
@@ -144,10 +148,10 @@ should better first get familiar with your Linux Operating System, the
 kernel, the modules, etc.</LI>
 <LI>If you happen to use a ix86 machine with a 2.2.16 Linux kernel 
 <!--(e.g. in SuSE Linux 6.4)--> and a glibc-2.1 based distribution, you should be
-able to install and use the <A HRef="onstream-0.9.13_0.8.1-0.i386.rpm">onstream RPM</A>
+able to install and use the <A HRef="onstream-0.9.13_0.8.2-0.i386.rpm">onstream RPM</A>
 <!--from SuSE-->. Install with <TT>rpm -i</TT> or update with <TT>rpm -U</TT>.
 If you have a different arch, kernel or libc, you will probably be able to get the
-thing to work by getting the <A HRef="onstream-0.9.13_0.8.1-0.src.rpm">source RPM</A>
+thing to work by getting the <A HRef="onstream-0.9.13_0.8.2-0.src.rpm">source RPM</A>
 and recompile it with <TT>rpm --recompile</TT>. This package actually is an
 (updated) RPM provided by <A HRef="http://www.suse.com/">SuSE</A>
 <A HRef="http://www.suse.com/PressReleases/64pr.html">Linux 7.0 (beta)</A>.
