@@ -44,6 +44,11 @@
   Changes
   =======
 
+  0.9.12Beta 2000/3/01  Changed skip on read to 40.
+	(KG)		Check for Firmware and save revision
+			For new firmware (>=1.06): Use the SkipLocate() function for 
+				error recovery on write.
+			Signal handling changes
   0.9.11Beta 2000/2/29	Check buffer filling by READ_POSITION.
 	(KG)		Disabled buffer draining, it does not work.
 			Started to convert structs to directly match the ones on tape
@@ -102,6 +107,11 @@
 
   */
 
+/* In theory, anything below 57 should be possible here. In practice,
+ * the firmware (mine: 108D) will not reconnect on writes, if this is
+ * larger than 50 */
+#define MAX_FILL_BUFF 50
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -134,7 +144,7 @@
 #define SG_GET_SG_TABLESIZE  0x227F
 #define SG_SET_COMMAND_Q     0x2271 
 
-#define VERSION "0.9.11Beta"
+#define VERSION "0.9.12Beta"
 #define VENDORID "LINX"
 
 const ssize_t cbSGHeader = sizeof(sg_header);
@@ -144,7 +154,7 @@ const ssize_t cbSGHeader = sizeof(sg_header);
 //***********************************************
 int debug = 0;
 FILE* fDebugFile = NULL;
-int signalled = 0;
+volatile int signalled = 0;
 unsigned int TotalBufferedFrames = 0;
 const char* szOnStreamErrors[] = {
 	"no error",
@@ -188,7 +198,7 @@ enum Sense {
 	SLongWrite,
 	SMediumWriteError,
 	SUnrecoveredReadError,
-	STimeoutWaitRead,
+	STimeoutWaitPos,
 	SInvalidParameter,
 	SEOD,
 	SNotReadyToReady,
@@ -265,6 +275,7 @@ public:
 
 	bool StartRead(void);
 	bool Read(void* pBuffer);
+	bool StartWrite(void);
 	bool Write(void* pBuffer, unsigned int len);
 	bool ModeSense(void *sense);
 	bool DeleteBuffer(unsigned int number);
@@ -277,6 +288,7 @@ public:
 	bool ReadPosition(void);
 	enum Sense WaitPosition(unsigned int, int to = 30, int ahead = 0);
 	bool Locate(UINT32 nLogicalBlock, bool write = false);
+	UINT32 SkipLocate(UINT32 skip);
 	bool Flush(void);
 	void Drain(void);
 	bool Rewind(void);
@@ -296,7 +308,7 @@ public:
 	UINT8 SenseKey(void);
 	UINT8 ASC(void);
 	UINT8 ASCQ(void);
-
+	
 	OnStreamError GetLastError(void);
 
 private:
@@ -311,6 +323,7 @@ private:
 	UINT8         pLastSense[16];
 
 	UINT32        nPacketID;
+	UINT32	      Firmware;
 
 	int           nFD;
 	OnStreamError LastError;
@@ -323,6 +336,7 @@ private:
 	void NeedCommandBytes(ssize_t nBytes);
 	void NeedResultBytes(ssize_t nBytes);
 	void NeedTempBytes(ssize_t nBytes);
+	UINT32 ParseFirmwareRev (const char *);
 
 	template<class T> inline const T min(const T t1, const T t2) {
 		if (t1 < t2) {
@@ -567,10 +581,44 @@ bool OnStream::StartRead(void) {
 	pCommandBuffer[4] = 0x00; // Transfer length, 7-0
 	pCommandBuffer[5] = 0x00; // reserved
 
-	if (false == SCSICommand()) {
-		return false;
+	return SCSICommand();
+}
+
+bool OnStream::StartWrite(void) {
+	NeedCommandBytes(6);
+	NeedResultBytes(0);
+
+	pCommandBuffer[0] = 0x0a; // WRITE
+	pCommandBuffer[1] = 0x01; // 7-2: reserved; 1: SILI; 0: Fixed
+	pCommandBuffer[2] = 0x00; // Transfer length, 23-16
+	pCommandBuffer[3] = 0x00; // Transfer length, 15-8
+	pCommandBuffer[4] = 0x00; // Transfer length, 7-0
+	pCommandBuffer[5] = 0x00; // reserved
+
+	return SCSICommand();
+}
+
+/* Acc. to OnStream, the vers. numbering is the following:
+ * X.XX for released versions (X=digit), 
+ * XXXY for unreleased versions (Y=letter)
+ * Ordering 1.05 < 106A < 106a < 106B < ... < 1.06
+ * This fn makes monoton numbers out of this scheme ...
+ */
+UINT32 OnStream::ParseFirmwareRev (const char * str)
+{
+	UINT32 rev;
+	if (str[1] == '.') {
+		rev = (str[0]-0x30)*10000
+			+(str[2]-0x30)*1000
+			+(str[3]-0x30)*100;
+	} else {
+		rev = (str[0]-0x30)*10000
+			+(str[1]-0x30)*1000
+			+(str[2]-0x30)*100 - 100;
+		rev += 2*(str[3] & 0x1f)
+			+(str[3] >= 0x60? 1: 0);
 	}
-	return true;
+	return rev;
 }
 
 bool OnStream::IsOnstream(void) {
@@ -594,18 +642,26 @@ bool OnStream::IsOnstream(void) {
 	
 	char VendorID[9];
 	char ProductID[17];
+	char FirmRev[5];
 
 	strncpy(VendorID, (const char *) &pResultBuffer[8], 8);
 	VendorID[8] = 0;
 	strncpy(ProductID, (const char *) &pResultBuffer[16], 16);
 	ProductID[16] = 0;
+	strncpy(FirmRev, (const char *) &pResultBuffer[32], 4);
+	FirmRev[4] = 0;
+	Firmware = ParseFirmwareRev (FirmRev);
 
-	Debug(4, "Vendor-ID: %s\nProduct-ID: %s\n", VendorID, ProductID);
+	Debug(4, "Vendor-ID : %s\nProduct-ID: %s\nFirmware  : %s (%i)\n",
+	      VendorID, ProductID, FirmRev, Firmware);
 	if (strcmp(VendorID, "OnStream") != 0) {
 		Debug(0, "Vendor-ID %s not supported\n", VendorID);
 		return false;
 	}
-	if (strcmp(ProductID, "SC-30           ") != 0 && strcmp(ProductID, "SC-50           ") != 0) {
+	if (strcmp(ProductID, "SC-30           ") != 0 && 
+	    strcmp(ProductID, "SC-50           ") != 0 &&
+	    strcmp(ProductID, "SC-70           ") != 0 )
+	{
 		Debug(0, "Product %s not supported by this version\n", ProductID);
 		return false;
 	}
@@ -881,9 +937,39 @@ bool OnStream::Locate(UINT32 nLogicalBlock, bool write = false) {
 	cpAndSwap(&pCommandBuffer[3], &nLogicalBlock, 4); // logical block position
 	pCommandBuffer[7] = 0x00; // reserved;
 	pCommandBuffer[8] = 0x00; // reserved;
-	pCommandBuffer[9] = 0x00; // reserved;
+	pCommandBuffer[9] = 0x00; // 7: SKIP; 6-0: reserved
 
 	return SCSICommand();
+}
+
+/* This is the new (1.06) way of recovering write errors */
+UINT32 OnStream::SkipLocate(UINT32 skip) {
+	if (Firmware < 10600) return 0;
+	if (!ReadPosition()) return 0;
+	UINT32 first = ntohl (*((UINT32*) &pResultBuffer[4]));
+	UINT32 last  = ntohl (*((UINT32*) &pResultBuffer[8]));
+	UINT32 nLogicalBlock = last + skip;
+
+	Debug (2, "SkipLocate to pos %i\n", nLogicalBlock);
+	
+	NeedCommandBytes(10);
+	NeedResultBytes(0);
+
+	pCommandBuffer[0] = 0x2B; // LOCATE
+	pCommandBuffer[1] = 0x01; // 7-3: reserved; 2: BT; 1: 0; 0: Immed
+	pCommandBuffer[2] = 0x00; // reserved
+	cpAndSwap(&pCommandBuffer[3], &nLogicalBlock, 4); // logical block position
+	pCommandBuffer[7] = 0x00; // reserved;
+	pCommandBuffer[8] = 0x00; // reserved;
+	pCommandBuffer[9] = 0x80; // SKIP: Don't throw away buffers
+
+	if (!SCSICommand()) return 0;
+	/* With the skip, it seems, we don't need to restart writing */
+	/* StartWrite(); */
+	if (!ReadPosition()) return 0;
+	first = ntohl (*((UINT32*) &pResultBuffer[4]));
+	last  = ntohl (*((UINT32*) &pResultBuffer[8]));
+	return first;
 }
 
 bool OnStream::Rewind(void) {
@@ -1072,9 +1158,11 @@ bool OnStream::WaitForRead(const int nSec, const int nUsec) {
 	}
 }
 
-void signalHandler(int signal) {
-	signalled = signal;
-	Debug(0, "Got signal %d. Completeing current action...", signal);
+void signalHandler(int sig) {
+	signalled = sig;
+	Debug(0, "Got signal %d. Completeing current action...", sig);
+	/* Reset to standard behaviour: Next signal will be fatal ... */
+	signal (sig, SIG_DFL);
 }
 
 //***********************************************
@@ -1107,16 +1195,6 @@ bool OnStream::SCSICommand(const int nSec, const int nUsec) {
 	pSG->reply_len   = cbSGHeader + cbResultBuffer;
 
 	memmove(&pTempBuffer[cbSGHeader], pCommandBuffer, cbCommandBuffer);
-
-	signal(SIGHUP, signalHandler);
-	signal(SIGINT, signalHandler);
-	signal(SIGQUIT, signalHandler);
-	signal(SIGILL, signalHandler);
-	signal(SIGPIPE, signalHandler);
-	signal(SIGALRM, signalHandler);
-	signal(SIGTERM, signalHandler);
-	signal(SIGUSR1, signalHandler);
-	signal(SIGUSR2, signalHandler);
 
 	Debug(7, "Waiting for write...");
 	if (false == WaitForWrite(nSec, nUsec)) {
@@ -1177,19 +1255,12 @@ bool OnStream::SCSICommand(const int nSec, const int nUsec) {
 	}
 	memmove(&SG, pTempBuffer, cbSGHeader);
 	NeedResultBytes(rc - cbSGHeader);
-	signal(SIGHUP, SIG_DFL);
-	signal(SIGINT, SIG_DFL);
-	signal(SIGQUIT, SIG_DFL);
-	signal(SIGILL, SIG_DFL);
-	signal(SIGPIPE, SIG_DFL);
-	signal(SIGALRM, SIG_DFL);
-	signal(SIGTERM, SIG_DFL);
-	signal(SIGUSR1, SIG_DFL);
-	signal(SIGUSR2, SIG_DFL);
+#if 0	
 	if (signalled) {
 		Debug(0, "Caught signal %d. Aborting\n", signalled);
-		exit(-1);
+		raise (signalled);
 	}
+#endif
 	return true;
 }
 
@@ -1230,18 +1301,18 @@ enum Sense OnStream::WaitPosition (unsigned int CurrentFrame, int timeout = 30, 
 			return (enum Sense)0x020400;
 		first = ntohl (*((UINT32*) &pResultBuffer[4]));
 		last  = ntohl (*((UINT32*) &pResultBuffer[8]));
-		if (cntr) Debug (3, "Wait for buffer (pos=%i, buffer=%i-%i, wait>%i) %i.%i\r",
+		if (cntr) Debug (3, "Wait for buffer (pos=%i, buffer=%i-%i, wait>%i) %3i.%i \r",
 		       CurrentFrame, first, last, CurrentFrame-ahead, cntr/5, (cntr%5)*2);
-		if (CurrentFrame == first && CurrentFrame < last + ahead)
+		if ((CurrentFrame == first && CurrentFrame < last + ahead) ||
+		    sense != SNoSense)
 		{
 			if (cntr) Debug (3, "\n");
 			return sense;
 		}
-		if (sense != SNoSense) return sense;
 		usleep (200*1000); cntr++;
 	}
 	Debug (3, "\n");
-	return STimeoutWaitRead;
+	return STimeoutWaitPos;
 }
 
 void OnStream::DumpSCSIResult(sg_header* pSG, UINT8* pBuffer) {
@@ -1457,7 +1528,7 @@ bool FlushBuffer(OnStream *pOnStream) {
 	return pOnStream->DeleteBuffer(CurrentBuffer);
 }
 
-unsigned int RequeueData(OnStream *pOnStream, TAPEBUFFER** TapeBuffer, unsigned int addedFrames, unsigned int *CurrentBuffer, bool fRetry = false) {
+unsigned int RequeueData(OnStream *pOnStream, TAPEBUFFER** TapeBuffer, unsigned int addedFrames, unsigned int *CurrentBuffer, unsigned int skip, bool fRetry = false) {
 	unsigned char sense[16];
 	unsigned int CurrentFrame, BadFrames;
 	unsigned int counter;
@@ -1476,6 +1547,7 @@ unsigned int RequeueData(OnStream *pOnStream, TAPEBUFFER** TapeBuffer, unsigned 
 		}
 
 		CheckWrittenFrames(pOnStream, TapeBuffer, addedFrames, CurrentBuffer);
+#if 0
 		if (sense[0] != 0x70 && sense[0] != 0x71) {
 			Debug(2, "No Sense? Assuming 1 block? Retrying operation...\n");
 			BadFrames = 1;
@@ -1484,6 +1556,9 @@ unsigned int RequeueData(OnStream *pOnStream, TAPEBUFFER** TapeBuffer, unsigned 
 			BadFrames = (unsigned int) (unsigned char) sense[9];
 			Debug(2, "Write error on frame %d. Skipping %d frames.\n", CurrentFrame, BadFrames);
 		}
+#else
+		BadFrames = skip;
+#endif
 		Debug(3, "Current Frames in tape buffer: %d Current Frames in system buffer: %d\n", *CurrentBuffer, TotalBufferedFrames);
 		if (*CurrentBuffer != TotalBufferedFrames) {
 			Debug(0, "Tape/system buffer mismatch. Aborting!\n");
@@ -1528,6 +1603,7 @@ unsigned int RequeueData(OnStream *pOnStream, TAPEBUFFER** TapeBuffer, unsigned 
 void WaitForWrite(OnStream *pOnStream, TAPEBUFFER** TapeBuffer, unsigned int *CurrentTapeBuffer) {
 	// Wait for Write
 	unsigned int CurrentBuffer, MaxBuffer;
+	int skip; unsigned char sense[16];
 	Sense CurrentSense;
 
 	pOnStream->BufferStatus(&MaxBuffer, &CurrentBuffer);
@@ -1543,7 +1619,10 @@ void WaitForWrite(OnStream *pOnStream, TAPEBUFFER** TapeBuffer, unsigned int *Cu
 			CheckWrittenFrames(pOnStream, TapeBuffer, 0, CurrentTapeBuffer);
 			break;
 		case SMediumWriteError:
-			RequeueData(pOnStream, TapeBuffer, 0, CurrentTapeBuffer);
+			pOnStream->GetLastSense (sense); 
+			skip = (unsigned int) sense[9];
+			if (!skip) skip = 80;
+			RequeueData(pOnStream, TapeBuffer, 0, CurrentTapeBuffer, 80);
 			break;
 		default:
 			Debug(0, "Unhandled sense %d\n", CurrentSense);
@@ -1714,6 +1793,16 @@ int main(int argc, char* argv[]) {
 	}
 
 	sprintf(deviceName, "/dev/sg%d", SCSIDeviceNo);
+
+	signal(SIGHUP, signalHandler);
+	signal(SIGINT, signalHandler);
+	signal(SIGQUIT, signalHandler);
+	//signal(SIGILL, signalHandler);
+	signal(SIGPIPE, signalHandler);
+	signal(SIGALRM, signalHandler);
+	signal(SIGTERM, signalHandler);
+	signal(SIGUSR1, signalHandler);
+	signal(SIGUSR2, signalHandler);
 
 	pOnStream = new OnStream(deviceName);
 
@@ -1952,12 +2041,26 @@ int main(int argc, char* argv[]) {
 
 			Debug(3, "main: starting write\n");
 			startTime = time(NULL);
-			while (feof(fFile) == 0) {
+			unsigned char * readbuf = (unsigned char *) malloc (131072);
+			char endpad = 0;
+			while ((feof(fFile) == 0 || endpad) && !signalled) {
 				if (!retry) {
-					memset(buf, 0, 33280);
-					rc = fread(buf, 1, 32768, fFile);
-					totalBytes += rc;
-					AuxFrame.DataAccessTable.DataAccessTableEntry[0].size = rc;
+					//memset(buf, 0, 33280);
+					if (!(AuxFrame.FrameSequenceNumber % 4))
+					{
+						rc = fread(readbuf, 1, 131072, fFile);
+						totalBytes += rc;
+						if (rc < 131072)
+						{
+							memset(readbuf, 0, 131072-rc);
+							endpad = rc / 32768;
+						}
+					}
+					else
+						if (endpad) endpad--;
+					memcpy(buf, readbuf+32768*(AuxFrame.FrameSequenceNumber % 4), 32768);
+					if (feof(fFile) && !endpad) AuxFrame.DataAccessTable.DataAccessTableEntry[0].size = rc % 32768;
+					else AuxFrame.DataAccessTable.DataAccessTableEntry[0].size = 32768;
 					AuxFrame.DataAccessTable.DataAccessTableEntry[0].LogicalElements = 1;
 					AuxFrame.DataAccessTable.DataAccessTableEntry[0].flags = 0xC;
 
@@ -1975,24 +2078,38 @@ int main(int argc, char* argv[]) {
 					Debug(10, "Read %d bytes\n", rc);
 					Debug(10, "Writing block %ld\n", CurrentFrame);
 				}
-				if (false == pOnStream->Write(buf, 33280)) {
-					Debug(0, "main: write failed: '%s'\n", szOnStreamErrors[pOnStream->GetLastError()]);
-					CheckSense(pOnStream);
-					delete pOnStream;
-					return 1;
+				CurrentSense = pOnStream->WaitPosition (CurrentFrame, 30, MAX_FILL_BUFF);
+				if (CurrentSense == SNoSense) {
+					if (false == pOnStream->Write(buf, 33280)) {
+						Debug(0, "main: write failed: '%s'\n", szOnStreamErrors[pOnStream->GetLastError()]);
+						CheckSense(pOnStream);
+						delete pOnStream;
+						return 1;
+					}
+					CurrentSense = CheckSense(pOnStream);
 				}
-				switch (CurrentSense = CheckSense(pOnStream)) {
+				/* if we cant't get this info from the sense, let's assume 80
+				 * bad frames */
+				int skip = 80;
+				char sense[16];
+				switch (CurrentSense) {
 				case SNoSense:
 					retry = 0;
 					AddFrameToBuffer(&LastTapeBuffer, buf);
 					AuxFrame.FrameSequenceNumber++;
 					AuxFrame.LogicalBlockAddress++;
 					CurrentFrame++;
-					pOnStream->WaitPosition (CurrentFrame, 30, 50);
 					CheckWrittenFrames(pOnStream, &TapeBuffer, 1, &CurrentTapeBuffer);
 					break;
 				case SMediumWriteError:
-					CurrentFrame += RequeueData(pOnStream, &TapeBuffer, 0, &CurrentTapeBuffer);
+					pOnStream->GetLastSense(sense);
+					skip = (unsigned int) (unsigned char) sense[9];
+					Debug (2, "WriteError: Device advised to skip %i\n", skip);
+					if (!skip) skip = 80;
+				case STimeoutWaitPos:
+					Debug (2, "WriteError: Try to skip %i frames \n", skip);
+					if ((skip = pOnStream->SkipLocate (skip))) CurrentFrame = skip;
+					else CurrentFrame += RequeueData(pOnStream, &TapeBuffer, 0, &CurrentTapeBuffer, 80);
 					retry = 1;
 					break;
 				case SEndOfMedium:
@@ -2022,7 +2139,7 @@ int main(int argc, char* argv[]) {
 					WaitForReady(pOnStream);
 					Debug(2, "Done.\n");
 
-					RequeueData(pOnStream, &TapeBuffer, 0, &CurrentTapeBuffer, true);
+					RequeueData(pOnStream, &TapeBuffer, 0, &CurrentTapeBuffer, 0, true);
 					retry = 1;
 					break;
 				default:
@@ -2050,6 +2167,7 @@ int main(int argc, char* argv[]) {
 			if (multiple == 0) {
 				fclose(fFile);
 			}
+			free (readbuf);
 
 			// Write EOD frame
 			AuxFrame.FrameType = 0x0100;
@@ -2073,7 +2191,7 @@ int main(int argc, char* argv[]) {
 			pOnStream->ShowPosition(NULL, NULL);
 			WaitForReady(pOnStream);
 			pOnStream->ShowPosition(NULL, NULL);
-			if (multiple) {
+			if (multiple && !signalled) {
 				Debug(2, "Rewinding and Ejecting...");
 				if (false == pOnStream->LURewindAndEject()) {
 					Debug(0, "main: Rewind failed: '%s'\n", szOnStreamErrors[pOnStream->GetLastError()]);
@@ -2095,6 +2213,8 @@ int main(int argc, char* argv[]) {
 				Debug(2, "Done.\n");
 			}
 			Debug(2, "%Ld bytes in %ld seconds (%Ld bytes/sec %0.3f kbytes/sec %0.3f Mbytes/sec)\n", totalBytes, time(NULL) - startTime, totalBytes / (int) (time(NULL) - startTime), totalBytes / (float) (time(NULL) - startTime) / 1024.0, totalBytes / (float) (time(NULL) - startTime) / 1048576.0);
+			if (signalled) raise (signalled);
+#if 0
 			Debug(2, "Waiting for more data...\n");
 			
 			do {
@@ -2109,9 +2229,10 @@ int main(int argc, char* argv[]) {
 					ungetc(nTestChar, fFile);
 					break;
 				}
-			} while (1);
+			} while (!signalled);
 
 			Debug(0, "Waiting for more data...\n");
+#endif
 
 		} else { /* read mode */
 			Debug(2, "Moving to start of user data. Frame = %d\n", StartFrame);
@@ -2146,7 +2267,7 @@ int main(int argc, char* argv[]) {
 			startTime = time(NULL);
 			CurrentSeqNo = 0;
 
-			while (!eof) {
+			while (!eof && !signalled) {
 				CurrentSense = pOnStream->WaitPosition (CurrentFrame);
 				if (CurrentSense == SNoSense) {
 					if (false == pOnStream->Read(buf)) {
@@ -2160,7 +2281,7 @@ int main(int argc, char* argv[]) {
 				case SNoSense:
 					break;
 				case SUnrecoveredReadError:
-				case STimeoutWaitRead:
+				case STimeoutWaitPos:
 					// See if the next readable frame has our data in it.
 					Debug(2, "Unrecoverable read error at frame %ld. Checking next block...\n", CurrentFrame);
 					if (retry++ > 5) {
@@ -2168,7 +2289,7 @@ int main(int argc, char* argv[]) {
 						continue;
 					}
 					if (CurrentSense == SUnrecoveredReadError) CurrentFrame++;
-					else CurrentFrame += 80;
+					else CurrentFrame += 40;
 					if (false == pOnStream->Locate(CurrentFrame)) {
 						Debug(0, "main: Locate failed: '%s'\n", szOnStreamErrors[pOnStream->GetLastError()]);
 						delete pOnStream;
@@ -2228,12 +2349,14 @@ int main(int argc, char* argv[]) {
 					}
 					/* The skip 80 forward could have been too far ... */
 					if (AuxFrame.FrameSequenceNumber > CurrentSeqNo) {
-						Debug(0, "Frame with high sequence number %ld. Expecting %ld. Aborting.\n", AuxFrame.FrameSequenceNumber, CurrentSeqNo);
+						Debug(0, "Frame with high sequence number %ld. Expecting %ld. ", AuxFrame.FrameSequenceNumber, CurrentSeqNo);
 						if (retry++ > 5) {
 							eof = 1;
+							Debug (0, "Aborting\n");
 							break;
 						}
 						CurrentFrame -= AuxFrame.FrameSequenceNumber - CurrentSeqNo + 1;
+						Debug (0, "Jump Back to %i.\n", CurrentFrame);
 						if (CurrentFrame > second_cfg && CurrentFrame <= second_cfg + 5) {
 							if (adr_version < 10004) CurrentFrame -= 6;
 							else CurrentFrame -= 5;
@@ -2258,7 +2381,9 @@ int main(int argc, char* argv[]) {
 					break;
 				case 0x0100:
 					Debug(2, "EOD\n");
-					eof = 1;
+					/* Ignore EOD frames if in error recovery, 
+					 * i.e. locating forward to find next valid frame */
+					if (!retry) eof = 1;
 					break;
 				default:
 					Debug(2, "Unknown frame 0x%04x at pos %d. Skipping.\n", 
@@ -2286,7 +2411,7 @@ int main(int argc, char* argv[]) {
 
 		}
 
-	} while (multiple == 1);
+	} while (multiple == 1 && !signalled);
 
 	delete pOnStream;
 	return 0;
