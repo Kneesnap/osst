@@ -246,7 +246,10 @@ can be done. It also contains patches for the ide-tape to fix the onstream
 support in there.
 
 <H3>USB30</H3>
-The USB drive USB30 can be used via the usb-storage driver. Compile it with
+The <A HRef="http://www.linux-usb.org/">USB</A> drive USB30 can be used via
+the 
+<A HRef="http://www2.one-eyed-alien.net/~mdharm/linux-usb/">usb-storage</A> 
+driver. Compile it with 
 support for the <A HRef="http://www.freecom.com/">FreeCom</A> USB-Atapi
 converter <TT>CONFIG_USB_STORAGE_FREECOM</TT>, load it and load your osst
 driver. 
@@ -255,6 +258,12 @@ Note: Stability and speed veries between different versions of the kernel's
 low-level USB drivers, of the usb-storage driver and the Freecom dongle.
 Recently, problems with older versions (9.21 and older) of the dongle have
 been reported. (Check <TT>/proc/bus/usb/devices</TT>.)
+
+<H3>FW-30</H3>
+Should work, provided the low-level Firewire 
+(IEEE1394) <A HRef="http://linux1394.sourceforge.net/">Linux drivers</A> 
+(ohci1394) and the SCSI protocol interface (sbp2) do their job well.
+Currently (12/2001), there still seem to be problems hidden somewhere ...
 
 <H3>Links</H3>
 JP Vossen has a <A HRef="http://www.jpsdomain.org/linux/#backups">nice
