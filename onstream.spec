@@ -54,8 +54,14 @@ cd onstreamsg
 make
 cd ../tools
 make
-cd ../driver
-test -e /usr/src/linux/.config || cp -p /boot/vmlinuz.config /usr/src/linux/.config
+cd ..
+if test ! -e /usr/src/linux/.config; then
+  if -e /boot/vmlinuz.config; then cp -p /usr/src/linux/.config;
+  else if -e /proc/config.gz; then gunzip -dc /proc/config.gz >/usr/src/linux/.config;
+    else yes "" | make -C /usr/src/linux oldconfig
+    fi
+  fi
+fi
 make
 
 %install
@@ -75,7 +81,7 @@ make install DESTDIR=$RPM_BUILD_ROOT
 /lib/modules/%kversion/scsi/osst.o
 /dev/osst*
 /dev/nosst*
-%doc README COPYING tapeinfo driver/README.osst driver/dev-reg.txt driver/osst-22.diff
+%doc README COPYING tapeinfo driver-24/README.osst driver-24/dev-reg.txt driver-24/osst-24.diff driver-22/osst-22.diff
 
 %clean
 rm -rf $RPM_BUILD_ROOT

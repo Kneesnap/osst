@@ -1,0 +1,20 @@
+# Makefile for the osst driver to determine kernel version and
+# automatically call the Makefile for the correct driver ...
+
+KDIR := /usr/src/linux
+
+KVER = 2$(shell head -5 $(KDIR)/Makefile | grep PATCHLEVEL | sed 's/[^=]*=[^0-9]*\([0-9]*\).*/\1/')
+
+default: driver
+
+driver:
+	make -C driver-$(KVER) KDIR=$(KDIR)
+
+install:
+	make install -C driver-$(KVER) KDIR=$(KDIR) 
+
+load:
+	make load -C driver-$(KVER) KDIR=$(KDIR)
+
+clean:
+	make load -C driver-$(KVER) KDIR=$(KDIR)
