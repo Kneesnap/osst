@@ -1,22 +1,22 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
 <HTML>
 <Head>
-<Title>OnStream IDE Tape driver for Linux patches</Title>
+<Title>OnStream DI-x0 support in Linux</Title>
 	<Link HRef="mailto:osst@linux1.onstream.nl">
 	<Meta HTTP-Equiv="Content-Type" Content="text/html; charset=iso-8859-1">
 	<Meta Name="Author" Content="garloff@suse.de">
 	<Meta Name="Generator" Content="Text Editor (xemacs/jed, Linux)">
-	<Meta Name="Keywords" Content="OnStream IDE Tape DI-30 DI-50 ADR">
-	<Meta Name="Description" Content="onstream ide-tape patches page">
+	<Meta Name="Keywords" Content="OnStream IDE Tape DI-30 DI-50 ADR Linux">
+	<Meta Name="Description" Content="onstream DI-x0 support for Linux">
 </Head>
 <Body Background="/gif/bg_pingu.gif" BGColor=#f0f0f0>
 <A HRef="index.html"><Img Src="/gif/left.gif" Align=middle Alt="Back" Width=16 Height=16>
 Back</A>
-<Center><H1>Onstream IDE tapes (DI-30)</H1></Center>
+<Center><H1>Onstream IDE tapes (DI-30) with Linux</H1></Center>
 This page should help you to get your OnStream DI-30/50 running with Linux.
 <H3>ide-scsi &amp; osst</H3>
 <EM>This is the recommended way of getting you DI-30 running with
-Linux</EM><Br>.
+Linux.</EM><Br>
 Compile your kernel with support for <TT>ide-scsi
 (CONFIG_BLK_DEV_IDESCSI)</TT> and <TT>osst (CONFIG_CHR_DEV_OSST)</TT>.
 Depending on where your OnStream DI-30 is on the IDE busses, pass<TT><Pre>
