@@ -26,9 +26,13 @@ binaries for other platforms.
 </P><P>
 Those tools use the generic SCSI interface (<TT>/dev/sgX</TT>), but via SCSI
 emulation layers they can be used to update IDE (via ide-scsi) and USB (via
-usb-storage) drives as well. The binaries have been compiled with
+usb-storage) drives as well. Make sure you have the sg driver compiled into
+your kernel (statically or as module) and the necessary lowlevel drivers
+(your SCSI host adapter or ide-scsi or usb-storage).<Br>
+The binaries have been compiled with
 glibc-2.1.2 and libstdc++-libc6.1-2.so.3 (gcc-2.95.2) and should work on
 glibc-2.1.3 systems as well (SuSE Linux-6.3, 6.4, 7.0; RH Linux 6.x).
+On distributions with newer versions of glibc(2.2.x), it should also work.
 Otherwise you may use the statically linked binaries.
 You also need to get the appropriate firmware.
 </P><P>
