@@ -1204,7 +1204,7 @@ static int osst_read_back_buffer_and_rewrite(OS_Scsi_Tape * STp, Scsi_Request **
 		SRpnt = osst_do_scsi(SRpnt, STp, cmd, OS_FRAME_SIZE, SCSI_DATA_READ,
 					    STp->timeout, MAX_RETRIES, TRUE);
 	
-		if ((STp->buffer)->syscall_result) {
+		if ((STp->buffer)->syscall_result || !SRpnt) {
 			printk(KERN_ERR "osst%d: Failed to read frame back from OnStream buffer\n", dev);
 			vfree((void *)buffer);
 			*aSRpnt = SRpnt;

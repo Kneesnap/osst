@@ -1,6 +1,6 @@
 README file for the osst driver
 ===============================
-(w) Kurt Garloff <garloff@suse.de> 10/2000
+(w) Kurt Garloff <garloff@suse.de> 04/2001
 
 This file describes the osst driver as of version 0.8.x/0.9.x, the released
 version of the osst driver.
@@ -158,8 +158,14 @@ USB and IDE
 Via the SCSI emulation layers usb-storage and ide-scsi, you can also use the
 osst driver to drive the USB-30 and the DI-30 drives. (Unfortunately, there
 is no such layer for the parallel port, otherwise the DP-30 would work as
-well.) For the USB support, you need the latest 2.4.0-test kernels and the 
-latest usb-storage driver from 
+well.) 
+
+For the DI-30, compile the SCSI layer and ide-scsi into the kernel and pass
+hdX=scsi as boot parameter to your kernel, with hdX corresponding to your
+OnStream device.
+
+For the USB support, you need the usb-sotrage driver of 2.4.0 kernel or
+newer and you have to enable the Freecom support. For news, check
 http://www.linux-usb.org/
 http://sourceforge.net/cvs/?group_id=3581
 
@@ -199,6 +205,10 @@ Status
 have been sent, but mostly reported success or only minor trouble.
 All the issues have been addressed.
 Check the web pages for more info about the current developments.
+
+0.8.6.x and 0.9.4.x have been integrated into the mainstream kernels 2.2.19
+and 2.4.0 repsectively. Newer versions with variable block size support will
+be submitted soon.
 
 
 Acknowledgments
