@@ -28,6 +28,7 @@ const char * osst_version = "0.51";
 /* The "failure to reconnect" firmware bug */
 #define OS_NEED_POLL_MIN 10602 /*(107A)*/
 #define OS_NEED_POLL_MAX 10708 /*(108D)*/
+#define OS_NEED_POLL(x) ((x) >= OS_NEED_POLL_MIN && (x) <= OS_NEED_POLL_MAX)
 
 #include <linux/module.h>
 
@@ -683,7 +684,7 @@ static int osst_read_block(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int timeout)
 #endif
 
 	/* TODO: Error handling */
-	if (STp->os_fw_rev >= OS_NEED_POLL_MIN && STp->os_fw_rev <= OS_NEED_POLL_MAX)
+	if (OS_NEED_POLL(STp->os_fw_rev))
 		retval = osst_wait_frame (STp, STp->first_frame_position, 0, timeout);
 #if 0//def DEBUG
 	printk ("osst_read: wait for frame returned %i\n", retval);
@@ -1842,7 +1843,7 @@ osst_flush_write_buffer(Scsi_Tape *STp, int file_blk)
     memset((STp->buffer)->b_data + offset, 0, transfer - offset);
 
     /* TODO: Error handling! */
-    if (STp->os_fw_rev >= OS_NEED_POLL_MIN && STp->os_fw_rev <= OS_NEED_POLL_MAX)
+    if (OS_NEED_POLL(STp->os_fw_rev))
 	result = osst_wait_frame (STp, STp->first_frame_position, -50, 120);
 
     memset(cmd, 0, 10);
@@ -2106,7 +2107,7 @@ st_write(struct file * filp, const char * buf, size_t count, loff_t *ppos)
 	osst_position_tape_and_confirm(STp, 0xbb8);
     }
 	
-    if (STp->os_fw_rev >= OS_NEED_POLL_MIN && STp->os_fw_rev <= OS_NEED_POLL_MAX)
+    if (OS_NEED_POLL(STp->os_fw_rev))
 	retval = osst_wait_frame (STp, STp->first_frame_position, -50, 60);
     /* TODO: Check for an error ! */
 	
