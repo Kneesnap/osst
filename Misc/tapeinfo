@@ -23,6 +23,9 @@ if test -z "`type -p mtst`"; then
 else
   MT=mtst
 fi
+
+export LANG=POSIX
+
 echo "Info for tape $tape (bs=$bs):"
 resp=`$MT -f $tape status`
 type=`echo $resp | sed 's/.*rive type = \([0-9-]*\).*/\1/'`
@@ -32,15 +35,17 @@ if test -z "`echo $resp | grep 'rive type'`"; then
 fi
 file=`echo $resp | sed 's/.*ile number *= *\([0-9]*\).*/\1/'`
 sblk=`$MT -f $tape tell | sed 's/.*t block \([0-9]*\).*/\1/'`
-echo -e "Tape type $type.\nCurrent file $file (block $sblk). Scanning ..."
+tbs=`echo "$resp" | grep "^Tape block size" | sed 's/^Tape block size \([0-9]*\).*$/\1/'`
+echo -e "Tape type $type. Block size $tbs\nCurrent file $file (block $sblk). Scanning ..."
 $MT -f $tape rewind >/dev/null
 err=$?
 declare -i no
 no=0
 while test "$err" = "0"; do
+  oldno=`$MT -f $tape status | grep "^File number=" | sed 's/^File number=\([0-9]*\).*$/\1/'`
   resp=`$MT -f $tape tell`
   blocks=`echo $resp | sed 's/.*t block \([0-9]*\).*/\1/'`
-  myno=`printf %02i $no`
+  myno=`printf %02i $oldno`
   echo -n "File $myno (block`printf %7i $blocks`): "
   dd if=$tape of=/tmp/tape_$tp.$myno bs=$bs count=$blks 2>/dev/null
   err=$?
@@ -56,7 +61,12 @@ while test "$err" = "0"; do
       tar tvf /tmp/tape_$tp.$myno 2>/dev/null | head -n$inspect
     fi
   fi
-  $MT -f $tape fsf >/dev/null
+  newno=`$MT -f $tape status | grep "^File number=" | sed 's/^File number=\([0-9]*\).*$/\1/'`
+  if test "$newno" -eq "$oldno"; then
+    $MT -f $tape fsf >/dev/null
+  else
+    echo "                        (short file)"
+  fi
   err=$?
   let no+=1
 done
