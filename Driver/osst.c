@@ -28,7 +28,7 @@ const char * osst_version = "0.9.2";
 /* The "failure to reconnect" firmware bug */
 #define OSST_FW_NEED_POLL_MIN 10602 /*(107A)*/
 #define OSST_FW_NEED_POLL_MAX 10708 /*(108D)*/
-#define OSST_FW_NEED_POLL(x,d) ((x) >= OSST_FW_NEED_POLL_MIN && (x) <= OSST_FW_NEED_POLL_MAX && d->host->this_id <= 5)
+#define OSST_FW_NEED_POLL(x,d) ((x) >= OSST_FW_NEED_POLL_MIN && (x) <= OSST_FW_NEED_POLL_MAX && d->host->this_id != 7)
 
 #include <linux/module.h>
 
