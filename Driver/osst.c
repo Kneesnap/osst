@@ -50,7 +50,7 @@ const char * osst_version = "0.9.2";
 
 /* The driver prints some debugging information on the console if DEBUG
    is defined and non-zero. */
-#define DEBUG 0
+#define DEBUG 1
 
 /* The message level for the debug messages is currently set to KERN_NOTICE
    so that people can easily see the messages. Later when the debugging messages
@@ -163,7 +163,7 @@ struct Scsi_Device_Template osst_template =
 
 static int osst_int_ioctl(OS_Scsi_Tape *STp, Scsi_Request ** aSRpnt, unsigned int cmd_in,unsigned long arg);
 
-static int osst_set_frame_position(OS_Scsi_Tape *STp, Scsi_Request ** aSRpnt, unsigned int frame, int skip);
+static int osst_set_frame_position(OS_Scsi_Tape *STp, Scsi_Request ** aSRpnt, int frame, int skip);
 
 static int osst_get_frame_position(OS_Scsi_Tape *STp, Scsi_Request ** aSRpnt);
 
@@ -654,8 +654,10 @@ static int osst_wait_frame(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, int curr,
 #if DEBUG
 	char	notyetprinted = 1;
 #endif
-	if (minlast >= 0 && STp->ps[STp->partition].rw != ST_READING)
-		printk(KERN_ERR "osst%i: waiting for frame without having initialized read!\n", dev);
+	if ((minlast >= 0 && STp->ps[STp->partition].rw != ST_READING) ||
+	    (minlast <  0 && STp->ps[STp->partition].rw != ST_WRITING) )
+		printk(KERN_ERR "osst%i: waiting for frame without having initialized %s!\n",
+			       	dev, minlast<0?"write":"read");
 
 	while (time_before (jiffies, startwait + to*HZ))
 	{ 
@@ -667,12 +669,13 @@ static int osst_wait_frame(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, int curr,
 		if (STp->first_frame_position == curr &&
 		    ((minlast < 0 &&
 		      (signed)STp->last_frame_position > (signed)curr + minlast) ||
-		     STp->cur_frames > minlast
+		     (minlast >= 0 && STp->cur_frames > minlast)
 		    ) && result >= 0)
 		{
 #if DEBUG			
-			if (jiffies - startwait >= 2*HZ/OSST_POLL_PER_SEC)
-				printk ("osst%i: Succ wait f fr %i (>%i): %i-%i %i (%i): %3li.%li s\n",
+			if (debugging || jiffies - startwait >= 2*HZ/OSST_POLL_PER_SEC)
+				printk (OSST_DEB_MSG
+					"osst%i: Succ wait f fr %i (>%i): %i-%i %i (%i): %3li.%li s\n",
 					dev, curr, curr+minlast, STp->first_frame_position,
 					STp->last_frame_position, STp->cur_frames,
 					result, (jiffies-startwait)/HZ, 
@@ -683,7 +686,7 @@ static int osst_wait_frame(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, int curr,
 #if DEBUG
 		if (jiffies - startwait >= 2*HZ/OSST_POLL_PER_SEC && notyetprinted)
 		{
-			printk ("osst%i: Wait for frame %i (>%i): %i-%i %i (%i)\n",
+			printk (OSST_DEB_MSG "osst%i: Wait for frame %i (>%i): %i-%i %i (%i)\n",
 				dev, curr, curr+minlast, STp->first_frame_position,
 				STp->last_frame_position, STp->cur_frames, result);
 			notyetprinted--;
@@ -693,7 +696,7 @@ static int osst_wait_frame(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, int curr,
 		schedule_timeout (HZ / OSST_POLL_PER_SEC);
 	}
 #if DEBUG
-	printk ("osst%i: Fail wait f fr %i (>%i): %i-%i %i: %3li.%li s\n",
+	printk (OSST_DEB_MSG "osst%i: Fail wait f fr %i (>%i): %i-%i %i: %3li.%li s\n",
 		dev, curr, curr+minlast, STp->first_frame_position,
 		STp->last_frame_position, STp->cur_frames,
 		(jiffies-startwait)/HZ, (((jiffies-startwait)%HZ)*10)/HZ);
@@ -1661,6 +1664,7 @@ static int osst_write_filemark(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt)
 	       dev, STp->filemark_cnt, this_mark_ppos, STp->logical_blk_num);
 #endif
 	osst_init_aux(STp, OS_FRAME_TYPE_MARKER, STp->logical_blk_num++);
+	STp->ps[STp->partition].rw = ST_WRITING;
 	STp->dirty = 1;
 	result  = osst_flush_write_buffer(STp, aSRpnt, 0);
 	result |= osst_flush_drive_buffer(STp, aSRpnt);
@@ -1688,6 +1692,7 @@ static int osst_write_eod(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt)
 	printk(OSST_DEB_MSG "osst%i: Writing EOD at %d=>%d\n", dev, STp->logical_blk_num, STp->eod_frame_ppos);
 #endif
 	osst_init_aux(STp, OS_FRAME_TYPE_EOD, STp->logical_blk_num++);
+	STp->ps[STp->partition].rw = ST_WRITING;
 	STp->dirty = 1;
 
 	result  = osst_flush_write_buffer(STp, aSRpnt, 0);	
@@ -1733,10 +1738,10 @@ static int __osst_write_header(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, int b
 	osst_wait_ready(STp, aSRpnt, 60 * 5);
 	osst_set_frame_position(STp, aSRpnt, block, 0);
 	STp->write_type = OS_WRITE_HEADER;
+	STp->ps[STp->partition].rw = ST_WRITING;
 	osst_init_aux(STp, OS_FRAME_TYPE_HEADER, STp->logical_blk_num);
 	while (count--) {
 		osst_copy_to_buffer(STp->buffer, (unsigned char *)STp->header_cache);
-//		memcpy(STp->buffer->b_data, STp->header_cache, sizeof(os_header_t));
 		STp->buffer->buffer_bytes = sizeof(os_header_t);
 		STp->dirty = 1;
 		if (osst_flush_write_buffer(STp, aSRpnt, 0)) {
@@ -2396,7 +2401,7 @@ static int osst_get_frame_position(OS_Scsi_Tape *STp, Scsi_Request ** aSRpnt)
 
 
 /* Set the tape block */
-static int osst_set_frame_position(OS_Scsi_Tape *STp, Scsi_Request ** aSRpnt, unsigned int block, int skip)
+static int osst_set_frame_position(OS_Scsi_Tape *STp, Scsi_Request ** aSRpnt, int block, int skip)
 {
 	unsigned char	scmd[MAX_COMMAND_SIZE];
 	Scsi_Request  * SRpnt;
@@ -2539,7 +2544,6 @@ static int osst_flush_write_buffer(OS_Scsi_Tape *STp, Scsi_Request ** aSRpnt, in
 			STps->drv_block = (-1);
 		}
 		else {
-			STp->first_frame_position++;
 			if (file_blk && STps->drv_block >= 0)
 				STps->drv_block += blks;
 			STp->first_frame_position += blks;
@@ -3653,8 +3657,11 @@ os_bypass:
 			STp->partition = 0;
 		}
 
-		if (cmd_in == MTREW)
+		if (cmd_in == MTREW) {
 			ioctl_result = osst_position_tape_and_confirm(STp, &SRpnt, STp->first_data_ppos); 
+			if (ioctl_result > 0)
+				ioctl_result = 0;
+		}
 
 	} else if (SRpnt) {  /* SCSI command was not completely successful. */
 		if (SRpnt->sr_sense_buffer[2] & 0x40) {
