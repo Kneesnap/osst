@@ -95,6 +95,9 @@ challenged installations.</DD>
 <DD>The drive now ejects the tape with 'mt offline'. Fixed polling algorithm 
 in preparation of supporting IDE and USB drives. Osst 0.9.2 needs the version 
 of st found in kernel versions 2.4.0-test9-pre6 and later.</DD>
+<DT>2000-10-04: (osst 0.8.5 / 0.9.3)</DT>
+<DD>Some bugfixes. 0.9.3 now verified to support USB Onstream drives and
+big endian platforms such as the Power PC.</DD>
 </DL></P>
 
 <H3>Known problems as of <B>0.8.2</B></H3>
@@ -138,7 +141,7 @@ There are several possibilities to get the <TT>osst</TT>-driver. For your
 convenience, the archives also contain Terry's userspace driver <TT>osg</TT> 
 and some tools.
 <OL>
-<LI>(recommended) Get the <A HRef="onstream-20000924.tar.gz">sources</A>, unpack
+<LI>(recommended) Get the <A HRef="onstream-20001004.tar.gz">sources</A>, unpack
 them (<TT>tar xvzf onstream-2000*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux source
 tree (apply patch osst-22.diff resp. osst-24.diff first) installed in
