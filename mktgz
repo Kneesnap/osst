@@ -4,7 +4,7 @@ mkdir -p onstream/driver
 mkdir -p onstream/tools
 mkdir -p onstream/onstreamsg
 cp -p README.onstream onstream/README
-for name in osst.c osst.h st.c st.h st_options.h Makefile Makefile.osst Makedevs.sh osst-22.diff README.osst;
+for name in osst.c osst.h st.c st.h st_options.h Makefile Makefile.osst Makedevs.sh osst-22.diff README.osst dev-reg.txt;
  do cp -p Driver/$name onstream/driver/;
 done
 cp -p Misc/onstreamsg/Makefile Misc/onstreamsg/onstreamsg.cpp onstream/onstreamsg/
