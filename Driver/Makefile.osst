@@ -1,4 +1,6 @@
-# Makefile for osst
+# Makefile for osst to be called by master Makefile that
+# does the preparation work (setting up links, copying Rules.make ...)
+# (w) 3/2000 garloff@suse.de
 
 TARGET = osst.o
 TARGETMODDIR = scsi

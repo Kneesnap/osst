@@ -1,4 +1,6 @@
 # Makefile for the osst (OnStream SC-30/50/70 ADR tape) driver
+# (w) 3/2000, garloff@suse.de
+
 KDIR := /usr/src/linux
 
 TARGETS := Rules.make arch osst.o

@@ -22,9 +22,12 @@
   Some small formal changes - aeb, 950809
 */
 
-/* TODO: Add if (tpnt->onstream) all over the place ... */
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.5";
+const char * osst_version = "0.51";
+
+/* The "failure to reconnect" firmware bug */
+#define OS_NEED_POLL_MIN 10602 /*(107A)*/
+#define OS_NEED_POLL_MAX 10708 /*(108D)*/
 
 #include <linux/module.h>
 
@@ -679,7 +682,9 @@ static int osst_read_block(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int timeout)
 	int		dev    = TAPE_NR(STp->devt);
 #endif
 
-	retval = osst_wait_frame (STp, STp->first_frame_position, 0, timeout);
+	/* TODO: Error handling */
+	if (STp->os_fw_rev >= OS_NEED_POLL_MIN && STp->os_fw_rev <= OS_NEED_POLL_MAX)
+		retval = osst_wait_frame (STp, STp->first_frame_position, 0, timeout);
 #if 0//def DEBUG
 	printk ("osst_read: wait for frame returned %i\n", retval);
 #endif
@@ -1800,7 +1805,7 @@ osst_set_frame_position(Scsi_Tape *STp, unsigned int block)
 osst_flush_write_buffer(Scsi_Tape *STp, int file_blk)
 {
   int offset, transfer, blks = 0;
-  int result;
+  int result = 0;
   unsigned char cmd[10];
   Scsi_Cmnd *SCpnt;
   ST_partstat * STps;
@@ -1836,7 +1841,9 @@ osst_flush_write_buffer(Scsi_Tape *STp, int file_blk)
 #endif
     memset((STp->buffer)->b_data + offset, 0, transfer - offset);
 
-    osst_wait_frame (STp, STp->first_frame_position, -50, 120);
+    /* TODO: Error handling! */
+    if (STp->os_fw_rev >= OS_NEED_POLL_MIN && STp->os_fw_rev <= OS_NEED_POLL_MAX)
+	result = osst_wait_frame (STp, STp->first_frame_position, -50, 120);
 
     memset(cmd, 0, 10);
     cmd[0] = WRITE_6;
@@ -2098,8 +2105,9 @@ st_write(struct file * filp, const char * buf, size_t count, loff_t *ppos)
 	osst_flush_drive_buffer(STp);
 	osst_position_tape_and_confirm(STp, 0xbb8);
     }
-
-    osst_wait_frame (STp, STp->first_frame_position, -50, 60);
+	
+    if (STp->os_fw_rev >= OS_NEED_POLL_MIN && STp->os_fw_rev <= OS_NEED_POLL_MAX)
+	retval = osst_wait_frame (STp, STp->first_frame_position, -50, 60);
     /* TODO: Check for an error ! */
 	
     memset(cmd, 0, 10);
