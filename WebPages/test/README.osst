@@ -1,6 +1,8 @@
 README file for the osst driver
 ===============================
-(w) Kurt Garloff <garloff@suse.de> 04/2001
+ (w) Kurt Garloff <garloff@suse.de> 04/2001
+ (w) Willem Riede <osst@riede.org>  07/2001
+ $Id$
 
 This file describes the osst driver as of version 0.8.x/0.9.x, the released
 version of the osst driver.
@@ -54,6 +56,10 @@ There is an easy and a correct approach to install the osst driver
 (a) Without patching your kernel
 (b) Full integration into your kernel
 (c) The mainstream kernel does already include the osst driver
+
+Most probably, (c) applies, as osst has been part of official kernel since
+quite some time, now, so you can skip the next few paragraphs (up to To 
+load your module ...).
 
 While it is still possible to use possibility (a), i.e. to compile the osst
 driver as a module without patching your kernel, this is not recommended, as
@@ -180,6 +186,12 @@ blank if not applicable, and S is the severity:
 This output is sent to klogd with corresponding priority. If you don't see
 it in your system log (typically /var/log/messages), check your syslog.conf.
 
+Please note that during normal write operation, you will see some messages.
+A number of write errors per tape is normal; but all of them should be
+recovered by relocating the affected frames to a safe position behind the
+bad spot on the tape. Nothing to worry about. If you don't trust this, try
+reading back your backup and check whether this succeeds.
+
 
 USB and IDE
 -----------
@@ -267,7 +279,6 @@ Makedevs.sh
 #!/bin/sh
 # Script to create OnStream SC-x0 device nodes (major 206)
 # Usage: Makedevs.sh [nos [path to dev]]
-# $Id$
 major=206
 nrs=4
 dir=/dev
