@@ -1,5 +1,5 @@
 #
-# spec file for package onstream (Version 0.9.13_0.7.99a)
+# spec file for package onstream (Version 0.9.13_0.8.0)
 # 
 # Copyright  (c)  2000  SuSE GmbH  Nuernberg, Germany.
 #
@@ -28,9 +28,11 @@ BuildRoot:	/var/tmp/%{name}-buildroot
 OnStream's SC-x0 tapes are not compliant with the SCSI2 spec for Serial
 Access Storage Devices and can therefore not be operated by the Kernel's
 SCSI Tape st driver st. This package contains some tools to allow to
-test and access the device. The onstreamsg (osg) program allows reading
-and writing of data to tapes. The osst driver is a kernel module
-providing an st like interface. Some helpers are also included.
+test and access the device. 
+The osst driver is a kernel module providing an st like interface via the
+device nodes /dev/osst*
+The onstreamsg (osg) program allows reading and writing of data to tapes.
+Some helpers are also included.
 Note: Support for the IDE versions (DI-30) has been included in the
 standard SuSE kernel.
 
@@ -80,6 +82,9 @@ rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_DIR/%{name}
 
 %changelog -n onstream
+* Tue Jun 27 2000 - garloff@suse.de
+- 20000626 (0.8.0): Report MT_ISONSTREAM_SC tape,
+  clean up osst_options.h
 * Wed Jun 21 2000 - garloff@suse.de
 - 20000621 (0.7.99a): Use same OSST_SUPPORTS (SDp) from
   osst_detect.h in st and osst for both detect() and attach()
