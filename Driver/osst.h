@@ -326,7 +326,10 @@ typedef struct os_header_s {
         __u8            reserved10_15[6];
         __u8            par_num;
         __u8            reserved1_3[3];
-        os_partition_t  partition;
+        os_partition_t  partition[16];
+	__u32		reserved276_511[59];
+	__u32		filemark_list[8064];
+	
 } os_header_t;
 
 

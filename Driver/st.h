@@ -125,13 +125,15 @@ typedef struct {
   unsigned last_frame_position;                /* physical frame to be transferd to/from tape */
   int      cur_frames;                         /* current number of frames in internal buffer */
   int      max_frames;                         /* max number of frames in internal buffer */
-  __u16    wrt_pass_cntr;                      /* write pass counter */
-  __u32    update_frame_cntr;                  /* update frame counter */
+  char     application_sig[5];                 /* application signature */
+  unsigned char  fast_open;                    /* flag that reminds us we didn't check headers at open */
+  unsigned short wrt_pass_cntr;                /* write pass counter */
+  int      update_frame_cntr;                  /* update frame counter */
   int      onstream_write_error;               /* write error recovery active */
   int      header_ok;                          /* header frame verified ok */
   int      linux_media;                        /* reading linux-specifc media */
   int      linux_media_version;
-  char     application_sig[5];                 /* application signature */
+  os_header_t * header_cache;		       /* cache is kept for filemark positions */
   int      filemark_cnt;
   int      first_mark_addr;
   int      last_mark_addr;
