@@ -1,5 +1,5 @@
 #
-# spec file for package onstream (Version 0.9.13_0.7.2)
+# spec file for package onstream (Version 0.9.13_0.7.3)
 # 
 # Copyright  (c)  2000  SuSE GmbH  Nuernberg, Germany.
 #
@@ -18,9 +18,9 @@ Packager:     feedback@suse.de
 Copyright:	GPL
 Group:        Kernel
 Autoreqprov:  on
-Version:      0.9.13_0.7.2
+Version:      0.9.13_0.7.3
 Summary:      OnStream SC-x0 tape support tools
-Source:	      onstream-20000515.tar.gz
+Source:	      onstream-20000521.tar.gz
 #Patch:		onstream.dif
 BuildRoot:	/var/tmp/%{name}-buildroot
 
@@ -77,6 +77,8 @@ rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_DIR/%{name}
 
 %changelog -n onstream
+* Mon May 22 2000 - garloff@suse.de
+- Update to 20000521 (0.7.3): Fixed read after seek error.
 * Wed May 17 2000 - garloff@suse.de
 - Update to 20000515 (0.7.2)
 * Mon May 15 2000 - garloff@suse.de
