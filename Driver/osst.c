@@ -23,7 +23,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.9.0p1";
+const char * osst_version = "0.9.0";
 
 /* The "failure to reconnect" firmware bug */
 #define OS_NEED_POLL_MIN 10602 /*(107A)*/
@@ -161,7 +161,7 @@ struct Scsi_Device_Template osst_template =
        detach:		osst_detach
 };
 
-static int osst_int_ioctl(OS_Scsi_Tape *STp, unsigned int cmd_in,unsigned long arg);
+static int osst_int_ioctl(OS_Scsi_Tape *STp, Scsi_Request ** aSRpnt, unsigned int cmd_in,unsigned long arg);
 
 static int osst_set_frame_position(OS_Scsi_Tape *STp, Scsi_Request ** aSRpnt, unsigned int frame, int skip);
 
@@ -2706,7 +2706,7 @@ static ssize_t osst_write(struct file * filp, const char * buf, size_t count, lo
 	STps = &(STp->ps[STp->partition]);
 
 	if (STp->do_auto_lock && STp->door_locked == ST_UNLOCKED &&
-	    !osst_int_ioctl(STp, MTLOCK, 0))
+	    !osst_int_ioctl(STp, &SRpnt, MTLOCK, 0))
 		STp->door_locked = ST_LOCKED_AUTO;
 
 
@@ -3040,7 +3040,7 @@ static ssize_t osst_read(struct file * filp, char * buf, size_t count, loff_t *p
 	}
 
 	if (STp->do_auto_lock && STp->door_locked == ST_UNLOCKED &&
-	!osst_int_ioctl(STp, MTLOCK, 0))
+	!osst_int_ioctl(STp, &SRpnt, MTLOCK, 0))
 		STp->door_locked = ST_LOCKED_AUTO;
 
 	STps = &(STp->ps[STp->partition]);
@@ -3324,14 +3324,14 @@ static int osst_set_options(OS_Scsi_Tape *STp, long options)
 
 
 /* Internal ioctl function */
-static int osst_int_ioctl(OS_Scsi_Tape * STp, unsigned int cmd_in, unsigned long arg)
+static int osst_int_ioctl(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, unsigned int cmd_in, unsigned long arg)
 {
 	int timeout;
 	long ltmp;
 	int i, ioctl_result;
 	int chg_eof = TRUE;
 	unsigned char cmd[MAX_COMMAND_SIZE];
-	Scsi_Request * SRpnt = NULL;
+	Scsi_Request * SRpnt = * aSRpnt;
 	ST_partstat * STps;
 	int fileno, blkno, at_sm, undone, logical_blk_num;
 	int datalen = 0, direction = SCSI_DATA_NONE;
@@ -3649,8 +3649,7 @@ os_bypass:
 		if (cmd_in == MTREW)
 			ioctl_result = osst_position_tape_and_confirm(STp, &SRpnt, STp->first_data_ppos); 
 
-	} else if (SRpnt) {  /* SCSI command was not completely successful. Don't return
-			from this block without releasing the SCSI command block! */
+	} else if (SRpnt) {  /* SCSI command was not completely successful. */
 		if (SRpnt->sr_sense_buffer[2] & 0x40) {
 			if (cmd_in != MTBSF && cmd_in != MTBSFM &&
 			    cmd_in != MTBSR && cmd_in != MTBSS)
@@ -3731,7 +3730,7 @@ os_bypass:
 			STp->door_locked = ST_LOCK_FAILS;
 
 	}
-	if (SRpnt) scsi_release_request(SRpnt);
+	*aSRpnt = SRpnt;
 
 	return ioctl_result;
 }
@@ -3918,7 +3917,7 @@ static int os_scsi_tape_open(struct inode * inode, struct file * filp)
 		i = STp->first_frame_position;
 		if (STp->header_ok && i == osst_get_frame_position(STp, &SRpnt)) {
 			if (STp->door_locked == ST_UNLOCKED) {
-				if (osst_int_ioctl(STp, MTLOCK, 0))
+				if (osst_int_ioctl(STp, &SRpnt, MTLOCK, 0))
 					printk(KERN_WARNING "osst%d: Can't lock drive door\n", dev);
 				else
 					STp->door_locked = ST_LOCKED_AUTO;
@@ -4077,7 +4076,7 @@ static int os_scsi_tape_open(struct inode * inode, struct file * filp)
 	 * properly position the tape and check the ADR headers
 	 */
 	if (STp->door_locked == ST_UNLOCKED) {
-		 if (osst_int_ioctl(STp, MTLOCK, 0))
+		 if (osst_int_ioctl(STp, &SRpnt, MTLOCK, 0))
 			printk(KERN_WARNING "osst%d: Can't lock drive door\n", dev);
 		 else
 			STp->door_locked = ST_LOCKED_AUTO;
@@ -4211,6 +4210,7 @@ static int os_scsi_tape_close(struct inode * inode, struct file * filp)
 {
 	int result = 0;
 	OS_Scsi_Tape * STp;
+	Scsi_Request * SRpnt = NULL;
 
 	kdev_t devt = inode->i_rdev;
 	int dev;
@@ -4219,7 +4219,8 @@ static int os_scsi_tape_close(struct inode * inode, struct file * filp)
 	STp = os_scsi_tapes[dev];
 
 	if (STp->door_locked == ST_LOCKED_AUTO)
-		osst_int_ioctl(STp, MTUNLOCK, 0);
+		osst_int_ioctl(STp, &SRpnt, MTUNLOCK, 0);
+	if (SRpnt) scsi_release_request(SRpnt);
 
 	if (STp->buffer != NULL)
 		STp->buffer->in_use = 0;
@@ -4349,7 +4350,7 @@ static int osst_ioctl(struct inode * inode,struct file * file,
 			STp->device->was_reset = 0;
 			if (STp->door_locked != ST_UNLOCKED &&
 			    STp->door_locked != ST_LOCK_FAILS) {
-				if (osst_int_ioctl(STp, MTLOCK, 0)) {
+				if (osst_int_ioctl(STp, &SRpnt, MTLOCK, 0)) {
 					printk(KERN_NOTICE "osst%d: Could not relock door after bus reset.\n",
 								  dev);
 					STp->door_locked = ST_UNLOCKED;
@@ -4363,7 +4364,7 @@ static int osst_ioctl(struct inode * inode,struct file * file,
 			STps->rw = ST_IDLE;  /* Prevent automatic WEOF and fsf */
 
 		if (mtc.mt_op == MTOFFL && STp->door_locked != ST_UNLOCKED)
-			osst_int_ioctl(STp, MTUNLOCK, 0);  /* Ignore result! */
+			osst_int_ioctl(STp, &SRpnt, MTUNLOCK, 0);  /* Ignore result! */
 
 		if (mtc.mt_op == MTSETDRVBUFFER &&
 		   (mtc.mt_count & MT_ST_OPTIONS) != 0) {
@@ -4392,7 +4393,7 @@ static int osst_ioctl(struct inode * inode,struct file * file,
 				retval = (-EINVAL);
 				goto out;
 			}
-			if ((i = osst_int_ioctl(STp, MTREW, 0)) < 0 /*||
+			if ((i = osst_int_ioctl(STp, &SRpnt, MTREW, 0)) < 0 /*||
 			    (i = partition_tape(inode, mtc.mt_count)) < 0*/) {
 				retval = i;
 				goto out;
@@ -4425,7 +4426,7 @@ static int osst_ioctl(struct inode * inode,struct file * file,
 			retval = -EINVAL /*osst_compression(STp, (mtc.mt_count & 1))*/;
 		else
 
-			retval = osst_int_ioctl(STp, mtc.mt_op, mtc.mt_count);
+			retval = osst_int_ioctl(STp, &SRpnt, mtc.mt_op, mtc.mt_count);
 		goto out;
 	}
 
