@@ -23,7 +23,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.6";
+const char * osst_version = "0.6.1";
 
 /* The "failure to reconnect" firmware bug */
 #define OS_NEED_POLL_MIN 10602 /*(107A)*/
@@ -497,6 +497,8 @@ static int osst_verify_frame(Scsi_Tape * STp, int logical_blk_num, int quiet)
                 printk(KERN_INFO "osst%d: skipping frame, seq != logical\n", dev);
                 return 0;
         }
+	STp->logical_blk_in_buffer = 1;
+
         if (logical_blk_num != -1 && ntohl(aux->logical_blk_num) != logical_blk_num) {
                 if (!quiet)
                         printk(KERN_INFO "osst%d: skipping frame, logical_blk_num %u (expected %d)\n", 
@@ -509,7 +511,6 @@ static int osst_verify_frame(Scsi_Tape * STp, int logical_blk_num, int quiet)
         if (aux->frame_type == OS_FRAME_TYPE_EOD) {
                 STps->eof = ST_EOD_1;
         }
-	STp->logical_blk_in_buffer = 1;
         return 1;
 }
 
@@ -768,7 +769,9 @@ static int osst_initiate_read(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt)
 			osst_flush_drive_buffer(STp);
                 }
                 STps->rw = ST_READING;
+#if 0
                 STp->logical_blk_num = 0;
+#endif
 		STp->logical_blk_in_buffer = 0;
 
                 /*
@@ -805,6 +808,8 @@ static int osst_get_logical_blk(Scsi_Tape * STp, int logical_blk_num, int quiet)
         while (1) {
                 if (cnt++ > 100) {
                         printk(KERN_INFO "osst%d: couldn't find logical block %d, aborting\n", dev, logical_blk_num);
+			if (SCpnt)
+				scsi_release_command(SCpnt);
                         return (-EIO);
                 }
 #if DEBUG
@@ -1224,9 +1229,7 @@ static void osst_update_last_marker(Scsi_Tape * STp, int last_mark_addr, int nex
 			  dev, frame, STp->logical_blk_num, STp->last_frame_position);
 #endif
 	osst_set_frame_position(STp, last_mark_addr, 0);
-#if 0
-	osst_initiate_read (STp, &SCpnt); //use here breaks block administration
-#endif
+	osst_initiate_read (STp, &SCpnt);
 	reslt = osst_read_block(STp, &SCpnt, 180);
 	if (SCpnt) scsi_release_command(SCpnt);
 	if (reslt) {
@@ -1381,9 +1384,7 @@ static int __osst_analyze_headers(Scsi_Tape * STp, int block, Scsi_Cmnd ** aSCpn
 #endif
 	if (osst_set_frame_position(STp, block, 0))
 		printk(KERN_WARNING "osst%i: Couldn't position tape\n", dev);
-#if 0
-	if (osst_initiate_read (STp, aSCpnt)) return 0; //use here breaks block administration
-#endif
+	if (osst_initiate_read (STp, aSCpnt)) return 0;
 	if (osst_read_block(STp, aSCpnt, 180)) {
 		printk(KERN_INFO "osst%i: couldn't read header frame\n", dev);
 		return 0;
@@ -2369,6 +2370,7 @@ st_read(struct file * filp, char * buf, size_t count, loff_t *ppos)
     /* Up to this point generic checking of call's validity - may rely on st.c for that */
     /* From here on adapted to OnStream only */
     if (!STp->onstream) return (-ENXIO);
+    if (!STp->header_ok) return (-EIO);
 
     if ((count % STp->block_size) != 0) {
       printk(KERN_WARNING "osst%d: Use multiple of %d bytes as block size (%d requested)\n",
@@ -2928,7 +2930,7 @@ osst_int_ioctl(Scsi_Tape * STp, unsigned int cmd_in, unsigned long arg)
 	return (-ENOSYS);
    }
 
-   SCpnt = st_do_scsi(NULL, STp, cmd, datalen, timeout, MAX_RETRIES, TRUE);
+   SCpnt = st_do_scsi(SCpnt, STp, cmd, datalen, timeout, MAX_RETRIES, TRUE);
    if (!SCpnt) {
 #if DEBUG
       printk(ST_DEB_MSG "osst%d: couldn't exec scsi cmd for IOCTL\n", dev);
@@ -3327,8 +3329,12 @@ scsi_tape_open(struct inode * inode, struct file * filp)
     /*
      * properly position the tape and check the ADR headers
      */
-    if (osst_int_ioctl(STp, MTLOCK, 0))
-         printk(KERN_WARNING "osst%d: Can't lock drive door\n", dev);
+    if (STp->door_locked == ST_UNLOCKED) {
+       if (osst_int_ioctl(STp, MTLOCK, 0))
+          printk(KERN_WARNING "osst%d: Can't lock drive door\n", dev);
+       else
+	  STp->door_locked = ST_LOCKED_AUTO;
+    }
 
     osst_analyze_headers(STp, &SCpnt);
 
