@@ -2,7 +2,7 @@
 <HTML>
 <Head>
 <Title>OnStream DI-x0 support in Linux</Title>
-	<Link HRef="mailto:osst@linux1.onstream.nl">
+	<Link HRef="mailto:osst@www.linux1onstream.nl">
 	<Meta HTTP-Equiv="Content-Type" Content="text/html; charset=iso-8859-1">
 	<Meta Name="Author" Content="garloff@suse.de">
 	<Meta Name="Generator" Content="Text Editor (xemacs/jed, Linux)">
@@ -26,11 +26,22 @@ hdX=scsi
 <LI><TT>b</TT> for primary IDE channel, slave</LI>
 <LI><TT>c</TT> for secondary IDE channel, master</LI>
 <LI>...</LI>
-</UL>.
-<P>Load <TT>ide-scsi</TT> and <TT>osst</TT> if necessary. You should now see the 
-DI-30 as SCSI device under <TT>/proc/scsi/scsi</TT> and find syslog messages
-of the <TT>osst</TT> driver attaching to it. If not, something has gone
-wrong and you should check the kernel messages (syslog). Look into
+</UL>. (You may use <TT>hdX=ide-scsi</TT>, if you prefer 4 additional
+characters.)<Br>
+Passing boot options is being done via your boot loader; in case you use
+LILO, you can enter it at the boot prompt after the name to boot (e.g. <TT>
+Linux hdc=scsi</TT>), or you may add it to your <TT>/etc/lilo.conf</TT>
+inside the append parameter: <TT>append = "hdc=scsi ..."</TT> (where the
+<TT>...</TT> is a placeholder for other parameters you may want to pass to
+your kernel).<Br>
+The boot parameter is necessary to prevent the ide-tape driver from grabbing
+the device and thus preventing the IDE-SCSI emulation to use it. If you did
+not compile ide-tape, you may be able to do without the boot parameter.
+
+<P>Load <TT>ide-scsi</TT> and <TT>osst</TT> if necessary. You should now see
+the DI-30 as SCSI device under <TT>/proc/scsi/scsi</TT> and find syslog
+messages of the <TT>osst</TT> driver attaching to it. If not, something has
+gone wrong and you should check the kernel messages (syslog). Look into
 <TT>/var/log/messages</TT>, use <TT>dmesg</TT> or just look at the syslog
 console (default: <TT>Ctrl-Alt-F10</TT> on most distributions).</P>
 You should be able to use the tape via the <TT>/dev/(n)osstX</TT> devices
