@@ -611,6 +611,7 @@ typedef struct {
   int      eod_frame_ppos;
   int      eod_frame_lfa;
   int      write_type;				/* used in write error recovery */
+  int      read_error_frame;			/* used in read error recovery */
   unsigned long cmd_start_time;
   unsigned long max_cmd_time;
 
