@@ -252,9 +252,9 @@ typedef struct os_partition_s {
         __u8    partition_num;
         __u8    par_desc_ver;
         __u16   wrt_pass_cntr;
-        __u32   first_frame_addr;
-        __u32   last_frame_addr;
-        __u32   eod_frame_addr;
+        __u32   first_frame_ppos;
+        __u32   last_frame_ppos;
+        __u32   eod_frame_ppos;
 } os_partition_t;
 
 /*
@@ -310,7 +310,7 @@ typedef struct os_aux_s {
         __u8            reserved188_191[4];
         __u32           filemark_cnt;
         __u32           phys_fm;
-        __u32           last_mark_addr;
+        __u32           last_mark_ppos;
         __u8            reserved204_223[20];
 
         /*
@@ -318,24 +318,64 @@ typedef struct os_aux_s {
          *
          * Linux specific fields:
          */
-         __u32          next_mark_addr;         /* when known, points to next marker */
+         __u32          next_mark_ppos;         /* when known, points to next marker */
          __u8           linux_specific[28];
 
         __u8            reserved_256_511[256];
 } os_aux_t;
 
+#define OS_FM_TAB_MAX 1024
+
+typedef struct os_fm_tab_s {
+	__u8		fm_part_num;
+	__u8		reserved_1;
+	__u8		fm_tab_ent_sz;
+	__u8		reserved_3;
+	__u16		fm_tab_ent_cnt;
+	__u8		reserved6_15[10];
+	__u32		fm_tab_ent[OS_FM_TAB_MAX];
+} os_fm_tab_t;
+
+typedef struct os_ext_trk_ey_s {
+	__u8		et_part_num;
+	__u8		fmt;
+	__u16		fm_tab_off;
+	__u8		reserved4_7[4];
+	__u32		last_hlb_hi;
+	__u32		last_hlb;
+	__u32		last_pp;
+	__u8		reserved20_31[12];
+} os_ext_trk_ey_t;
+
+typedef struct os_ext_trk_tb_s {
+	__u8		nr_stream_part;
+	__u8		reserved_1;
+	__u8		et_ent_sz;
+	__u8		reserved3_15[13];
+	os_ext_trk_ey_t	dat_ext_trk_ey;
+	os_ext_trk_ey_t	qfa_ext_trk_ey;
+} os_ext_trk_tb_t;
+
 typedef struct os_header_s {
         char            ident_str[8];
         __u8            major_rev;
         __u8            minor_rev;
-        __u8            reserved10_11[2];
-	__u32		column_width;
-        __u8            par_num;
-        __u8            reserved1_3[3];
+	__u16		ext_trk_tb_off;
+        __u8            reserved12_15[4];
+        __u8            pt_par_num;
+        __u8            pt_reserved1_3[3];
         os_partition_t  partition[16];
-	__u32		reserved276_511[59];
-	__u32		filemark_list[8064];
-	
+	__u32		cfg_col_width;
+	__u32		dat_col_width;
+	__u32		qfa_col_width;
+	__u8		cartridge[16];
+	__u8		reserved304_511[208];
+	__u32		old_filemark_list[16680/4];		/* in ADR 1.4 __u8 track_table[16680] */
+	os_ext_trk_tb_t	ext_track_tb;
+	__u8		reserved17272_17735[464];
+	os_fm_tab_t	dat_fm_tab;
+	os_fm_tab_t	qfa_fm_tab;
+	__u8		reserved25960_32767[6808];
 } os_header_t;
 
 
@@ -345,7 +385,7 @@ typedef struct os_header_s {
 #define OS_FRAME_SIZE   (32 * 1024 + 512)
 #define OS_DATA_SIZE    (32 * 1024)
 #define OS_AUX_SIZE     (512)
-
+#define OSST_MAX_SG      2
 
 /* The tape buffer descriptor. */
 typedef struct {
@@ -418,15 +458,13 @@ typedef struct {
   int block_size;
   int min_block;
   int max_block;
-  int recover_count;
-  struct mtget * mt_status;
+  int recover_count;            /* from tape opening */
+  int recover_erreg;            /* from last status call */
   /*
    * OnStream flags
    */
-  int      onstream;                           /* the tape is an OnStream tape */
   int	   os_fw_rev;			       /* the firmware revision * 10000 */
   int      raw;                                /* OnStream raw access (32.5KB block size) */
-  int      frame_size;                         /* with OnStream not equal to block_size (AUX) */
   int      logical_blk_num;                    /* logical block number */
   int	   logical_blk_in_buffer;	       /* flag that the black as per logical_blk_num
 						* has been read into STp->buffer and is valid */
@@ -444,10 +482,11 @@ typedef struct {
   int      linux_media_version;
   os_header_t * header_cache;		       /* cache is kept for filemark positions */
   int      filemark_cnt;
-  int      first_mark_addr;
-  int      last_mark_addr;
-  int      first_data_addr;
-  int      eod_frame_addr;
+  int      first_mark_ppos;
+  int      last_mark_ppos;
+  int      first_data_ppos;
+  int      eod_frame_ppos;
+  int      eod_frame_lfa;
   int      write_type;				/* used in write error recovery */
   unsigned long cmd_start_time;
   unsigned long max_cmd_time;
