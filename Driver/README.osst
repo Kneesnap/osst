@@ -1,6 +1,6 @@
 README file for the osst driver
 ===============================
-(w) Kurt Garloff <garloff@suse.de> 05/2000
+(w) Kurt Garloff <garloff@suse.de> 06/2000
 
 This file describes the osst driver as of version 0.8.0, the first BETA.
 It is intended to help advanced users to understand the role of osst and to

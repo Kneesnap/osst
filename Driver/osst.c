@@ -23,7 +23,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.7.99";
+const char * osst_version = "0.7.99a";
 
 /* The "failure to reconnect" firmware bug */
 #define OS_NEED_POLL_MIN 10602 /*(107A)*/
@@ -68,6 +68,7 @@ const char * osst_version = "0.7.99";
 #include "st_options.h"
 #include "st.h"
 #include "osst.h"
+#include "osst_detect.h"
 /* From st_options.h */
 #define OSST_MAX_TAPES ST_MAX_TAPES
 #define OSST_EXTRA_DEVS ST_EXTRA_DEVS
@@ -4707,11 +4708,14 @@ static int osst_attach(Scsi_Device * SDp){
    if (SDp->type != TYPE_TAPE)
        return 1;
 
+   if (! OSST_SUPPORTS (SDp))
+       return 1;
+	
    if (osst_template.nr_dev >= osst_template.dev_max) {
        SDp->attached--;
        return 1;
    }
-
+	
    /* find a free minor number */
    for (i=0; os_scsi_tapes[i] && i<osst_template.dev_max; i++);
    if(i >= osst_template.dev_max) panic ("Scsi_devices corrupt (osst)");
@@ -4829,11 +4833,7 @@ static int osst_detect(Scsi_Device * SDp)
   /* We are willing to drive OnStream SC-x0 as well as the
    * IDE, ParPort, USB variants, if accessible by emulation
    * layer (ide-scsi, usb-storage, ...) */
-  if ( memcmp (SDp->vendor, "OnStream", 8) ||
-       ( memcmp (SDp->model, "SC-", 3) &&
-	 memcmp (SDp->model, "DI-", 3) &&
-	 memcmp (SDp->model, "DP-", 3) &&
-	 memcmp (SDp->model, "USB", 3) ) )
+  if (! OSST_SUPPORTS (SDp))
       return 0;
   printk(KERN_WARNING
 	 "Detected OnStream scsi tape osst%d at scsi%d, channel %d, id %d, lun %d\n",
