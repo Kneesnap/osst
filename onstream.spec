@@ -18,9 +18,9 @@ Packager:     feedback@suse.de
 Copyright:	GPL
 Group:        Kernel
 Autoreqprov:  on
-Version:      0.9.13_0.7.3
+Version:      0.9.13_0.7.9
 Summary:      OnStream SC-x0 tape support tools
-Source:	      onstream-20000521.tar.gz
+Source:	      onstream-20000524.tar.gz
 #Patch:		onstream.dif
 BuildRoot:	/var/tmp/%{name}-buildroot
 
@@ -70,6 +70,8 @@ make install DESTDIR=$RPM_BUILD_ROOT
 /usr/bin/os_write
 /usr/bin/stream
 /lib/modules/%kversion/scsi/osst.o
+/dev/osst*
+/dev/nosst*
 %doc README COPYING
 
 %clean

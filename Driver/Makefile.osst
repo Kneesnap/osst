@@ -25,14 +25,14 @@ $(MODLIB)/$(TARGETMODDIR)/osst.o: osst.o
 		echo "Install osst"; install -o root -g root -d $(MODLIB)/$(TARGETMODDIR); \
 		install -o root -g root -m 0644 osst.o $(MODLIB)/$(TARGETMODDIR)/; \
 		echo "depmod -a $(KERNELRELEASE)"; depmod -a $(KERNELRELEASE); \
-		if test ! -e /dev/osst0; then ./Makedevs.sh; fi; \
+		if test ! -e /dev/osst0; then ./Makedevs.sh 4 $(DESTDIR)/dev; fi; \
 	else \
 		echo "Give root password for installation of kernel module"; \
 		su -c \
 		'echo "Install osst"; install -o root -g root -d $(MODLIB)/$(TARGETMODDIR); \
 		 install -o root -g root -m 0644 osst.o $(MODLIB)/$(TARGETMODDIR)/; \
 		 echo "depmod -a $(KERNELRELEASE)"; depmod -a $(KERNELRELEASE); \
-		 if test ! -e /dev/osst0; then ./Makedevs.sh; fi'; \
+		 if test ! -e /dev/osst0; then ./Makedevs.sh 4 $(DESTDIR)/dev; fi'; \
 	fi
 
 load_module: install_mod
