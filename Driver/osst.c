@@ -23,7 +23,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.7.0";
+const char * osst_version = "0.7.1";
 
 /* The "failure to reconnect" firmware bug */
 #define OS_NEED_POLL_MIN 10602 /*(107A)*/
@@ -49,7 +49,7 @@ const char * osst_version = "0.7.0";
 
 /* The driver prints some debugging information on the console if DEBUG
    is defined and non-zero. */
-#define DEBUG 1
+#define DEBUG 0
 
 /* The message level for the debug messages is currently set to KERN_NOTICE
    so that people can easily see the messages. Later when the debugging messages
@@ -350,6 +350,8 @@ osst_write_behind_check(Scsi_Tape *STp)
 
   if ((STp->buffer)->last_result_fatal)
     osst_write_error_recovery(STp, &((STp->buffer)->last_SCpnt), 1);
+  else
+    STp->first_frame_position++;
 
   scsi_release_command((STp->buffer)->last_SCpnt);
 
@@ -471,7 +473,8 @@ static int osst_verify_frame(Scsi_Tape * STp, int logical_blk_num, int quiet)
                 printk(KERN_INFO "osst%d: skipping frame, format_id %u\n", dev, ntohl(aux->format_id));
                 return 0;
         }
-        if (memcmp(aux->application_sig, STp->application_sig, 4) != 0) {
+        if (memcmp(aux->application_sig, STp->application_sig, 4) != 0 &&
+	    (memcmp(aux->application_sig, "LIN3", 4) != 0 || STp->linux_media_version != 4)) {
                 printk(KERN_INFO "osst%d: skipping frame, incorrect application signature\n", dev);
                 return 0;
         }
@@ -695,7 +698,7 @@ static int osst_read_block(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int timeout)
 	/* TODO: Error handling */
 	if (OS_NEED_POLL(STp->os_fw_rev))
 		retval = osst_wait_frame (STp, aSCpnt, STp->first_frame_position, 0, timeout);
-#if 0//def DEBUG
+#if 0// DEBUG
 	printk ("osst_read: wait for frame returned %i\n", retval);
 #endif
 	
@@ -729,9 +732,10 @@ static int osst_read_block(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int timeout)
 	    STp->first_frame_position++;
 #if DEBUG
 	if (debugging) {
-	   printk(ST_DEB_MSG "osst%i: AUX: %c%c%c%c #%d %s seq#%d log#%d\n", dev, aux->application_sig[0],
-			aux->application_sig[1], aux->application_sig[2], aux->application_sig[3],
-			ntohl(aux->update_frame_cntr), aux->frame_type==1?"EOD":aux->frame_type==2?"MARK":
+	   printk(ST_DEB_MSG "osst%i: AUX: %c%c%c%c UpdFrCt#%d %s FrSeq#%d LogBlk#%d\n", dev,
+			aux->application_sig[0], aux->application_sig[1],
+			aux->application_sig[2], aux->application_sig[3], ntohl(aux->update_frame_cntr),
+			aux->frame_type==1?"EOD":aux->frame_type==2?"MARK":
 			aux->frame_type==8?"HEADR":aux->frame_type==0x80?"DATA":"FILL", 
 			ntohl(aux->frame_seq_num), ntohl(aux->logical_blk_num) );
 	   if (aux->frame_type==2)
@@ -759,9 +763,6 @@ static int osst_initiate_read(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt)
 			osst_flush_drive_buffer(STp, aSCpnt);
                 }
                 STps->rw = ST_READING;
-#if 0
-                STp->logical_blk_num = 0;
-#endif
 		STp->logical_blk_in_buffer = 0;
 
                 /*
@@ -796,12 +797,14 @@ static int osst_get_logical_blk(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int logica
          */
         while (1) {
                 if (cnt++ > 200) {
-                        printk(KERN_WARNING "osst%d: couldn't find logical block %d, aborting\n", dev, logical_blk_num);
+                        printk(KERN_WARNING "osst%d: couldn't find logical block %d, aborting\n",
+					    dev, logical_blk_num);
                         return (-EIO);
                 }
 #if DEBUG
 		if (debugging)
-			printk(ST_DEB_MSG "osst%d: Looking for block %d, attempt %d\n", dev, logical_blk_num, cnt);
+			printk(ST_DEB_MSG "osst%d: Looking for block %d, attempt %d\n",
+					  dev, logical_blk_num, cnt);
 #endif
                 if ( osst_initiate_read(STp, aSCpnt)
                 || ( (!STp->logical_blk_in_buffer) && osst_read_block(STp, aSCpnt, 30) ) ) {
@@ -844,7 +847,10 @@ static int osst_get_logical_blk(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int logica
                 }
 		STp->logical_blk_in_buffer = 0;
         }
-       
+        if (cnt > 1) {
+		STp->recover_count++;
+		STp->mt_status->mt_erreg += (1 << MT_ST_SOFTERR_SHIFT);
+ 	}
         STp->logical_blk_num = ntohl(STp->buffer->aux->logical_blk_num);
 
 #if DEBUG
@@ -961,6 +967,8 @@ static int osst_read_back_buffer_and_rewrite(Scsi_Tape * STp, Scsi_Cmnd ** aSCpn
 				i += skip;
 				p += skip * STp->block_size;
 			}
+			else if (new_block < 2990 && new_block+skip+frames+pending >= 2990)
+				new_block = 3000-i;
 			else
 				new_block += skip;
 #if DEBUG
@@ -1035,7 +1043,6 @@ static int osst_read_back_buffer_and_rewrite(Scsi_Tape * STp, Scsi_Cmnd ** aSCpn
 					}
 					if (STp->buffer->last_result_fatal)
 						flag = 1;
-printk(ST_DEB_MSG "osst%d: %s\n",dev,flag?"error":"ready");
 					break;
 				}
 #if DEBUG
@@ -1050,7 +1057,7 @@ printk(ST_DEB_MSG "osst%d: %s\n",dev,flag?"error":"ready");
 			     (SCpnt->sense_buffer[5] <<  8) |
 			      SCpnt->sense_buffer[6]        ) - new_block;
 			p = &buffer[i * STp->block_size];
-#if DEBUG
+#if 1 //DEBUG
 			printk(ST_DEB_MSG "osst%d: Additional write error at %d\n", dev, new_block+i);
 #endif
 			osst_get_frame_position(STp, aSCpnt);
@@ -1078,11 +1085,13 @@ static int osst_reposition_and_retry(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt,
 	int	    dbg       = debugging;
 #endif
 
-	while (attempts && time_before(jiffies, startwait + 60*HZ)) { /* TODO -- verify that this works */
+	while (attempts && time_before(jiffies, startwait + 60*HZ)) {
 		if (flag) {
 #if DEBUG
 			debugging = dbg;
 #endif
+			if (block < 2990 && block+skip+STp->cur_frames+pending >= 2990)
+				block = 3000-skip;
 #if 1 //DEBUG
 			printk(ST_DEB_MSG "osst%d: Position to frame %d, re-write from lblk %d\n",
 					  dev, block+skip, STp->logical_blk_num-STp->cur_frames-pending);
@@ -1092,6 +1101,11 @@ static int osst_reposition_and_retry(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt,
 			attempts--;
 		}
 		if (osst_get_frame_position(STp, aSCpnt) < 0) {		/* additional write error */
+#if 1 //DEBUG
+			printk(ST_DEB_MSG "osst%d: Addl error, host %d, tape %d, buffer %d\n",
+					  dev, STp->first_frame_position,
+					  STp->last_frame_position, STp->cur_frames);
+#endif
 			block = STp->last_frame_position;
 			flag = 1;
 			continue;
@@ -1166,11 +1180,11 @@ static int osst_write_error_recovery(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int p
 		 SCpnt->sense_buffer[6];
 	skip  =  SCpnt->sense_buffer[9];
  
-#if DEBUG
+#if 1 //DEBUG
 	printk(ST_DEB_MSG "osst%d: detected physical bad block at %u, advised to skip %d\n", dev, block, skip);
 #endif
 	osst_get_frame_position(STp, aSCpnt);
-#if DEBUG
+#if 1 //DEBUG
 	printk(ST_DEB_MSG "osst%d: reported frame positions: host = %d, tape = %d\n",
 			dev, STp->first_frame_position, STp->last_frame_position);
 #endif
@@ -1199,11 +1213,15 @@ static int osst_write_error_recovery(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int p
 		osst_set_frame_position(STp, aSCpnt, block + STp->cur_frames + pending, 0);
 	}
 	osst_get_frame_position(STp, aSCpnt);
-#if DEBUG
+#if 1 //DEBUG
 	printk(KERN_ERR "osst%d: positioning complete, cur_frames %d, pos %d, tape pos %d\n", 
 			dev, STp->cur_frames, STp->first_frame_position, STp->last_frame_position);
 	printk(ST_DEB_MSG "osst%d: next logical block to write: %d\n", dev, STp->logical_blk_num);
 #endif
+	if (retval == 0) {
+		STp->recover_count++;
+		STp->mt_status->mt_erreg += (1 << MT_ST_SOFTERR_SHIFT);
+	}
 	STps->rw = rw_state;
 	return retval;
 }
@@ -1660,7 +1678,9 @@ static int osst_write_header(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int locate_eo
 			return (-ENOMEM);
 		}
 		memset(STp->header_cache, 0, sizeof(os_header_t));
+#if DEBUG
 		printk(ST_DEB_MSG "osst%d: Allocated and cleared memory for header cache\n", dev);
+#endif
 	}
 	if (STp->header_ok) STp->update_frame_cntr++;
 	else                STp->update_frame_cntr = 0;
@@ -1691,6 +1711,7 @@ static int osst_write_header(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int locate_eo
 	if (reslt)
 		printk(KERN_WARNING "osst%i: write header failed\n", dev);
 	else {
+		memcpy(STp->application_sig, "LIN4", 4);
 		STp->linux_media         = 1;
 		STp->linux_media_version = 4;
 		STp->header_ok           = 1;
@@ -1807,7 +1828,7 @@ static int __osst_analyze_headers(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int bloc
 		STp->last_mark_addr    = ntohl(aux->last_mark_addr);
 		STp->update_frame_cntr = update_frame_cntr;
 #if DEBUG
-	printk(ST_DEB_MSG "osst%i: detected write pass counter %d, update frame counter %d, filemark counter %d\n",
+	printk(ST_DEB_MSG "osst%i: detected write pass %d, update frame counter %d, filemark counter %d\n",
 			  dev, STp->wrt_pass_cntr, STp->update_frame_cntr, STp->filemark_cnt);
 	printk(ST_DEB_MSG "osst%i: first data frame on tape = %d, last = %d, eod frame = %d\n", dev,
 			  STp->first_data_addr,
@@ -1822,7 +1843,9 @@ static int __osst_analyze_headers(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int bloc
 			printk(KERN_ERR "osst%i: failed to allocate header cache\n", dev);
 			return 0;
 		}
+#if DEBUG
 		printk(ST_DEB_MSG "osst%d: Allocated memory for header cache\n", dev);
+#endif
 	}
 	memcpy(STp->header_cache, header, sizeof(os_header_t));
 
@@ -1852,7 +1875,7 @@ static int osst_analyze_headers(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt)
 #endif
 
 	/* optimization for speed - if we are positioned at block 10, read second group first */	
-	/* and let's NOT try both the ADR 1.1 and the ADR 1.2 locations for the second group...   */
+	/* TODO try the ADR 1.1 locations for the second group if we have no valid one yet... */
 
 	first = position==10?0xbae: 5;
 	last  = position==10?0xbb3:10;
@@ -1871,6 +1894,7 @@ static int osst_analyze_headers(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt)
 	if (!valid) {
 		printk(KERN_ERR "osst%i: failed to find valid ADRL header, new media?\n", dev);
 		STp->eod_frame_addr = STp->first_data_addr = 0;
+		osst_set_frame_position(STp, aSCpnt, 10, 0);
 		return 0;
 	}
 	if (position <= STp->first_data_addr) {
@@ -2045,7 +2069,7 @@ static int osst_configure_onstream(Scsi_Tape *STp, Scsi_Cmnd ** aSCpnt)
 #endif
 
         /*
-         * Set vendor name to 'LIN4' for "Linux support version 3".
+         * Set vendor name to 'LIN4' for "Linux support version 4".
          */
 
 	memset(cmd, 0, 10);
@@ -2091,7 +2115,8 @@ static int osst_configure_onstream(Scsi_Tape *STp, Scsi_Cmnd ** aSCpnt)
 	}
 
         header = (osst_mode_parameter_header_t *) (STp->buffer)->b_data;
-	cp = (osst_capabilities_page_t *) ((STp->buffer)->b_data + sizeof(osst_mode_parameter_header_t) + header->bdl);
+	cp     = (osst_capabilities_page_t    *) ((STp->buffer)->b_data +
+		 sizeof(osst_mode_parameter_header_t) + header->bdl);
 
 	drive_buffer_size = ntohs(cp->buffer_size) / 2;
 
@@ -2110,7 +2135,8 @@ static int osst_configure_onstream(Scsi_Tape *STp, Scsi_Cmnd ** aSCpnt)
 	}
 
         header = (osst_mode_parameter_header_t *) (STp->buffer)->b_data;
-	prm = (osst_tape_paramtr_page_t *) ((STp->buffer)->b_data + sizeof(osst_mode_parameter_header_t) + header->bdl);
+	prm    = (osst_tape_paramtr_page_t    *) ((STp->buffer)->b_data +
+		 sizeof(osst_mode_parameter_header_t) + header->bdl);
 
 	STp->density  = prm->density;
 	STp->capacity = ntohs(prm->segtrk) * ntohs(prm->trks);
@@ -2191,6 +2217,12 @@ osst_get_frame_position(Scsi_Tape *STp, Scsi_Cmnd ** aSCpnt)
       printk(KERN_ERR "osst%d: Can't read tape position.\n", dev);
     else {
 
+      if (result == -EIO) {	/* re-read position */
+	memset (scmd, 0, 10);
+	scmd[0] = READ_POSITION;
+	STp->buffer->b_data = mybuf; STp->buffer->buffer_size = 24;
+	SCpnt = st_do_scsi(SCpnt, STp, scmd, 20, STp->timeout, MAX_READY_RETRIES, TRUE);
+      }
       STp->first_frame_position = ((STp->buffer)->b_data[4] << 24)
 				+ ((STp->buffer)->b_data[5] << 16)
 				+ ((STp->buffer)->b_data[6] << 8)
@@ -2232,21 +2264,22 @@ osst_set_frame_position(Scsi_Tape *STp, Scsi_Cmnd ** aSCpnt, unsigned int block,
     int timeout;
     unsigned char scmd[10];
     Scsi_Cmnd   * SCpnt;
-
-#if DEBUG
     int dev = TAPE_NR(STp->devt);
-#endif
 
     if (STp->ready != ST_READY)
       return (-EIO);
     timeout = STp->long_timeout;
     STps = &(STp->ps[STp->partition]);
 
+    if (block < 0 || block > STp->capacity) {
+      printk(KERN_ERR "osst%d: Reposition request %d out of range\n", dev, block);
+      block = block < 0 ? 0 : (STp->capacity - 1);
+      result = (-EINVAL);
+    }
 #if DEBUG
     if (debugging)
       printk(ST_DEB_MSG "osst%d: Setting block to %d.\n", dev, block);
 #endif
-
     memset (scmd, 0, 10);
     scmd[0] = SEEK_10;
     scmd[1] = 1;
@@ -2314,8 +2347,6 @@ osst_flush_write_buffer(Scsi_Tape *STp, Scsi_Cmnd ** aSCpnt, int file_blk)
 	return (-ENOSPC);
       return (-EIO);
     }
-    else
-      STp->first_frame_position++;
   }
 
   result = 0;
@@ -2330,7 +2361,8 @@ osst_flush_write_buffer(Scsi_Tape *STp, Scsi_Cmnd ** aSCpnt, int file_blk)
       printk(ST_DEB_MSG "osst%d: Flushing %d bytes, Tranfering %d bytes in %d blocks.\n",
 			 dev, offset, transfer, blks);
 #endif
-    memset((STp->buffer)->b_data + offset, 0, transfer - offset);
+    if (offset < STp->block_size)
+      memset((STp->buffer)->b_data + offset, 0, STp->block_size - offset);
 
     /* TODO: Error handling! */
     if (OS_NEED_POLL(STp->os_fw_rev))
@@ -2366,6 +2398,7 @@ osst_flush_write_buffer(Scsi_Tape *STp, Scsi_Cmnd ** aSCpnt, int file_blk)
       STps->drv_block = (-1);
     }
     else {
+      STp->first_frame_position++;
       if (file_blk && STps->drv_block >= 0)
 	STps->drv_block += blks;
       STp->first_frame_position += blks;
@@ -2538,7 +2571,7 @@ st_write(struct file * filp, const char * buf, size_t count, loff_t *ppos)
       STps->rw = ST_IDLE;
     }
     else if (STps->rw != ST_WRITING) {
-      if (!STp->header_ok || (STps->drv_file == 0 && STps->drv_block == 0)) {/* FIXME */
+      if (!STp->header_ok || (STps->drv_file == 0 && STps->drv_block == 0)) {
 	STp->wrt_pass_cntr++;
 #if DEBUG
 	printk(ST_DEB_MSG "osst%d: Allocating next write pass counter: %d\n",
@@ -2573,8 +2606,6 @@ if (SCpnt) printk(KERN_ERR "osst%d: Not supposed to have SCpnt at line %d\n", de
 	else
 	  STps->eof = ST_EOM_ERROR;
       }
-      else
-        STp->first_frame_position++;
     }
     if (SCpnt) scsi_release_command(SCpnt);
     SCpnt = NULL;
@@ -2712,6 +2743,7 @@ if (SCpnt) printk(KERN_ERR "osst%d: Not supposed to have SCpnt at line %d\n", de
 	else
 	  return retval;
       }
+      STp->first_frame_position++;
 ok:
       filp->f_pos += do_count;
       b_point += do_count;
@@ -3766,7 +3798,7 @@ scsi_tape_open(struct inode * inode, struct file * filp)
       (STp->buffer)->b_data[MODE_HEADER_LENGTH + 2] = 2;
       (STp->buffer)->b_data[MODE_HEADER_LENGTH + 3] = 3;
 
-#if DEBUG
+#if 1 //DEBUG
       printk(ST_DEB_MSG "osst%i: Applying soft reset\n", dev);
 #endif
       SCpnt = st_do_scsi(SCpnt, STp, cmd, cmd[4], STp->timeout, 0, TRUE);
@@ -3823,6 +3855,8 @@ scsi_tape_open(struct inode * inode, struct file * filp)
            b_size += STp->buffer->sg[i++].length);
       STp->buffer->aux = (os_aux_t *) (STp->buffer->sg[i].address + OS_DATA_SIZE - b_size);
 #if DEBUG
+      printk(ST_DEB_MSG "osst%d: b_data points to %p in segment 0 at %p\n", dev,
+			STp->buffer->b_data, STp->buffer->sg[0].address);
       printk(ST_DEB_MSG "osst%d: AUX points to %p in segment %d at %p\n", dev,
                          STp->buffer->aux, i, STp->buffer->sg[i].address);
 #endif
