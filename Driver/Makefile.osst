@@ -1,0 +1,43 @@
+# Makefile for osst
+
+TARGET = osst.o
+TARGETMODDIR = scsi
+
+default: $(TARGET)
+
+TOPDIR := $(KDIR)
+include $(KDIR)/.config
+include $(KDIR)/Makefile
+TOPDIR := $(KDIR)
+
+CFLAGS := -I. -I $(KDIR)/drivers/scsi $(CFLAGS) -DMODULE
+
+osst.o: osst.c osst.h st_options.h arch Rules.make
+
+MODLIB := $(INSTALL_MOD_PATH)/lib/modules/$(KERNELRELEASE)
+
+install_mod: $(MODLIB)/$(TARGETMODDIR)/osst.o
+
+$(MODLIB)/$(TARGETMODDIR)/osst.o: osst.o
+	@if test $(shell id -u) == 0; then \
+		echo "Install osst"; install -o root -g root -m 0644 osst.o $(MODLIB)/scsi/; \
+		echo "depmod -a $(KERNELRELEASE)"; depmod -a $(KERNELRELEASE); \
+	else \
+		echo "Give root password for installation of kernel module"; \
+		su -c \
+		'echo "Install osst"; install -o root -g root -m 0644 osst.o $(MODLIB)/scsi/; \
+		 echo "depmod -a $(KERNELRELEASE)"; depmod -a $(KERNELRELEASE)'; \
+	fi	
+
+load_module: install_mod
+	@if test $(shell id -u) == 0; then \
+		if test ! -z "$(shell lsmod | grep osst)"; then echo "Remove osst"; \
+		rmmod osst; fi; \
+		echo "Load osst"; modprobe osst; \
+	else \
+		echo "Give root password for loading of kernel module"; \
+		su -c \
+		'if test ! -z "$(shell lsmod | grep osst)"; then echo "Remove osst"; \
+		 rmmod osst; fi; \
+		 echo "Load osst"; modprobe osst'; \
+	fi	

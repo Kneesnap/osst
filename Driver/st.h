@@ -115,6 +115,7 @@ typedef struct {
    * OnStream flags
    */
   int      onstream;                           /* the tape is an OnStream tape */
+  int	   os_fw_rev;			       /* the firmware revision * 10000 */
   int      raw;                                /* OnStream raw access (32.5KB block size) */
   int      frame_size;                         /* with OnStream not equal to block_size (AUX) */
   int      logical_blk_num;                    /* logical block number */

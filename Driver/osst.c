@@ -6,6 +6,7 @@
 
   OnStream SCSI Tape support (osst) cloned from st.c by
   Willem Riede (wriede@monmouth.com) Feb 2000
+  Fixes ... Kurt Garloff <garloff@suse.de> Mar 2000
 
   Rewritten from Dwayne Forsyth's SCSI tape driver by Kai Makisara.
   Contribution and ideas from several people including (in alphabetical
@@ -20,6 +21,10 @@
   Last modified: Wed Feb  2 22:04:05 2000 by makisara@kai.makisara.local
   Some small formal changes - aeb, 950809
 */
+
+/* TODO: Add if (tpnt->onstream) all over the place ... */
+static const char * cvsid = "$Id$";
+const char * osst_version = "0.5";
 
 #include <linux/module.h>
 
@@ -40,7 +45,7 @@
 
 /* The driver prints some debugging information on the console if DEBUG
    is defined and non-zero. */
-#define DEBUG 0
+#define DEBUG 1
 
 /* The message level for the debug messages is currently set to KERN_NOTICE
    so that people can easily see the messages. Later when the debugging messages
@@ -93,8 +98,8 @@ static int debugging = 1;
 #define MAX_READY_RETRIES 5
 #define NO_TAPE  NOT_READY
 
-#define ST_TIMEOUT (900 * HZ)
-#define ST_LONG_TIMEOUT (14000 * HZ)
+#define ST_TIMEOUT (300 * HZ)
+#define ST_LONG_TIMEOUT (1800 * HZ)
 
 #define TAPE_NR(x) (MINOR(x) & ~(128 | ST_MODE_MASK))
 #define TAPE_MODE(x) ((MINOR(x) & ST_MODE_MASK) >> ST_MODE_SHIFT)
@@ -125,7 +130,7 @@ static int st_attach(Scsi_Device *);
 static int st_detect(Scsi_Device *);
 static void st_detach(Scsi_Device *);
 
-struct Scsi_Device_Template st_template = {NULL, "tape", "st", NULL, TYPE_TAPE,
+struct Scsi_Device_Template st_template = {NULL, "OnStream tape", "osst", NULL, TYPE_TAPE,
 					     SCSI_TAPE_MAJOR, 0, 0, 0, 0,
 					     st_detect, st_init,
 					     NULL, st_attach, st_detach};
@@ -383,15 +388,18 @@ static void osst_init_aux(Scsi_Tape * STp, int frame_type, int logical_blk_num)
 		par->partition_num = OS_CONFIG_PARTITION;
 		par->par_desc_ver = OS_PARTITION_VERSION;
 		par->wrt_pass_cntr = htons(0xffff);
+		/* KG: 0-4 = reserved, 5-9 = header, 2990-2994 = header, 2995-2999 = reserved */
 		par->first_frame_addr = htonl(0);
-		par->last_frame_addr = htonl(0xbb2);
+		par->last_frame_addr = htonl(0xbb7);
 	} else {
 		aux->update_frame_cntr = htonl(0);
 		par->partition_num = OS_DATA_PARTITION;
 		par->par_desc_ver = OS_PARTITION_VERSION;
 		par->wrt_pass_cntr = htons(STp->wrt_pass_cntr);
-		par->first_frame_addr = htonl(0x00000014);
-		par->last_frame_addr = htonl(19239 * 24);
+		par->first_frame_addr = htonl(0x0000000A);
+		/* KG: This is not true for SC-50 tapes */
+		//par->last_frame_addr = htonl(19239 * 24);
+		par->last_frame_addr = htonl(STp->capacity);
 	}
 	if (frame_type != OS_FRAME_TYPE_HEADER) {
 		aux->frame_seq_num = htonl(logical_blk_num);
@@ -610,6 +618,54 @@ static int osst_flush_drive_buffer(Scsi_Tape * STp)
 	return (osst_wait_ready(STp, 5 * 60));
 }
 
+#define OSST_POLL_PER_SEC 10
+static int osst_wait_frame(Scsi_Tape * STp, int curr, int minlast, int to)
+{
+	long startwait = jiffies;
+#ifdef DEBUG	
+	char notyetprinted = 1;
+	int		dev    = TAPE_NR(STp->devt);
+#endif
+	while (time_before (jiffies, startwait + to*HZ))
+	{ 
+		int result;
+		result = osst_get_frame_position (STp);
+		if (result < 0) break;
+		if (STp->first_frame_position == curr &&
+		    (signed)STp->last_frame_position > (signed)curr + minlast &&
+		    result >= 0)
+		{
+#ifdef DEBUG			
+			if (jiffies - startwait >= 2*HZ/OSST_POLL_PER_SEC)
+				printk ("osst%i: Succ wait f fr %i (>%i): %i-%i %i (%i): %3li.%li s\n",
+					dev, curr, curr+minlast, STp->first_frame_position,
+					STp->last_frame_position, STp->cur_frames,
+					result, (jiffies-startwait)/HZ, 
+					(((jiffies-startwait)%HZ)*10)/HZ);
+#endif
+			return 0;
+		}
+#ifdef DEBUG
+		if (jiffies - startwait >= 2*HZ/OSST_POLL_PER_SEC && notyetprinted)
+		{
+			printk ("osst%i: Wait for frame %i (>%i): %i-%i %i (%i)\n",
+				dev, curr, curr+minlast, STp->first_frame_position,
+				STp->last_frame_position, STp->cur_frames, result);
+			notyetprinted--;
+		}
+#endif
+		current->state = TASK_INTERRUPTIBLE;
+		schedule_timeout (HZ / OSST_POLL_PER_SEC);
+	}
+#ifdef DEBUG
+	printk ("osst%i: Fail wait f fr %i (>%i): %i-%i %i: %3li.%li s\n",
+		dev, curr, curr+minlast, STp->first_frame_position,
+		STp->last_frame_position, STp->cur_frames,
+		(jiffies-startwait)/HZ, (((jiffies-startwait)%HZ)*10)/HZ);
+#endif	
+	return -EBUSY;
+}
+
 /*
  * Read the next OnStream tape block at the current location
  */
@@ -623,6 +679,14 @@ static int osst_read_block(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt)
 	int		dev    = TAPE_NR(STp->devt);
 #endif
 
+	/* KG: This is a hack: The timeout should be passed along and not be based
+	 * on a heuristic. It works though. (The locate to the header might involve
+	 * a rewind, while normally, you don't expect that.) */
+	retval = osst_wait_frame (STp, STp->first_frame_position, 0, STp->first_frame_position == 5? 180: 30);
+#if 0//def DEBUG
+	printk ("osst_read: wait for frame returned %i\n", retval);
+#endif
+	
 	memset(cmd, 0, 10);
 	cmd[0] = READ_6;
 	cmd[1] = 1;
@@ -772,8 +836,8 @@ static int osst_seek_logical_blk(Scsi_Tape * STp, int logical_blk_num)
 
 	if (logical_blk_num < 0) logical_blk_num = 0;
 	/* FIXME -- this may not be valid for foreign formats */
-	if (logical_blk_num < 2970) estimate  = logical_blk_num + 20;
-	else			    estimate  = logical_blk_num + 35;
+	if (logical_blk_num < 2980) estimate  = logical_blk_num + 10;
+	else			    estimate  = logical_blk_num + 20;
 
 	if (osst_get_logical_blk(STp, logical_blk_num, 1) >= 0)
 	   return 0;
@@ -1116,6 +1180,7 @@ static void osst_update_last_marker(Scsi_Tape * STp, int last_mark_addr, int nex
 			  dev, frame, STp->logical_blk_num, STp->last_frame_position);
 #endif
 	osst_set_frame_position(STp, last_mark_addr);
+	osst_initiate_read (STp, &SCpnt);
 	reslt = osst_read_block(STp, &SCpnt);
 	if (SCpnt) scsi_release_command(SCpnt);
 	if (reslt) {
@@ -1156,13 +1221,20 @@ static void osst_write_filemark(Scsi_Tape * STp)
 
 	last_mark_addr = osst_get_frame_position(STp);
 #if DEBUG
-	printk(ST_DEB_MSG "st%i: Writing Filemark at %d\n", dev, STp->logical_blk_num);
+	printk(ST_DEB_MSG "osst%i: Writing Filemark %i at %d\n", 
+	       dev, STp->filemark_cnt, STp->logical_blk_num);
 #endif
 	osst_init_aux(STp, OS_FRAME_TYPE_MARKER, STp->logical_blk_num++);
 	STp->dirty = 1;
 	osst_flush_write_buffer(STp, 0);
-	if (STp->filemark_cnt)
+	if (STp->filemark_cnt) {
+#if DEBUG		
+		printk ("osst%i: Update last_marker at frame %d\n",
+			dev, STp->last_mark_addr);
+#endif
 		osst_update_last_marker(STp, STp->last_mark_addr, last_mark_addr);
+		osst_set_frame_position (STp, last_mark_addr + 1);
+	}
 	STp->last_mark_addr = last_mark_addr;
 	if (STp->filemark_cnt++ == 0)
 		STp->first_mark_addr = last_mark_addr;
@@ -1205,7 +1277,7 @@ static int __osst_write_header(Scsi_Tape * STp, int block, int count)
 	header.par_num = 1;
 	header.partition.partition_num = OS_DATA_PARTITION;
 	header.partition.par_desc_ver = OS_PARTITION_VERSION;
-	header.partition.first_frame_addr = htonl(0x00000014);
+	header.partition.first_frame_addr = htonl(0x0000000A);
 	header.partition.last_frame_addr = htonl(STp->capacity);
 	header.partition.wrt_pass_cntr = htons(STp->wrt_pass_cntr);
 	header.partition.eod_frame_addr = htonl(STp->eod_frame_addr);
@@ -1262,13 +1334,14 @@ static int __osst_analyze_headers(Scsi_Tape * STp, int block, Scsi_Cmnd ** aSCpn
 	STp->header_ok = STp->linux_media = 0;
 	STp->update_frame_cntr = 0;
 	STp->wrt_pass_cntr = 0;
-	STp->eod_frame_addr = 0x00000014;
+	STp->eod_frame_addr = 0x0000000A;
 	STp->first_mark_addr = STp->last_mark_addr = -1;
 #if DEBUG
 	printk(KERN_INFO "st%i: reading header\n", dev);
 #endif
 	if (osst_set_frame_position(STp, block))
-	    printk(KERN_WARNING "st%i: Couldn't position tape\n", dev);;
+		printk(KERN_WARNING "st%i: Couldn't position tape\n", dev);
+	if (osst_initiate_read (STp, aSCpnt)) return 0;
 	if (osst_read_block(STp, aSCpnt)) {
 		printk(KERN_INFO "st%i: couldn't read header frame\n", dev);
 		return 0;
@@ -1282,7 +1355,7 @@ static int __osst_analyze_headers(Scsi_Tape * STp, int block, Scsi_Cmnd ** aSCpn
 		printk(KERN_INFO "st%i: invalid header identification string %s\n", dev, id_string);
 		return 0;
 	}
-	if (header->major_rev != 1 || header->minor_rev != 2)
+	if (header->major_rev != 1 || (header->minor_rev != 2 && header->minor_rev != 1))
 		printk(KERN_INFO "st%i: warning: revision %d.%d detected (1.2 supported)\n", 
 				 dev, header->major_rev, header->minor_rev);
 	if (header->par_num != 1)
@@ -1336,7 +1409,7 @@ static int osst_analyze_headers(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt)
 	for (block = 5; block < 10; block++)
 		if (__osst_analyze_headers(STp, block, aSCpnt))
 			goto ok;
-	for (block = 0xbae; block < 0xbb8; block++)
+	for (block = 0xbae; block < 0xbb3; block++)
 		if (__osst_analyze_headers(STp, block, aSCpnt))
 			goto ok;
 #if DEBUG
@@ -1344,14 +1417,41 @@ static int osst_analyze_headers(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt)
 #endif
 	return 0;
 ok:
+	/*
 	if (position < 0x00000014)
 		position = 0x00000014;
+	 */
+	position = 10;
+	
 	osst_set_frame_position(STp, position);
 	STp->header_ok = 1;
 
 	return 1;
 }
 
+
+/* Acc. to OnStream, the vers. numbering is the following:
+ * X.XX for released versions (X=digit), 
+ * XXXY for unreleased versions (Y=letter)
+ * Ordering 1.05 < 106A < 106a < 106B < ... < 1.06
+ * This fn makes monoton numbers out of this scheme ...
+ */
+static unsigned int osst_parse_firmware_rev (const char * str)
+{
+	unsigned int rev;
+	if (str[1] == '.') {
+		rev = (str[0]-0x30)*10000
+			+(str[2]-0x30)*1000
+			+(str[3]-0x30)*100;
+	} else {
+		rev = (str[0]-0x30)*10000
+			+(str[1]-0x30)*1000
+			+(str[2]-0x30)*100 - 100;
+		rev += 2*(str[3] & 0x1f)
+			+(str[3] >= 0x60? 1: 0);
+	}
+	return rev;
+}
 
 /*
  * Configure the OnStream SCII tape drive for default operation
@@ -1373,10 +1473,11 @@ static int osst_configure_onstream(Scsi_Tape *STp)
 #endif
 	    return (-EIO);
 	}
-	if (strcmp(STp->device->rev, "1.05") < 0) {
+	
+	if (STp->os_fw_rev < 10600) {
             printk("st%i: Old OnStream firmware revision detected (%s)\n", 
                        dev, STp->device->rev);
-            printk("st%i: An upgrade to version 1.05 or above is recommended\n", 
+            printk("st%i: An upgrade to version 1.06 or above is recommended\n",
                        dev);
         }
 
@@ -1567,6 +1668,11 @@ osst_get_frame_position(Scsi_Tape *STp)
     int result;
     unsigned char scmd[10];
     Scsi_Cmnd *SCpnt;
+    /* KG: We want to be able to use it for checking Write Buffer availability
+     *  and thus don't want to risk to overwrite anything. Exchange buffers ... */
+    char mybuf[24];
+    char * olddata = STp->buffer->b_data;
+    int oldsize = STp->buffer->buffer_size;
 #if DEBUG
     int dev = TAPE_NR(STp->devt);
 #endif
@@ -1578,9 +1684,12 @@ osst_get_frame_position(Scsi_Tape *STp)
     scmd[0] = READ_POSITION;
 /*    scmd[1] = 1;*/
 
+    STp->buffer->b_data = mybuf; STp->buffer->buffer_size = 24;
     SCpnt = st_do_scsi(NULL, STp, scmd, 20, STp->timeout, MAX_READY_RETRIES, TRUE);
-    if (!SCpnt)
-      return (-EBUSY);
+    if (!SCpnt) {
+	    STp->buffer->b_data = olddata; STp->buffer->buffer_size = oldsize;
+	    return (-EBUSY);
+    }
 
     if ((STp->buffer)->last_result_fatal != 0 ||
 	(STp->device->scsi_level >= SCSI_2 &&
@@ -1606,7 +1715,7 @@ osst_get_frame_position(Scsi_Tape *STp)
 				+ ((STp->buffer)->b_data[10] <<  8)
 				+  (STp->buffer)->b_data[11];
       STp->cur_frames           =  (STp->buffer)->b_data[15];
-#if DEBUG
+#if 0 //def DEBUG
       if (debugging) {
 	printk(ST_DEB_MSG "st%d: Got tape pos. blk %d %s.\n", dev,
 			   result, ((STp->buffer)->b_data[0]&0x80)?"(BOP)":
@@ -1624,6 +1733,7 @@ osst_get_frame_position(Scsi_Tape *STp)
       }
     }
     scsi_release_command(SCpnt);
+    STp->buffer->b_data = olddata; STp->buffer->buffer_size = oldsize;
     SCpnt = NULL;
 
     return result;
@@ -1692,7 +1802,7 @@ osst_set_frame_position(Scsi_Tape *STp, unsigned int block)
 	static int
 osst_flush_write_buffer(Scsi_Tape *STp, int file_blk)
 {
-  int offset, transfer, blks;
+  int offset, transfer, blks = 0;
   int result;
   unsigned char cmd[10];
   Scsi_Cmnd *SCpnt;
@@ -1724,16 +1834,16 @@ osst_flush_write_buffer(Scsi_Tape *STp, int file_blk)
     
 #if DEBUG
     if (debugging)
-      printk(ST_DEB_MSG "st%d: Flushing %d bytes, Tranfering %d bytes in %d blocks.\n", 
+      printk(ST_DEB_MSG "osst%d: Flushing %d bytes, Tranfering %d bytes in %d blocks.\n",
 			 dev, offset, transfer, blks);
 #endif
     memset((STp->buffer)->b_data + offset, 0, transfer - offset);
 
+    osst_wait_frame (STp, STp->first_frame_position, -50, 120);
+
     memset(cmd, 0, 10);
     cmd[0] = WRITE_6;
     cmd[1] = 1;
-    cmd[2] = blks >> 16;
-    cmd[3] = blks >> 8;
     cmd[4] = blks;
 
     SCpnt = st_do_scsi(NULL, STp, cmd, transfer, STp->timeout, MAX_WRITE_RETRIES,
@@ -1938,7 +2048,7 @@ st_write(struct file * filp, const char * buf, size_t count, loff_t *ppos)
 	printk(ST_DEB_MSG "st%d: Allocating next write pass counter: %d\n", dev, STp->wrt_pass_cntr);
 #endif
 	STp->filemark_cnt = 0;
-	STp->eod_frame_addr = 0x00000014;
+	STp->eod_frame_addr = 0x0000000A;
 	STp->first_mark_addr = STp->last_mark_addr = -1;
 	osst_write_header(STp, 1);
     }
@@ -1984,14 +2094,17 @@ st_write(struct file * filp, const char * buf, size_t count, loff_t *ppos)
 
     total = count;
 
-    if ((!STp-> raw) && (STp->first_frame_position == 0xba4)) {
+    if ((!STp-> raw) && (STp->first_frame_position == 0xbae)) {
 #if DEBUG
 	printk(KERN_INFO "st%d: Skipping over config partition.\n", dev);
 #endif
 	osst_flush_drive_buffer(STp);
-	osst_position_tape_and_confirm(STp, 0xbb3);
+	osst_position_tape_and_confirm(STp, 0xbb8);
     }
 
+    osst_wait_frame (STp, STp->first_frame_position, -50, 60);
+    /* TODO: Check for an error ! */
+	
     memset(cmd, 0, 10);
     cmd[0] = WRITE_6;
     cmd[1] = 1;
@@ -2697,7 +2810,7 @@ osst_int_ioctl(Scsi_Tape * STp, unsigned int cmd_in, unsigned long arg)
 	if (STp->write_prot)
 	   return (-EACCES);
 	fileno = blkno = at_sm = 0 ;
-	STp->eod_frame_addr  = 0x00000014;
+	STp->eod_frame_addr  = 0x0000000A;
 	STp->logical_blk_num = logical_blk_num     =  0;
 	STp->first_mark_addr = STp->last_mark_addr = -1;
 	ioctl_result = osst_position_tape_and_confirm(STp, STp->eod_frame_addr);
@@ -2819,7 +2932,7 @@ os_bypass:
       }
 
       if (cmd_in == MTREW)
-	ioctl_result = osst_position_tape_and_confirm(STp, 0x00000014); 
+	ioctl_result = osst_position_tape_and_confirm(STp, 0x0000000A); 
 
    } else if (SCpnt) {  /* SCSI command was not completely successful. Don't return
 	        	from this block without releasing the SCSI command block! */
@@ -2915,7 +3028,7 @@ os_bypass:
 
 
 /* Open the device */
-	static int
+static int
 scsi_tape_open(struct inode * inode, struct file * filp)
 {
     unsigned short flags;
@@ -3855,7 +3968,26 @@ static int st_attach(Scsi_Device * SDp){
      scsi_tapes[i].mt_status->mt_type = MT_ISSCSI1;
    else
      scsi_tapes[i].mt_status->mt_type = MT_ISSCSI2;
+   
+   /* Recognize OnStream tapes */
+   if (!memcmp (SDp->vendor, "OnStream", 8) &&
+       ( !memcmp (SDp->model, "SC-30", 5) 
+       ||!memcmp (SDp->model, "SC-50", 5)
+       ||!memcmp (SDp->model, "SC-70", 5)))
+	tpnt->onstream = 1;
+   else
+	tpnt->onstream = 0;
+       
+   if (tpnt->onstream)
+   {
+	tpnt->os_fw_rev = osst_parse_firmware_rev (SDp->rev);
+#ifdef DEBUG
+	printk ("st%i: OnStream tape recognized, FW=%i\n", i, tpnt->os_fw_rev);
+#endif
+   }
 
+   printk ("st%i: Tape driver with OnStream support osst %s\nosst%i: %s\n",
+	   i, osst_version, i, cvsid);
    tpnt->devt = MKDEV(SCSI_TAPE_MAJOR, i);
    tpnt->dirty = 0;
    tpnt->in_use = 0;
