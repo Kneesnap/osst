@@ -1,28 +1,30 @@
 #
-# spec file for package onstream (Version 0.9.13_0.8.1)
+# spec file for package onstream (Version 0.9.13_0.8.6.1)
 # 
 # Copyright  (c)  2000  SuSE GmbH  Nuernberg, Germany.
-#
+# This file and all modifications and additions to the pristine
+# package are under the same license as the package itself.
+# 
 # please send bugfixes or comments to feedback@suse.de.
 #
 
-# neededforbuild  gpp k_deflt lx_suse
-# usedforbuild    aaa_base aaa_dir autoconf automake base bash bindutil binutils bison bzip compress cpio cracklib devs diff ext2fs file fileutil find flex gawk gcc gdbm gettext gpm gpp gppshare groff gzip k_deflt kbd less libc libtool libz lx_ia64 lx_suse make mktemp modules ncurses net_tool netcfg nkita nkitb nssv1 pam patch perl pgp ps rcs rpm sendmail sh_utils shadow shlibs strace syslogd sysvinit texinfo textutil timezone unzip util vim xdevel xf86 xshared
+# neededforbuild  gpp lx_suse
+# usedforbuild    aaa_base aaa_dir autoconf automake base bash bindutil binutils bison bzip compress cpio cracklib db devs diffutils e2fsprogs file fileutils findutils flex gawk gcc gdbm gdbm-devel gettext glibc glibc-devel gpm gpp gppshare groff gzip kbd less libtool libz lx_suse make mktemp modutils ncurses ncurses-devel net-tools netcfg nkitb pam pam-devel patch perl pgp ps rcs rpm sendmail sh-utils shadow strace syslogd sysvinit texinfo textutils timezone unzip util-linux vim xdevel xf86 xshared
 
 Vendor:       SuSE GmbH, Nuernberg, Germany
-Distribution: SuSE Linux 7.0a (ia64)
+Distribution: SuSE Linux 7.0 (i386)
 Name:         onstream
-Release:      0
 Packager:     feedback@suse.de
 
 Copyright:	GPL
 Group:        Base/Kernel
 Autoreqprov:  on
-Version:      0.9.13_0.8.1
+Version:      0.9.13_0.8.6.1
+Release:      0
 Summary:      OnStream SC-x0 tape support tools
-Source:	      onstream-20000724.tar.gz
+Source:	      onstream-0861-0942.tar.gz
 #Patch:		onstream.dif
-BuildRoot:	/var/tmp/%{name}-buildroot
+BuildRoot:	%{_tmppath}/%{name}-buildroot
 
 %description
 OnStream's SC-x0 tapes are not compliant with the SCSI2 spec for Serial
@@ -31,10 +33,16 @@ SCSI Tape st driver st. This package contains some tools to allow to
 test and access the device.
 The osst driver is a kernel module providing an st like interface on the
 device files /dev/osst*
-The onstreamsg (osg) program allows reading and writing of data to tapes.
+The onstreamsg (osg) program allows reading and writing of data to tapes
+via the sg interface. It is recommended to use the kernel driver, though.
 Some helpers are also included.
 Note: Support for the IDE versions (DI-30) has been included in the
-standard SuSE kernel.
+standard SuSE kernel. However, the DI-x0 can be driven by osst via
+ide-scsi. Similarily, the USB30 may be driven by osst via usb-storage,
+if you have the latest 2.4.0 usb-storage driver providing the Freecom
+support.
+The ADRx0 series is fully SCSI-2 compliant  and supported by the standard
+st driver.
 
 Authors:
 --------
@@ -45,6 +53,7 @@ Authors:
 SuSE series: ap
 
 %define kversion %(uname -r)
+%define kmodpath %(KVS=`uname -r`; KVS=${KVS#*.}; KVS=${KVS%%.*}; if test $KVS -gt 3; then echo kernel/drivers/scsi; else echo scsi; fi)
 %prep
 %setup -n onstream
 #%patch
@@ -82,7 +91,7 @@ make install DESTDIR=$RPM_BUILD_ROOT
 /usr/bin/os_write
 /usr/bin/stream
 #%ifnarch ia64
-/lib/modules/%kversion/scsi/osst.o
+/lib/modules/%kversion/%{kmodpath}/osst.o
 /dev/osst*
 /dev/nosst*
 #%endif
@@ -93,6 +102,19 @@ rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_DIR/%{name}
 
 %changelog -n onstream
+* Wed Dec 20 2000 - garloff@suse.de
+- Updated to 0.8.6.1/0.9.4.2:
+  * Makefile fixes
+  * IDE polling fixes
+* Sat Oct 14 2000 - garloff@suse.de
+- 20001004 (0.8.5): * Error recovery improvements.
+  * Support USB and big-endian
+  * Fixed error in frame number bookkeeping, so polling (needed
+  for IDE and broken FW) works again.
+  * Return value of rewind ioctl 0 now if successful
+  * offl IOCTL now ejects the tape
+  * Read the blocks 5-9,2990-2994,10- initially, as that's the
+  order, they are preread by the FW.
 * Tue Jul 25 2000 - garloff@suse.de
 - 20000724 (0.8.1): Fix EOM handling (Give an early warning and
   report proper error code).
