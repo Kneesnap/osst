@@ -87,10 +87,11 @@ symlink trick. The IOCTLs to control tape operation are also mostly
 supported and you may try the mt (or mt_st) program to jump between
 filemarks, eject the tape, ...
 
-There's one limitation: You need to use a block size of 32kB.
-
-(This limitation is worked on and will be fixed in version 0.8.8 of
- this driver.)
+There's one limitation: You need to use a block size of 512 bytes, 1kB, 2kB,
+4kB, 8kB, 16kB or 32kB. The default block size is 512 bytes. However, your 
+backup software can transfer any multiple of the current block size. The
+blocksize can be changed with:
+mt -f /dev/nosst0 defblksize 1024
 
 If you just want to get started with standard software, here is an example
 for creating and restoring a full backup:
@@ -110,6 +111,29 @@ Expect something like 1.8MB/s for the SC-x0 drives and 0.9MB/s for the DI-30.
 The USB drive will give you about 0.7MB/s.
 On a fast machine, you may profit from software data compression (z flag for
 tar).
+
+
+Interpreting log output
+-----------------------
+Log output of different severity is created by osst. Every message starts
+with "osstX:S:" where X is the tape device (minor number modulo 32), or a
+blank if not applicable, and S is the severity:
+
+:A: Assert, an error that "should not happen". If you get one of these and
+    have not changed anything in osst_options.h, report it to the mail list.
+
+:E: Error, your backup is toast (sorry).
+
+:W: Warning, something happened that endangers your data. Look for other
+    information to see if osst was able to recover.
+
+:I: Information which osst wants you to know. This could be follow-on info
+    on a previously issued warning or error.
+
+:D: Debug output, created when you compile with "#define DEBUG 1".
+
+This output is sent to klogd with corresponding priority. If you don't see
+it in your system log (typically /var/log/messages), check your syslog.conf.
 
 
 USB and IDE
