@@ -651,7 +651,7 @@ static int osst_wait_frame(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, int curr,
 {
 	long	startwait     = jiffies;
 	int	dev	      = TAPE_NR(STp->devt);
-#ifdef DEBUG
+#if DEBUG
 	char	notyetprinted = 1;
 #endif
 	if (STp->ps[STp->partition].rw != ST_READING)
@@ -670,7 +670,7 @@ static int osst_wait_frame(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, int curr,
 		     STp->cur_frames > minlast
 		    ) && result >= 0)
 		{
-#ifdef DEBUG			
+#if DEBUG			
 			if (jiffies - startwait >= 2*HZ/OSST_POLL_PER_SEC)
 				printk ("osst%i: Succ wait f fr %i (>%i): %i-%i %i (%i): %3li.%li s\n",
 					dev, curr, curr+minlast, STp->first_frame_position,
@@ -680,7 +680,7 @@ static int osst_wait_frame(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, int curr,
 #endif
 			return 0;
 		}
-#ifdef DEBUG
+#if DEBUG
 		if (jiffies - startwait >= 2*HZ/OSST_POLL_PER_SEC && notyetprinted)
 		{
 			printk ("osst%i: Wait for frame %i (>%i): %i-%i %i (%i)\n",
@@ -692,7 +692,7 @@ static int osst_wait_frame(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, int curr,
 		current->state = TASK_INTERRUPTIBLE;
 		schedule_timeout (HZ / OSST_POLL_PER_SEC);
 	}
-#ifdef DEBUG
+#if DEBUG
 	printk ("osst%i: Fail wait f fr %i (>%i): %i-%i %i: %3li.%li s\n",
 		dev, curr, curr+minlast, STp->first_frame_position,
 		STp->last_frame_position, STp->cur_frames,
@@ -5034,7 +5034,7 @@ static int osst_attach(Scsi_Device * SDp)
 	       i, osst_version, i, cvsid);
 	/* We don't need to test for OnStream, as this has been done in detect () */
 	tpnt->os_fw_rev = osst_parse_firmware_rev (SDp->rev);
-#ifdef DEBUG
+#if DEBUG
 	printk ("osst%i: OnStream tape drive recognized, Model %s\n", i, SDp->model);
 #endif
 	tpnt->omit_blklims = 1;
