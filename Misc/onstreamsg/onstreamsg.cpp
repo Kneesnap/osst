@@ -1884,6 +1884,7 @@ int main(int argc, char* argv[]) {
 		WaitForReady(pOnStream);
 		pOnStream->WaitPosition (CurrentFrame, 300);
 
+		/* TODO: Check frames 6-9, 2990-2994, if 5 is invalid */
 		if (false == pOnStream->Read(buf)) {
 			Debug(0, "main: Read 0 failed: '%s'\n", szOnStreamErrors[pOnStream->GetLastError()]);
 			delete pOnStream;
