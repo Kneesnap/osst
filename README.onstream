@@ -17,7 +17,7 @@ together with the developers ...
 
 The following programs are included in this package:
 * osst: Kernel module which can be loaded instead of st in order to access
-   the OnStream tapes by the /dev/stX device nodes. Note: This module can
+   the OnStream tapes by the /dev/osstX device nodes. Note: This module can
    coexist with the existing standard SCSI tape driver "st". It's pretty
    stable nowadays.
 * osg (onstreamsg): Userspace program that uses the sg interface to access
