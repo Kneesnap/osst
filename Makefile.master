@@ -5,6 +5,10 @@ KDIR := /usr/src/linux
 
 KVER = 2$(shell head -5 $(KDIR)/Makefile | grep PATCHLEVEL | sed 's/[^=]*=[^0-9]*\([0-9]*\).*/\1/')
 
+ifeq ($(KVER),23)
+  KVER = 24
+endif
+
 default: driver
 
 driver:
