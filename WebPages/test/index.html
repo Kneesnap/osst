@@ -113,9 +113,11 @@ The blocksize for reading is set to the size used to
 write it when you start reading.</DD>
 <DT>2000-12-11: (osst 0.8.8)</DT>
 <DD>Fixed bug when write error is detected during polling.</DD>
-<DT>2000-12-20: (osst 0.8.6.1/0.9.4.2)</DT>
+<DT>2000-12-20: (osst 0.8.6.1 / 0.9.4.2)</DT>
 <DD>Ported the bugfix which went into 0.8.8 to the versions with a fixed
 block size of 32k.</DD>
+<DT>2000-12-22: (osst 0.8.6.1 / 0.9.4.3)</DT>
+<DD>0.9.4.2 could not be compiled statically into the kernel. Fixed.</DD>
 </DL></P>
 
 <H3>Known problems as of <B>0.8.6.1</B></H3>
@@ -164,7 +166,7 @@ them (<TT>tar xvzf onstream-2000*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux source
 tree (apply patch osst-22.diff resp. osst-24.diff first) installed in
 <TT>/usr/src/linux/</TT>. Here are the 
-<A HRef="onstream-0861-0942.tar.gz">sources for 0.8.6.1/0.9.4.2</A>, the
+<A HRef="onstream-0861-0943.tar.gz">sources for 0.8.6.1/0.9.4.3</A>, the
 latest versions with a fixed blocksize of 32k.
 <Br>
 To install the driver, do a <TT>make install</TT>, and the driver will be
