@@ -15,9 +15,81 @@ OnStream main pages</A>
 <Br>
 <A HRef="http://www.onstream.com/"><Img Src="/gif/onstream.gif" Alt="OnStream Logo"></A>
 <Center><H1>OnStream Linux SCSI tape driver development</H1></Center>
+<A Name="intro"></A>
 <P>This page coordinates the development of a Linux tape driver for the
-OnStream SC-30/SC-50 devices. The target is to create a kernel driver to
-provide an st-like interface to the userspace.</P>
+ OnStream SC-30/SC-50 devices. The target is to create a kernel driver to
+ provide an st-like interface to the userspace.</P>
+<P>This project is a joint effort of indiviuals that try to get their
+ OnStream SC-x0 ADR tape drive to run with Linux. They are supported by
+ <A HRef="http://www.onstream.com">OnStream</A> and <A HRef="http://www.suse.com">SuSE</A>.
+ This machine is dedicated for the support of this and is located in
+ Eindhoven, NL. It should be reachable via the IP <TT>195.193.200.24</TT> and
+ -- in a few days -- via the name <TT>linux.onstream.nl</TT></A>.
+</P>
+<P>This web page is a trial to coordinate this effort. Besides from pointers
+ to relevant information or software, it should also give a short
+ summary of the tools for the developers which are used. It does not provide
+ software for the end user! As soon as an alpha version is out there, it will
+ be put at some location in order to allow people who want to take the risk
+ to play with it. As soon as there is a beta, it will be announced here and
+ some download page will be installed.</P>
+
+<A Name="cvs">
+<H3>CVS</H3></A>
+<P>For the joint development, a <A HRef="http://www.cyclic.com/">CVS</A>
+ repository is installed on this machine. It handles the driver sources and
+ also the web pages.</P>
+<P>The repository contains the modules <TT>WebPages</TT>, <TT>Driver</TT>, 
+ <TT>Docu</TT> and <TT>Misc</TT>.</P>
+<P>In <TT>Driver</TT> you find the stock 2.2.14 kernel <TT>st</TT> driver and
+ some support files like include headers. A branch with the tag <TT>L23</TT>
+ is created for the Linux-2.3 versions of the <TT>st</TT>driver. That way,
+ changes to the 2.2 version should be easily transferable to the 2.3 branch
+ and vice versa. Of course, there can be added new files like scripts to test
+ or <TT>TODO</TT> lists ...</P>
+<P>The <TT>Docu</TT> directory contains the docu from OnStream, namely the
+ ADR spec as a PDF. More documentation will go here. The <TT>Misc</TT>
+ directory contains the IDE driver for the OnStream of Gadi Oxman, and the
+ userspace OnStream SCSI driver from Terry Hardie. Other sourcecode related
+ to the OnStream should also go here.</P>
+<P>CVS read access is granted upon request. If you have some small
+ contributions, the diffs (use <TT>diff -u</TT>) should be send to the 
+ <A HRef="#mailinglist"> and someone will have a look and check it into the
+ CVS. If you are contributing a lot, it will be easier to give you read-write
+ access to the repository, so this will happen.</P>
+
+<A Name="mailinglist">
+<H3>Mailinglist</H3></A>
+<P>A mailing list is there to provide an easy way for the developers to
+ communicate. The name is 
+ <TT><A HRef="mailto:osst@linux.onstream.nl">osst@linux.onstream.nl</A></TT>,
+ and it's a majordomo list. So subscribe requests etc. go to
+ <TT>osst-request</TT>.</P>
+<P>At the time of writing, the mailing list is unfortunately not yet
+ functional.</P>
+
+<A Name="related">
+<H3>Related efforts and resources</H3></A>
+<P>Terry Hardie has created a userspace driver, which uses the scsi generic 
+ (<TT>sg</TT>) of Linux to access the device. It can be 
+ <A HRef="ftp://ftp.orcas.net/pub/linux/onstream/">downloaded</A>.</P>
+ SCSI specs are unfortunately not freely available. Some copies of the
+ draft version of the SCSI-II spec are floating around. Drafts for the
+ upcoming SCSI-III have also been seen ... Obviously the comittee think they
+ are very clever by hiding it and trying to prevent people from accessing it.
+ Shouldn't the bad VESA example tell them, they are wrong. Free software
+ would not be possible if all committees would work like that.<Br>
+ <!--Some things can be found <A HRef="ftp://playground.sun.com/pub/>here</A>.--> 
+</P>
+ 
+<A Name="status">
+<H3>Status<H3></A>
+<DL>
+ <DT>2000-02-22</DT>
+ <DD>CVS is up and running, but not yet completely filled with data yet.
+     For the mailing list, the DNS entry needs to be there, first.</DD>
+</DL>
+
 <P>
 <Img Src="/gif/construction.gif">
 </P>
