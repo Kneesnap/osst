@@ -69,6 +69,10 @@ and try it out!</DD>
 <DT>2000-06-11: (osst 0.7.99)</DT>
 <DD>Adopted ADR 1.4 Tape Format, which standardizes the location of file mark
 lists in the Header and disambiguates terminology.</DD>
+<DT>2000-06-21: (osst 0.7.99a)</DT>
+<DD>Slight changes to the way it is integrated into the kernel. Both osst
+and st now use the OSST_SUPPORTS(SDp) macro provided by osst_detect.h in
+both detect() and attach(). Kernel patch is against 2.2.16 now.
 </DL></P>
 
 <H3>Known problems as of <B>0.7.99</B></H3>
@@ -112,7 +116,7 @@ There are several possibilities to get the <TT>osst</TT>-driver. For your
 convenience, the archives also contain Terry's userspace driver <TT>osg</TT> 
 and some tools.
 <OL>
-<LI>(recommended) Get the <A HRef="onstream-20000611.tar.gz">sources</A>, unpack
+<LI>(recommended) Get the <A HRef="onstream-20000621.tar.gz">sources</A>, unpack
 them (<TT>tar xvzf onstream-2000*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux source
 tree installed in <TT>/usr/src/linux/</TT>. 
@@ -126,13 +130,13 @@ should better first get familiar with your Linux Operating System, the
 kernel, the modules, etc.</LI>
 <LI>If you happen to use a ix86 machine with a 2.2.16 Linux kernel 
 <!--(e.g. in SuSE Linux 6.4)--> and a glibc-2.1 based distribution, you should be
-able to install and use the <A HRef="onstream-0.9.13_0.7.99-0.i386.rpm">onstream RPM</A>
+able to install and use the <A HRef="onstream-0.9.13_0.7.99a-0.i386.rpm">onstream RPM</A>
 from SuSE. Install with <TT>rpm -i</TT> or update with <TT>rpm -U</TT>.
 If you have a different arch, kernel or libc, you might be able to get the
-thing to work by grabbing the <A HRef="onstream-0.9.13_0.7.99-0.src.rpm">source RPM</A>
+thing to work by grabbing the <A HRef="onstream-0.9.13_0.7.99a-0.src.rpm">source RPM</A>
 and recompile it with <TT>rpm --recompile</TT>. This package actually is an
 (updated) RPM provided by <A HRef="http://www.suse.com/">SuSE</A>
-<A HRef="http://www.suse.com/PressReleases/64pr.html">Linux 6.4</A>.
+<A HRef="http://www.suse.com/PressReleases/64pr.html">Linux 7.0 (beta)</A>.
 </OL>
 If you download and use this driver, you agree to do so under the terms of
 the <A HREf="http://www.fsf.org/copyleft/">GNU GPL</A>.
