@@ -385,7 +385,7 @@ typedef struct os_header_s {
 #define OS_FRAME_SIZE   (32 * 1024 + 512)
 #define OS_DATA_SIZE    (32 * 1024)
 #define OS_AUX_SIZE     (512)
-#define OSST_MAX_SG      2
+//#define OSST_MAX_SG      2
 
 /* The tape buffer descriptor. */
 typedef struct {
