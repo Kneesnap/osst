@@ -1,0 +1,16 @@
+#!/bin/sh
+rm -rf onstream
+mkdir -p onstream/driver
+mkdir -p onstream/tools
+mkdir -p onstream/onstreamsg
+cp -p README.onstream onstream/README
+for name in osst.c osst.h st.c st.h st_options.h Makefile Makefile.osst; 
+ do cp -p Driver/$name onstream/driver/;
+done
+cp -p Misc/onstreamsg/Makefile Misc/onstreamsg/onstreamsg.cpp onstream/onstreamsg/
+cp -p Misc/onstreamsg/COPYING onstream/
+for name in Makefile README os_dump.c os_write.c sg_err.c sg_err.h stream.c;
+ do cp -p Misc/sg_utils/$name onstream/tools/;
+done
+cp -pf Makefile.tools onstream/tools/Makefile
+tar cvzf onstream-`date +"%Y%m%d"`.tar.gz onstream/
