@@ -15,6 +15,70 @@
 <a href="http://sourceforge.net"><img src="http://sourceforge.net/sflogo.php?group_id=84433&amp;type=2" width="125" height="37" border="0" alt="SourceForge.net Logo" /></a>
 
 <Center><H1>OSST Backup software compatibility</H1></Center>
+<A Name="arkeia">
+<H3>Using Arkeia</H3>
+Add this to your tape definition file
+<TT>/usr/knox/arkeia/dbase/f3tape/tptypes.lst</TT>
+<PRE>
+ITEM    {
+        "NAME"  "ADR30"
+        "CAPACITY"      "14429"
+        "THROUGHPUT"    "1000"
+        "MAXUSE"        "100000"
+        "SIZESEG"       "96000"
+        "COMMENT"       "OnStream ADR30"
+        "FORM_FACTOR" "ADR"
+}
+
+ITEM    {
+        "NAME"  "ADR50"
+        "CAPACITY"      "23895"
+        "THROUGHPUT"    "2000"
+        "MAXUSE"        "100000"
+        "SIZESEG"       "96000"
+        "COMMENT"       "OnStream ADR50"
+        "FORM_FACTOR" "ADR"
+}
+
+ITEM    {
+        "NAME"  "ADR60"
+        "CAPACITY"      "28710"
+        "THROUGHPUT"    "2400"
+        "MAXUSE"        "100000"
+        "SIZESEG"       "96000"
+        "COMMENT"       "OnStream ADR2-60"
+        "FORM_FACTOR" "ADR2"
+}
+</PRE>
+and the following to your drive type definition file
+<TT>/usr/knox/arkeia/dbase/f3drv/drvtypes.lst</TT>
+<PRE>
+ITEM    {
+        "NAME"  "ONSTREAM_ADR"
+        "FORM_FACTOR"   "ADR"
+        "TIME_BEFORE_CLEAN"     "50"
+}
+ITEM    {
+        "NAME"  "ONSTREAM_ADR2"
+        "FORM_FACTOR"   "ADR2"
+        "TIME_BEFORE_CLEAN"     "50"
+}
+</PRE><P>
+You may want to lower the <TT>THROUGHPUT</TT> for the <TT>ADR_30</TT> to
+<TT>700</TT> in case you  have a USB30 device and you may want to increase
+it to <TT>2000</TT> for a DI-30+(Fast) or SC-30/50 drive.<Br>
+Note: There is some controversary whether a <TT>"BLOCK_SIZE"    "32768"</TT> 
+statement should be added to the drvtype definition or not. In theory it
+should be there, but in practice it seems to prevent successful restores.<Br>
+Another note: I introduced a second drivetype <TT>ADR2</TT> for the ADR-2
+tapes as they are not really compatible with ADR tapes.
+</P><P>
+JP Vossen has a <A HRef="http://www.jpsdomain.org/linux/#backups">nice
+section on Backups with Linux</A> and also a 
+<A HRef="http://www.jpsdomain.org/linux/OnStream_DI-30-RedHat_Backup_mini-HOWTO.html">
+OnStream DI-30 HOWTO</A>.
+</P>
+
 <P>
 <Img Src="gif/construction.gif" Alt="under construction" Width=40 Height=32>
 </P>

@@ -81,6 +81,45 @@ applies.</EM></P>
  <TT><A HRef="https://lists.sourceforge.net/lists/listinfo/osst-users">osst-users-request</A></TT>.
  </P>
 
+<A Name="usage">
+<H3>Using osst.</H3>
+</A>
+<H4>SC-30/50</H4>
+<P>
+You need to use a kernel that has generic SCSI support enabled (scsi_mod is the
+name of the module) and with osst compiled and installed. Device nodes need to
+exist (if they don't, use MAKEDEV or mknod):
+</P><PRE>
+crw-rw----    1 root     disk     206,   0 Sep 15 09:40 /dev/osst0
+crw-rw----    1 root     disk     206,   1 Sep 15 09:40 /dev/osst1
+crw-rw-rw-    1 root     disk     206, 128 Sep 15 09:40 /dev/nosst0
+crw-rw----    1 root     disk     206, 129 Sep 15 09:40 /dev/nosst1
+</PRE><P>
+To have osst be loaded automatically when you refer to any of the devices,
+add this line to /etc/modules.conf:
+</P><PRE>alias char-major-206 osst
+</PRE>
+<H4>DI-30/50</H4>
+<P>
+On top of the requirements for the SC model, you need to use ide-scsi
+with the device. You'll want to tell the kernel to do so when you boot,
+using <EM>hdx=ide-scsi</EM> (where you substitute the right device letter
+for the x) to the grub or lilo configuration.
+</P>
+<H4>FW-30</H4>
+<P>
+On top of the requirements for the SC model, you need to activate the
+IEEE1394 subsystem, and load the sbp2 driver.
+</P>
+<H4>USB30</H4>
+<P>
+On top of the requirements for the SC model, you need to activate the
+USB subsystem, and load the usb-storage driver. Furthermore, it needs
+to be compiled with 
+support for the <A HRef="http://www.freecom.com/">FreeCom</A> USB-Atapi
+converter <TT>CONFIG_USB_STORAGE_FREECOM</TT>.
+</P>
+
 <A Name="info">
 <H3>Useful Information.</H3>
 </A>
@@ -97,7 +136,7 @@ applies.</EM></P>
 <H3>Development.</H3>
 </A>
 <P>For the joint development, a <A HRef="http://www.cyclic.com/">CVS</A>
- repository is available on <A HRef="http://cvs.sourceforge.net/">SourceForge</A>.
+ repository is available on <A HRef="https://sourceforge.net/cvs/?group_id=84433">SourceForge</A>.
 
  It handles the driver sources and also the web pages.</P>
 <P>The repository contains the modules (=directories) <TT>WebPages</TT>,
@@ -114,7 +153,7 @@ applies.</EM></P>
  update the firmware of your OnStream tape device.</P>
 
 <P>CVS read access is available through
- <A HRef="https://sourceforge.net/cvs/?group_id=84433">browsing</A>.
+ <A HRef="http://cvs.sourceforge.net/viewcvs.py/osst/">browsing</A>.
  If you have some contributions, the diffs (use <TT>diff -u</TT>) should be sent to the 
  <A HRef="#mailinglist"> mailing list</A> and someone will have a look and
  check it into the CVS. 
