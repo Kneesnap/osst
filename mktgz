@@ -6,10 +6,10 @@ mkdir -p onstream/driver-24
 mkdir -p onstream/tools
 cp -p README.onstream onstream/README
 cp -p Makefile.master onstream/Makefile
-for name in osst.c osst.h osst_detect.h osst_options.h Makefile Makefile.osst Makedevs.sh osst-22.diff README.osst dev-reg.txt;
+for name in osst.c osst.h osst_detect.h osst_options.h Makefile Makefile.osst Makedevs.sh osst-22.diff README.osst README.osst.kernel dev-reg.txt;
  do cp -p 2.2/Driver/$name onstream/driver-22/;
 done
-for name in osst.c osst.h osst_detect.h osst_options.h Makefile Makefile.osst Makedevs.sh osst-24.diff README.osst dev-reg.txt;
+for name in osst.c osst.h osst_detect.h osst_options.h Makefile Makefile.osst Makedevs.sh osst-24.diff README.osst README.osst.kernel dev-reg.txt;
  do cp -p 2.4/Driver/$name onstream/driver-24/;
 done
 cp -p Misc/onstreamsg/Makefile Misc/onstreamsg/onstreamsg.cpp onstream/onstreamsg/
