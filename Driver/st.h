@@ -8,10 +8,6 @@
 #ifndef _SCSI_H
 #include "scsi.h"
 #endif
-#include <linux/config.h>
-#ifdef CONFIG_DEVFS_FS
-#include <linux/devfs_fs_kernel.h>
-#endif
 
 /* The tape buffer descriptor. */
 typedef struct {
@@ -27,8 +23,7 @@ typedef struct {
   int last_result_fatal;
   Scsi_Cmnd *last_SCpnt;
   unsigned char *b_data;
-  os_aux_t *aux;               /* onstream AUX structure at end of each block */
-  unsigned short use_sg;       /* zero or number of segments for this adapter */
+  unsigned short   use_sg;     /* zero or number of segments for this adapter */
   unsigned short sg_segs;      /* total number of allocated segments */
   unsigned short orig_sg_segs; /* number of segments allocated at first try */
   struct scatterlist sg[1];    /* MUST BE last item */
@@ -91,10 +86,6 @@ typedef struct {
   /* Mode characteristics */
   ST_mode modes[ST_NBR_MODES];
   int current_mode;
-#ifdef CONFIG_DEVFS_FS
-  devfs_handle_t de_r[ST_NBR_MODES];  /*  Rewind entries     */
-  devfs_handle_t de_n[ST_NBR_MODES];  /*  No-rewind entries  */
-#endif
 
   /* Status variables */
   int partition;
@@ -118,37 +109,6 @@ typedef struct {
   int max_block;
   int recover_count;
   struct mtget * mt_status;
-  /*
-   * OnStream flags
-   */
-  int      onstream;                           /* the tape is an OnStream tape */
-  int	   os_fw_rev;			       /* the firmware revision * 10000 */
-  int      raw;                                /* OnStream raw access (32.5KB block size) */
-  int      frame_size;                         /* with OnStream not equal to block_size (AUX) */
-  int      logical_blk_num;                    /* logical block number */
-  int	   logical_blk_in_buffer;	       /* flag that the black as per logical_blk_num
-						* has been read into STp->buffer and is valid */
-  unsigned first_frame_position;               /* physical frame to be transfered to/from host */
-  unsigned last_frame_position;                /* physical frame to be transferd to/from tape */
-  int      cur_frames;                         /* current number of frames in internal buffer */
-  int      max_frames;                         /* max number of frames in internal buffer */
-  char     application_sig[5];                 /* application signature */
-  unsigned char  fast_open;                    /* flag that reminds us we didn't check headers at open */
-  unsigned short wrt_pass_cntr;                /* write pass counter */
-  int      update_frame_cntr;                  /* update frame counter */
-  int      onstream_write_error;               /* write error recovery active */
-  int      header_ok;                          /* header frame verified ok */
-  int      linux_media;                        /* reading linux-specifc media */
-  int      linux_media_version;
-  os_header_t * header_cache;		       /* cache is kept for filemark positions */
-  int      filemark_cnt;
-  int      first_mark_addr;
-  int      last_mark_addr;
-  int      first_data_addr;
-  int      eod_frame_addr;
-  int      write_type;				/* used in write error recovery */
-  unsigned long cmd_start_time;
-  unsigned long max_cmd_time;
 
 #if DEBUG
   unsigned char write_pending;
@@ -160,14 +120,6 @@ typedef struct {
 } Scsi_Tape;
 
 extern Scsi_Tape * scsi_tapes;
-
-/* Values of write_type */
-#define OS_WRITE_DATA      0
-#define OS_WRITE_EOD       1
-#define OS_WRITE_NEW_MARK  2
-#define OS_WRITE_LAST_MARK 3
-#define OS_WRITE_HEADER    4
-#define OS_WRITE_FILLER    5
 
 /* Values of eof */
 #define	ST_NOEOF	0

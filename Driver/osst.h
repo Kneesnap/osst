@@ -2,6 +2,11 @@
  *	$Header$
  */
 
+#include <linux/config.h>
+#ifdef CONFIG_DEVFS_FS
+#include <linux/devfs_fs_kernel.h>
+#endif
+
 /*	FIXME - rename and use the following two types or delete them!
  *              and the types really should go to st.h anyway...
  *	INQUIRY packet command - Data Format (From Table 6-8 of QIC-157C)
@@ -323,7 +328,8 @@ typedef struct os_header_s {
         char            ident_str[8];
         __u8            major_rev;
         __u8            minor_rev;
-        __u8            reserved10_15[6];
+        __u8            reserved10_11[2];
+	__u32		column_width;
         __u8            par_num;
         __u8            reserved1_3[3];
         os_partition_t  partition[16];
@@ -340,4 +346,128 @@ typedef struct os_header_s {
 #define OS_DATA_SIZE    (32 * 1024)
 #define OS_AUX_SIZE     (512)
 
+
+/* The tape buffer descriptor. */
+typedef struct {
+  unsigned char in_use;
+  unsigned char dma;	/* DMA-able buffer */
+  int this_size;        /* allocated size of the structure */
+  int buffer_size;
+  int buffer_blocks;
+  int buffer_bytes;
+  int read_pointer;
+  int writing;
+  int last_result;
+  int last_result_fatal;
+  Scsi_Cmnd *last_SCpnt;
+  unsigned char *b_data;
+  os_aux_t *aux;               /* onstream AUX structure at end of each block */
+  unsigned short use_sg;       /* zero or number of segments for this adapter */
+  unsigned short sg_segs;      /* total number of allocated segments */
+  unsigned short orig_sg_segs; /* number of segments allocated at first try */
+  struct scatterlist sg[1];    /* MUST BE last item */
+} OSST_buffer;
+
+/* The tape drive descriptor */
+typedef struct {
+  kdev_t devt;
+  unsigned capacity;
+  Scsi_Device* device;
+  struct semaphore sem;
+  OSST_buffer * buffer;
+
+  /* Drive characteristics */
+  unsigned char omit_blklims;
+  unsigned char do_auto_lock;
+  unsigned char can_bsr;
+  unsigned char can_partitions;
+  unsigned char two_fm;
+  unsigned char fast_mteom;
+  unsigned char restr_dma;
+  unsigned char scsi2_logical;
+  unsigned char default_drvbuffer;  /* 0xff = don't touch, value 3 bits */
+  int write_threshold;
+  int timeout;			/* timeout for normal commands */
+  int long_timeout;		/* timeout for commands known to take long time*/
+
+  /* Mode characteristics */
+  ST_mode modes[ST_NBR_MODES];
+  int current_mode;
+#ifdef CONFIG_DEVFS_FS
+  devfs_handle_t de_r[ST_NBR_MODES];  /*  Rewind entries     */
+  devfs_handle_t de_n[ST_NBR_MODES];  /*  No-rewind entries  */
+#endif
+
+  /* Status variables */
+  int partition;
+  int new_partition;
+  int nbr_partitions;    /* zero until partition support enabled */
+  ST_partstat ps[ST_NBR_PARTITIONS];
+  unsigned char dirty;
+  unsigned char ready;
+  unsigned char write_prot;
+  unsigned char drv_write_prot;
+  unsigned char in_use;
+  unsigned char blksize_changed;
+  unsigned char density_changed;
+  unsigned char compression_changed;
+  unsigned char drv_buffer;
+  unsigned char density;
+  unsigned char door_locked;
+  unsigned char rew_at_close;
+  int block_size;
+  int min_block;
+  int max_block;
+  int recover_count;
+  struct mtget * mt_status;
+  /*
+   * OnStream flags
+   */
+  int      onstream;                           /* the tape is an OnStream tape */
+  int	   os_fw_rev;			       /* the firmware revision * 10000 */
+  int      raw;                                /* OnStream raw access (32.5KB block size) */
+  int      frame_size;                         /* with OnStream not equal to block_size (AUX) */
+  int      logical_blk_num;                    /* logical block number */
+  int	   logical_blk_in_buffer;	       /* flag that the black as per logical_blk_num
+						* has been read into STp->buffer and is valid */
+  unsigned first_frame_position;               /* physical frame to be transfered to/from host */
+  unsigned last_frame_position;                /* physical frame to be transferd to/from tape */
+  int      cur_frames;                         /* current number of frames in internal buffer */
+  int      max_frames;                         /* max number of frames in internal buffer */
+  char     application_sig[5];                 /* application signature */
+  unsigned char  fast_open;                    /* flag that reminds us we didn't check headers at open */
+  unsigned short wrt_pass_cntr;                /* write pass counter */
+  int      update_frame_cntr;                  /* update frame counter */
+  int      onstream_write_error;               /* write error recovery active */
+  int      header_ok;                          /* header frame verified ok */
+  int      linux_media;                        /* reading linux-specifc media */
+  int      linux_media_version;
+  os_header_t * header_cache;		       /* cache is kept for filemark positions */
+  int      filemark_cnt;
+  int      first_mark_addr;
+  int      last_mark_addr;
+  int      first_data_addr;
+  int      eod_frame_addr;
+  int      write_type;				/* used in write error recovery */
+  unsigned long cmd_start_time;
+  unsigned long max_cmd_time;
+
+#if DEBUG
+  unsigned char write_pending;
+  int nbr_finished;
+  int nbr_waits;
+  unsigned char last_cmnd[6];
+  unsigned char last_sense[16];
+#endif
+} OS_Scsi_Tape;
+
+extern Scsi_Tape * scsi_tapes;
+
+/* Values of write_type */
+#define OS_WRITE_DATA      0
+#define OS_WRITE_EOD       1
+#define OS_WRITE_NEW_MARK  2
+#define OS_WRITE_LAST_MARK 3
+#define OS_WRITE_HEADER    4
+#define OS_WRITE_FILLER    5
 
