@@ -23,7 +23,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.9.4p1";
+const char * osst_version = "0.9.4p2";
 
 /* The "failure to reconnect" firmware bug */
 #define OSST_FW_NEED_POLL_MIN 10602 /*(107A)*/
@@ -3193,16 +3193,16 @@ static ssize_t osst_read(struct file * filp, char * buf, size_t count, loff_t *p
 	/* Change the eof state if no data from tape or buffer */
 	if (total == 0) {
 		if (STps->eof == ST_FM_HIT) {
-			STps->eof = ST_FM;
+			STps->eof = (STp->first_frame_position >= STp->eod_frame_ppos)?ST_EOD:ST_FM;
 			STps->drv_block = 0;
 			if (STps->drv_file >= 0)
 				STps->drv_file++;
 		}
 		else if (STps->eof == ST_EOD_1) {
 			STps->eof = ST_EOD_2;
-			STps->drv_block = 0;
-			if (STps->drv_file >= 0)
+			if (STps->drv_block > 0 && STps->drv_file >= 0)
 				STps->drv_file++;
+			STps->drv_block = 0;
 		}
 		else if (STps->eof == ST_EOD_2)
 			STps->eof = ST_EOD;
@@ -3707,7 +3707,7 @@ os_bypass:
 		if (cmd_in == MTEOM)
 			STps->eof = ST_EOD;
 		else if (cmd_in == MTFSF)
-			STps->eof = ST_FM;
+			STps->eof = (STp->first_frame_position >= STp->eod_frame_ppos)?ST_EOD:ST_FM;
 		else if (chg_eof)
 			STps->eof = ST_NOEOF;
 
