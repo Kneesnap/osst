@@ -24,7 +24,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.9.9";
+const char * osst_version = "0.9.10";
 
 /* The "failure to reconnect" firmware bug */
 #define OSST_FW_NEED_POLL_MIN 10601 /*(107A)*/
@@ -227,20 +227,20 @@ static int osst_chk_result(OS_Scsi_Tape * STp, Scsi_Request * SRpnt)
 		 SRpnt->sr_cmnd[0] != MODE_SENSE &&
 		 SRpnt->sr_cmnd[0] != TEST_UNIT_READY)) { /* Abnormal conditions for tape */
 		if (driver_byte(result) & DRIVER_SENSE) {
-			printk(KERN_WARNING "osst%d:W: Error with sense data: ", dev);
-			print_req_sense("osst", SRpnt);
+			printk(KERN_WARNING "osst%d:W: Command with sense data: ", dev);
+			print_req_sense("osst:", SRpnt);
 		}
 		else {
 			static	int	notyetprinted = 1;
 
 			printk(KERN_WARNING
-			     "osst%d:W: Error %x (sugg. bt 0x%x, driver bt 0x%x, host bt 0x%x).\n",
+			     "osst%d:W: Warning %x (sugg. bt 0x%x, driver bt 0x%x, host bt 0x%x).\n",
 			     dev, result, suggestion(result), driver_byte(result) & DRIVER_MASK,
 			     host_byte(result));
 			if (notyetprinted) {
 				notyetprinted = 0;
 				printk(KERN_INFO
-					"osst%d:I: This error may be caused by your scsi controller,\n", dev);
+					"osst%d:I: This warning may be caused by your scsi controller,\n", dev);
 				printk(KERN_INFO
 					"osst%d:I: it has been reported with some Buslogic cards.\n", dev);
 			}
@@ -632,7 +632,7 @@ static int osst_wait_ready(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, unsigned 
 		debugging = 0;
 	    }
 #endif
-	    current->state = TASK_INTERRUPTIBLE;
+	    set_current_state(TASK_INTERRUPTIBLE);
 	    schedule_timeout(HZ / 10);
 
 	    memset(cmd, 0, MAX_COMMAND_SIZE);
@@ -692,7 +692,7 @@ static int osst_wait_for_medium(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, unsi
 		debugging = 0;
 	    }
 #endif
-	    current->state = TASK_INTERRUPTIBLE;
+	    set_current_state(TASK_INTERRUPTIBLE);
 	    schedule_timeout(HZ / 10);
 
 	    memset(cmd, 0, MAX_COMMAND_SIZE);
@@ -807,7 +807,7 @@ static int osst_wait_frame(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, int curr,
 			notyetprinted--;
 		}
 #endif
-		current->state = TASK_INTERRUPTIBLE;
+		set_current_state(TASK_INTERRUPTIBLE);
 		schedule_timeout (HZ / OSST_POLL_PER_SEC);
 	}
 #if DEBUG
@@ -1032,7 +1032,7 @@ static int osst_get_logical_frame(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, in
 	if (cnt > 1) {
 		STp->recover_count++;
 		STp->recover_erreg++;
-		printk(KERN_WARNING "osst%d:I: Read error at position %d recovered\n", 
+		printk(KERN_WARNING "osst%d:I: Don't worry, Read error at position %d recovered\n", 
 					dev, STp->read_error_frame);
  	}
 	STp->read_count++;
@@ -1589,7 +1589,10 @@ static int osst_write_error_recovery(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt,
 			retval = osst_reposition_and_retry(STp, aSRpnt, frame, skip, pending);
 		else
 			retval = osst_read_back_buffer_and_rewrite(STp, aSRpnt, frame, skip, pending);
-		printk(KERN_WARNING "osst%d:I: Write error%srecovered\n", dev, retval?" not ":" ");
+		printk(KERN_WARNING "osst%d:%s: %sWrite error%srecovered\n", dev,
+			       	retval?"E"    :"I",
+			       	retval?""     :"Don't worry, ",
+			       	retval?" not ":" ");
 		break;
 	   case OS_WRITE_LAST_MARK:
 		printk(KERN_ERR "osst%d:E: Bad frame in update last marker, fatal\n", dev);
@@ -5023,7 +5026,11 @@ static OSST_buffer * new_tape_buffer( int from_initialization, int need_dma )
 			tb->sg[0].address =
 			    (unsigned char *)__get_free_pages(priority, order);
 			if (tb->sg[0].address != NULL) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,13)
+			    tb->sg[0].page = NULL;
+#else
 			    tb->sg[0].alt_address = NULL;
+#endif
 			    tb->sg[0].length = b_size;
 			    break;
 			}
@@ -5059,7 +5066,11 @@ static OSST_buffer * new_tape_buffer( int from_initialization, int need_dma )
 				tb = NULL;
 				break;
 			    }
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,13)
+                            tb->sg[segs].page = NULL;
+#else
 			    tb->sg[segs].alt_address = NULL;
+#endif
 			    tb->sg[segs].length = b_size;
 			    got += b_size;
 			    segs++;
@@ -5133,7 +5144,11 @@ static int enlarge_buffer(OSST_buffer *STbuffer, int new_size, int need_dma)
 			normalize_buffer(STbuffer);
 			return FALSE;
 		}
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,13)
+		STbuffer->sg[segs].page = NULL;
+#else
 		STbuffer->sg[segs].alt_address = NULL;
+#endif
 		STbuffer->sg[segs].length = b_size;
 		STbuffer->sg_segs += 1;
 		got += b_size;
