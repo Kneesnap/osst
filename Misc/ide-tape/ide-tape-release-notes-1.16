@@ -1,0 +1,706 @@
+Linux OnStream IDE/ATAPI DI-30 tape support
+ide-tape version 1.16, September 1999
+Written by Gadi Oxman <gadio@netvision.net.il>
+----------------------------------------------
+
+Table of Contents:
+------------------
+
+1. Introduction.
+2. Driver Installation.
+3. Verifying that the new driver was installed correctly.
+4. Special device files.
+5. /dev/(n)htx tape API.
+   5.1. Backup/Restore.
+   5.2. Filemark positioning.
+   5.3. Random positioning.
+   5.4. Error recovery.
+6. Performance optimization
+   6.1. No driver speed regulation with no driver buffer.
+   6.2. No driver speed regulation, but with driver buffer.
+   6.3. Driver maximum constant speed regulation.
+   6.4. Driver variable speed regulation version 1 (default).
+   6.5. Driver variable speed regulation version 2.
+   6.6. Comparison of the various speed regulation algorithms.
+   6.7. IDE tape bus bandwidth sharing with another IDE device.
+7. Statistics and configuration using the /proc/hdx interface.
+8. Linux specific enhancements to the ADR logical tape format.
+
+1. Introduction
+---------------
+
+Version 1.16 of the Linux IDE/ATAPI tape driver introduces full support for
+the OnStream ATAPI DI-30 tape drive for Linux 2.2.x/2.3.x.
+
+A QIC-157 / Linux tape API compliant device is presented by the driver
+to the Linux user space tape applications. Internally, the implementation
+of the logical device view is based on the ADR logical format specification,
+version 1.1 (with a few Linux specific additions).
+
+2. Driver Installation
+----------------------
+
+1. Install a Linux source code tree which includes version 1.15 of the
+   ide-tape driver under /usr/src/linux.
+
+2. Upgrade the ide-tape driver to version 1.16 by one of the following
+   options:
+
+   1. installing the IDE tape driver patch included in this package using:
+
+	cd /usr/src
+	cat /.../ide-tape-1.16-2.2.x.diff | patch -p0 (for Linux 2.2.x)
+    or: cat /.../ide-tape-1.16-2.3.x.diff | patch -p0 (for Linux 2.3.x)
+
+   2. or copying the complete ide-tape.c version 1.16 to the Linux
+      source tree using:
+
+        cp /.../ide-tape-1.16-2.2.x.c /usr/src/linux/drivers/block/ide-tape.c
+    or: cp /.../ide-tape-1.16-2.3.x.c /usr/src/linux/drivers/block/ide-tape.c
+
+3. Recompile your kernel. During the kernel re-configuration
+   "make config" step, answer 'y' or 'm' to 'Include IDE/ATAPI tape
+   support', depending on whether you want to compile the IDE
+   tape support inside the kernel or in a loadable module.
+
+	make config
+	make dep
+	make zImage (or make bzImage)
+	make modules
+	make modules_install
+	depmod -a
+
+4. If IDE tape support was compiled into the kernel, install and boot
+   the new kernel:
+
+	cp arch/i386/boot/zImage (or bzImage) to the directory
+	in which you normally store your boot kernels
+
+	if you are using lilo to boot your kernel, add an entry
+	pointing to the new kernel to /etc/lilo.conf and re-run
+	/sbin/lilo.
+
+	if you are using loadlin to boot linux, update your batch
+	file to use the new kernel image.
+
+5. If IDE tape support was compiled as a loadable kernel module,
+   use "rmmod ide-tape" to unload the current ide-tape module, if
+   loaded, and then "modprobe ide-tape" to load the driver.
+
+For additional information about installing kernel patches and
+recompiling your Linux kernels, please consult the Kernel-HOWTO
+document.
+
+3. Verifying that the new driver was installed correctly
+--------------------------------------------------------
+
+The new version of the IDE tape driver should detect your tape drive as:
+
+ide-tape: hdx <-> hty: OnStream DI-30 rev 1.05
+ide-tape: hdx <-> hty: 990KBps, 64*32kB buffer, 10208kB pipeline, 60ms tDSC, DMA
+
+where "x" depends on the IDE interface to which the tape drive is
+connected (for example, hdc is the first drive on the secondary IDE
+interface), and "y" depends on the number of IDE/ATAPI tape drives
+on your system.
+
+If the kernel patch was not installed correctly, earlier versions of
+the ide-tape driver will incorrectly detect the tape as:
+
+hdx <-> hty, 990KBps, 2048*1kB buffer, 100kB pipeline, 400ms tDSC, DMA
+
+with wrong block size and pipeline sizes.
+
+4. Special device files
+-----------------------
+
+Four special character device files are supported for each OnStream DI-30
+device which is attached to the system:
+
+/dev/htx, character device, major 37, minor x:
+
+	Linux tape API compliant device with a fixed 32KB logical
+	block size (auto rewind on device close).
+
+/dev/nhtx, character device, major 37, minor 128 + x:
+
+	Linux tape API compliant device with a fixed 32KB logical
+	block size (no rewind on device close).
+
+/dev/rhtx, character device, major 37, minor 64 + x:
+
+	Raw media access, 32.5KB (data + AUX) block size, rewinding.
+
+/dev/nrhtx, character device, major 37, minor 192 + x:
+
+	Raw media access, 32.5KB (data + AUX) block size, non rewinding.
+
+Backuping/Restoring using Linux tape applications is performed using
+/dev/(n)htx.
+
+The /dev/(n)htx devices should also be capable of reading/updating
+ADRL 1.1 compatible media written by other operating systems or
+OnStream devices, although this has not been tested.
+
+Since some existing OnStream drivers for other operating systems
+do not use the ADRL 1.1 logical format, raw access to the OnStream
+media is also provided through /dev/rhtx and /dev/nrhtx. This can
+facilitate writing user space applications which will be able to
+access/modify ADR media written by those applications.
+
+5. /dev/(n)htx tape API
+-----------------------
+
+/dev/htx and /dev/nhtx provide a generic Linux tape API compliant
+device with a fixed 32KB block size.
+
+5.1. Backup/Restore
+------------------
+
+Application access to the /dev/(n)htx devices has to be performed
+using a 32KB block size.
+
+The logical block size can be retrieved by the application automatically
+using the MTIOCGET ioctl.
+
+If a specific user space application is not retrieving the block size
+automatically, it has to be manually set to 32KB before accessing
+the tape.
+
+For example, a backup operation using tar can be performed using:
+
+	tar cvbf 64 /dev/nht0 /usr
+
+The "b 64" argument tells tar that the tape block size is 64 * 512 bytes,
+or 32KB.
+
+This backup can be restored using:
+
+	mt -f /dev/nht0 rewind
+	tar xvbf 64 /dev/nht0
+
+If the block size which is used is incorrect, the kernel will log
+a message similar to the following to the syslog:
+
+	ide-tape: ht1: use 32768 bytes as block size (10240 used)
+
+5.2. Filemark positioning
+-------------------------
+
+On tapes written under Linux, filemark positioning using "mt -f /dev/nht0
+fsf" and "mt -f /dev/nht0 bsf" is accelerated, and will use fast seek
+commands rather than searching for the filemarks sequentially.
+
+On generic ADRL 1.1 tapes, backward filemark spacing is accelerated,
+while forward file spacing will perform a linear search.
+
+5.3. Random positioning
+----------------------
+
+Fast random access positioning to a specific 32KB logical block is
+supported, and can be performed using:
+
+	mt -f /dev/nht0 seek block_number
+
+Note that the logical block number argument specifies the block number
+in 32KB units. So that, for example, if we want to seek to the logical
+block which contains tar record number x (tar records are 512 bytes each),
+we would use:
+
+	mt -f /dev/nht0 seek (x/64)
+
+The current logical block number can be retrieved using:
+
+	mt -f /dev/nht0 tell
+
+5.4. Error recovery
+-------------------
+
+An OnStream media may contain a small number of bad blocks.
+
+When a write error is detected when writing logical block x to one of
+those bad blocks, the driver is performing an error recovery procedure
+which is transparent to the user of the /dev/(n)htx API.
+
+The bad block is relocated and the data is rewritten to a good block
+automatically by the driver. When reading, the driver will automatically
+use the relocated place in which the data was stored, and return the good
+logical block x after block x - 1; that is, from the point of view of
+the user application, the write error never occurred.
+
+The tape firmware is using advanced error correction algorithm to
+minimize the occurance of a read error on a block which was previously
+written correctly. In case a read error does develop over time on
+a previously good position, the driver will return an error code
+to the user space application and skip the logical block which
+couldn't be retrieved. The user application can then continue to
+read past the error, and perform its own error recovery and data
+stream resynchronization.
+
+6. Performance optimization
+---------------------------
+
+The tape contains an internal 2MB buffer which is used in a feedback
+loop to regulate the tape speed as a function of the incoming data rate.
+
+The ide-tape driver is using an additional (10MB by default) pipeline
+to help the tape in achieving the best performance under various Linux
+system and source/target disk drive loads.
+
+Several speed regulation options are provided by the driver, including
+(the description below assumes a backup operation, but holds for a
+ restore operation as well):
+
+6.1. No driver speed regulation with no driver buffer:
+-----------------------------------------------------
+
+   In this case, the incoming application data rate is visible directly
+   on the tape input. This reduces the kernel memory usage by 10MB,
+   and allows the tape firmware to perform the speed regulation decisions
+   directly based on the unregulated application incoming data rate.
+
+   Activate this mode using:
+
+   echo "pipeline_min:64 pipeline:64 pipeline_max:64" > /proc/ide/hdx/settings
+   echo "speed_control:0" > /proc/ide/hdx/settings
+
+   (a very small 64KB driver pipeline is still required for the implementation
+    of the Linux tape API, but as it is so much smaller than the 2MB internal
+    tape buffer, the overall driver + tape firmware speed regulation behavior
+    is essentially "no driver buffer" behavior).
+
+6.2. No driver speed regulation, but with driver buffer:
+--------------------------------------------------------
+
+   In this mode, incoming data is accepted by the driver into the driver
+   pipeline whenever there is room for it, and taken out of the pipeline
+   into the tape as fast as possible.
+
+   As long as there is data in the kernel driver pipeline, the tape will
+   be running at the full 1MB/sec speed. If and when the driver pipeline
+   is empty, the data will be passed to the tape at the application incoming
+   data rate, and at this point speed control will be performed by the tape.
+   If and when the tape buffer will be empty (when the current incoming
+   application data rate is lower than the minimum 500KB/sec tape speed),
+   we will enter an hysteresis cycle in which we will wait for the pipeline
+   to be relatively full again before starting to service requests (to
+   decrease the tape start/stop - "shoeshining" - frequency).
+
+   Activate this mode using:
+
+   echo "speed_control:0" > /proc/ide/hdx/settings
+   echo "pipeline_min:10208 pipeline_max:10208" > /proc/ide/hdx/settings
+   echo "pipeline:10208" > /proc/ide/hdx/settings
+
+6.3. Driver maximum constant speed regulation:
+----------------------------------------------
+
+   This mode, which can be combined with or without a driver pipeline,
+   is similar to modes 6.2 or 6.1 respectively, except that the maximum
+   driver pipeline (equivalent to the internal tape buffer incoming
+   data rate) is limited to a user selected value in the tape variable
+   speed range (500KB/sec to 1100KB/sec).
+
+   Activate this mode with speed x KB/sec, 500 <= x <= 1100, using:
+
+   echo "speed_control:x" > /proc/ide/hdx/settings
+   echo "pipeline_min:10208 pipeline_max:10208" > /proc/ide/hdx/settings
+   echo "pipeline:10208" > /proc/ide/hdx/settings
+
+6.4. Driver variable speed regulation version 1 (default):
+----------------------------------------------------------
+
+   In this mode, the driver will measure the application average incoming
+   data rate into the driver pipeline, and use this measurement in a feedback
+   loop to control the maximum incoming data rate to the tape, s, (which is
+   the same as the driver pipeline draining rate) using the pipeline
+   fullness x, according to a piecewise linear function:
+
+         |-------------------------------------------------|
+   x:    empty                 half                     full
+   s:    500KB/sec         application_speed          1100KB/sec
+
+   x = 0 (empty):  s = 500KB/sec (min tape speed).
+   x = half:       s = incoming application data rate.
+   x = full:       s = 1100KB/sec (a bit higher than the maximum tape speed).
+   0 <= x <= half:    s = linear interpolation between 0 and half.
+   half <= x <= full: s = linear interpolation between half and full.
+
+   (and case the incoming application speed is lower than 500KB/sec, s
+    is computed according to the above equation and then raised to
+    500KB/sec, if lower).
+
+   Under this scheme, the driver is using negative feedback to attempt to
+   keep the pipeline in the half full position, with the tape speed equaling
+   the application speed. Temporary high application speed will increase the
+   buffer fullness and increase the tape speed, hence decreasing the buffer
+   fullness back to the middle point. Similarly, temporary low application
+   speed will lower the buffer fullness, decrease the tape speed, and hence
+   increase the buffer fullness back to the middle point.
+
+   Activate this mode using:
+
+   echo "speed_control:1" > /proc/ide/hdx/settings
+   echo "pipeline_min:10208 pipeline_max:10208" > /proc/ide/hdx/settings
+   echo "pipeline:10208" > /proc/ide/hdx/settings
+
+6.5. Driver variable speed regulation version 2:
+------------------------------------------------
+
+   This mode is similar to the previous mode, except that the equation
+   for calculating s is:
+
+         |-------------------------------------------------|
+   x:    empty                 half                     full
+   s:    0.75 * app_speed    app_speed          1.25 * app_speed
+
+   x = 0 (empty):  s = 0.75 * incoming application data rate.
+   x = full:       s = 1.25 * application data rate.
+   0 <= x <= full: s = linear interpolation between 0 and full (with
+                       application speed at the middle point).
+
+   (and in any case, s is raised to 500KB/sec if lower).
+
+   Activate this mode using:
+
+   echo "speed_control:2" > /proc/ide/hdx/settings
+   echo "pipeline_min:10208 pipeline_max:10208" > /proc/ide/hdx/settings
+   echo "pipeline:10208" > /proc/ide/hdx/settings
+
+6.6. Comparison of the various speed regulation algorithms
+-----------------------------------------------------------
+
+The various speed regulation algorithms are designed to work with the
+tape firmware to best utilize the OnStream variable tape speed feature
+under hard system load conditions. The algorithm goals are:
+
+1. Provide maximum backup performance.
+
+2. Reduce the "shoe-shining" effect as much as possible.
+
+   "shoe-shining" is describing the condition in which, while backuping
+   (similarly for restoring), the tape buffer is completely empty due to
+   (a) high system load and low incoming data rate and perhaps (b) unoptimal
+   decisions made by the driver and firmware.
+
+   In this case, the tape has no data to write to the media, and it is
+   forced to de-accelerate, come to a full stop, accelerate in the opposite
+   direction, stop, and come back to the original position which the data
+   was supposed to be written at if it had arrived in time.
+
+   This effect both slows down the current backup rate, and a large amount
+   of "shoe-shining" potentially affects tape/media lifetime by imposing
+   additional wear on a mechanical system.
+
+Although the driver and firmware can help the backup performance
+substantially, ultimately, it is important to remember that the incoming
+data rate plays a major role in the achieved backup performance.
+
+For example, if the host system is so powerful that the incoming data rate
+can always be higher than the maximum possible tape speed, the driver and
+firmware have a very easy job, and all the algorithms will produce one
+result - the tape running at its maximum speed all the time, and this speed
+limits the user space backup application. In that case, we might as well
+just eliminate the driver buffer and regain the 10MB of kernel memory for
+better use by other tasks, using option (6.1). Even if occasionally the
+input data rate will be slightly lower than the maximum rate, the 2MB
+internal tape buffer will easily be able to cope with that.
+
+Option (6.1) might also be chosen in the (rare but perhaps possible)
+case in which the driver speed control algorithms are actually disturbing
+the firmware speed regulation job rather than helping it, and the firmware
+is doing a better job by itself when sensing the application data rate
+directly. In that case, I would also appreciate getting an e-mail report,
+so that the driver algorithms could be improved to handle this case as
+well.
+
+Option (6.2) is the driver behavior on other IDE tape drives which
+don't support a variable speed rate. For this method to work well,
+the basic assumption is that on average, the system is able to keep
+up with the maximum tape speed. There might be "high load" periods
+in which the incoming data rate drops dramatically, but they are
+assumed to be short periods which the pipeline is able to overcome.
+During those short periods, the pipeline size would drop, perhaps
+substantially, but the tape will still be running at its maximum speed.
+Once such a "high load" period is over, though, it is assumed that
+the incoming data rate can be much higher than the maximum tape
+speed, and can refill the pipeline quickly before it gets empty.
+
+If those assumptions are true, this method has the potential to provide
+the best performance as it takes a large risk and drains the driver
+pipeline as fast as possible without taking any action even when it
+sees its size dropping fast -- it hopes that the system is powerful
+enough not to let the pipeline become empty.
+
+If the assumptions are wrong, though, when the driver pipeline gets
+empty, in an abrupt change the much slower real incoming data rate
+will be visible to the tape. The tape firmware will then have a chance
+to perform speed regulation, but it will only have 2MB of buffer to
+do this -- it won't get any early warning as with the next algorithms.
+
+Using option (6.3) with a driver pipeline and a good value for the
+speed setting in which the driver pipeline is not emptied, you can
+ensure that the tape will see a constant speed incoming data rate
+for most of the backup time. A constant speed operation implies low
+wear on mechanical systems, but also implies that we will likely
+pay with backup speed since there will likely be times in which the
+system could backup at a speed higher than our current setting if only
+we would have given it the chance.
+
+Another case in which option (6.3) can give the best result
+is the case in which the system is very slow and can't reach the
+lowest 500KB/sec tape speed. In that case, it is best to use (6.3)
+and set the speed to 500KB/sec with a sufficient pipeline, depending
+on the memory capability of the system. We will be working in
+an hysteresis cycle -- a tape stop is inevitable at some point,
+since the average incoming data rate is simply too low, but at
+least we can increase the time between tape stops (lower the
+"shoe-shining" frequency) by making the stop periods long, gather
+data meanwhile, and then, when the pipeline is full, supply all of
+it to the tape at its lowest possible rate. In this low performance
+case, any other algorithm can at best match the behavior of (6.3),
+as it can potentially give data to the tape at higher speeds at
+times, and therefore lose time in which it could have given the
+data slowly, and decrease the time between tape stops.
+
+Option (6.4) is the default option, and will probably give the
+best performance in most cases. Using this speed regulation algorithm,
+the driver will use its internal pipeline to dramatically reduce
+the speed variations which the tape sees relative to the application
+speed variation in the input to the driver pipeline.
+
+The driver will try to maintain its pipeline to be at the half-full
+position by linearly increasing/decreasing the tape speed if we are
+below/above the mark. For a constant speed input to the pipeline, we
+will converge to the half-full position in an exponential fashion,
+with the tape speed equal to the incoming application speed. For other
+non constant speed loads, we will pass the data to the tape in full
+speed if the pipeline is getting full (to minimize the application
+waiting time), in the minimum speed if it is empty (to minimize the
+shoe-shining effect), and in the average application speed if the
+pipeline is half full.
+
+Mathematically, if we use:
+
+ph(t)  - amount of data written to the driver's pipeline head from the
+         beginning of the backup.
+bh(t)  - amount of data written to the tape since the beginning of the
+         backup.
+psz(t) - current driver pipeline size.
+     
+And ph', bh' and psz' for the derivatives of the above functions,
+then we have the following equations:
+
+(1) ph = bh + psz ; (2) ph' = bh' + psz'
+
+And due to the speed regulation performed by the driver:
+
+For psz >= maxsz/2:
+(3)	bh' = ph' + (psz - maxsz/2) / maxsz/2 * (max_speed - ph')
+For psz <= maxsz/2:
+(4)	bh' = ph' + (psz - maxsz/2) / maxsz/2 * (ph' - min_speed)
+
+Using (2) and x = psz - maxsz/2, we get:
+
+(3)	x' = - (max_speed - ph') / maxsz/2 * x
+(4)     x' = - (ph' - min_speed) / maxsz/2 * x
+
+For ph' = const = s, the above differential equations reduce to
+first order linear equations, with solution of the type
+x = c1*exp(-c2t). Any "jump" in x from the mid-point position
+(such as a track turn around) will exponentially return to the x = 0
+(psz = maxsz/2) steady state.
+
+Option (6.5) is mostly like (6.4), except that the speed change
+rate is limited. We put more faith into the past average speed
+then in the current pipeline state. So that, for example, if suddenly
+the pipeline is filled very quickly, (6.4) will assume that the
+application went out of the "slow speed" phase, and will give it
+all the credit and boost the tape speed to the maximum relatively
+fast. (6.5), on the other hand, will take into account that shortly
+after the speed will fall again and raise the speed much slower
+than (6.4).
+
+6.7. IDE tape bus bandwidth sharing with another IDE device
+-----------------------------------------------------------
+
+An IDE/ATAPI tape device which shares the IDE bus with another
+IDE device can effectively "disconnect" from the bus while the
+tape is busy, allowing another IDE device which shares the same
+BUS to use it almost exclusively.
+
+On some ATAPI tape devices, the driver is performing the overlap
+using the "DSC overlap" protocol. On the OnStream tape drive,
+the disconnection mechanism is performed by monitoring the internal
+tape buffer fullness using ATAPI packet commands. When the internal
+tape buffer is full, a write to the tape will hold the IDE bus until
+a (slow) media access would create room in the buffer. When reading,
+access to the tape while its internal buffer is empty would similarly
+hold the bus. Care is therefore taken by the driver to usually
+arbitrate for the IDE bus and queue a request to the tape when the
+tape will be able to service it quickly at the (burst) interface
+speed, rather than requiring waiting for an actual media access.
+While the tape buffer is full/empty the tape is working in the
+background to drain/fill it without holding the bus, and another
+IDE device which is connected to the same cable can access the bus.
+
+7. Statistics and configuration using the /proc/hdx interface
+-------------------------------------------------------------
+
+Performing a:
+
+	cat /proc/ide/hdx/settings
+
+command during a backup/restore will display various driver
+settings/statistics.
+
+It can also be displayed very rapidly using:
+
+	while 1
+		tput cup 0 0
+		cat /proc/ide/hdx/settings
+	end
+
+this can provide a real-time feeling of the driver behavior).
+
+Some of the more interesting settings are displayed below:
+
+name                    value           min             max             mode
+----                    -----           ---             ---             ----
+
+avg_speed               1120            0               65535           r
+
+"avg_speed" is the current average measured tape speed, over the last second.
+
+buffer                  2048            0               32767           r
+------
+
+"buffer" is the tape internal buffer size in kilobytes, which is 2MB
+for the OnStream tape drive.
+
+cur_frames              53              0               65535           r
+max_frames              57              0               65535           r
+----------
+
+The tape internal buffer consists of "max_frames" units of "stage" (32KB)
+each. "cur_frames" indicates the current internal tape buffer fullness,
+in stages.
+
+The above statistics are updated while accessing the tape. When writing,
+for example, if "cur_frames" drops to 0, the tape will stop streaming
+due to lack of data. When reading, if "cur_frames" reaches "max_frames",
+the tape will also stop streaming due to lack of read requests from
+the host.
+
+When "dsc_overlap" is enabled, the driver will sleep for a while
+in the buffer full/buffer empty condition letting the buffer to be
+filled/emptied a bit before continuing writing/reading, effectively
+disconnecting from the IDE bus and allowing access to the other
+device on the same interface meanwhile.
+
+insert_speed            234             0               65535           r
+max_insert_speed        1100            0               65535           rw
+----------------
+
+insert_speed is the current speed in which data is written/read to/from
+the tape by the driver. The maximum value of insert_speed is controlled
+by the driver using the various speed regulation algorithms explained in
+section 6.
+
+io_32bit                0               0               3               rw
+--------
+
+When DMA is not used, 32-bit PIO transfers can be enabled using:
+
+	echo "io_32bit:1" > /proc/ide/hdx/settings
+
+pipeline                10208           64              2097120         rw
+pipeline_pending        10208           0               2097120         r
+pipeline_max            20416           64              2097120         rw
+pipeline_min            10208           64              2097120         rw
+-------------
+
+pipeline is the current maximum size of the internal IDE tape buffer,
+implemented in the driver software. pipeline_pending is the current
+pipeline fullness -- the amount of driver buffer containing pending
+write/read requests.
+
+This buffer is in effect added to the tape internal buffer and
+used to optimize performance using various speed regulation algorithms,
+as described in section 6.
+
+it is possible to change the driver pipeline size using:
+
+	echo "pipeline:value > /proc/ide/hdx/settings"
+	echo "pipeline_min:value pipeline_max:value" > /proc/ide/hdx/settings"
+
+
+speed                   990             0               65535           r
+-----
+
+"speed" is the reported tape speed in kilobytes/sec.
+
+speed_control           0               0               65535           rw
+-------------
+
+For the OnStream tape, speed_control selects the driver speed control
+algorithm, as described in section 6.
+
+dsc_overlap             1               0               1               rw
+-----------
+
+Although the OnStream tape drive is not using the DSC overlap protocol,
+a similar protocol is provided to allow efficient sharing of the IDE bus
+between the tape and another IDE device which shares the same interface.
+
+When DSC overlap is enabled, the driver will attempt to always stream
+data to the tape buffers at the interface speed, and "disconnect" from
+the IDE bus afterwards, performing the actual read/write media access
+in a background, while allowing access to the other device which shared
+the interface.
+
+DSC overlap can be enabled/disabled using:
+
+enabled:	echo "dsc_overlap:1" > /proc/ide/hdx/settings (default)
+disabled:	echo "dsc_overlap:0" > /proc/ide/hdx/settings
+
+unmaskirq               0               0               1               rw
+---------
+
+"unmaskirq" is a generic IDE driver feature, and allows other interrupt
+handlers to pre-empt the IDE driver interrupt handler. This can improve
+serial port latency and avoid dropped characters on systems which are
+not using DMA.
+
+using_dma               1               0               1               rw
+---------
+
+"using_dma" selects whether bus mastering DMA transfers will be used
+for reading/writing to the tape. DMA transfers reduce CPU overhead
+and improve interactive response while accessing the tape.
+
+stage                   32              0               63              r
+-----
+
+"stage" is the tape block size in kilobytes.
+
+tdsc                    50              50              1000            rw
+----
+
+"tdsc" is the "disconnection time" in milliseconds when encountering
+the above buffer full / buffer empty conditions. The amount of data
+which the tape can read/write during this time can be calculated based
+on the tape speed:
+
+	size = speed * tdsc
+
+8. Linux specific enhancements to the ADR logical tape format
+------------------------------------------------------------
+
+To speed the frequently used "mt fsf" forward filemark spacing
+command, the position of the first filemark in the tape is stored
+in the tape header, and each time a filemark is written, its address
+is noted in the previous filemark as well.
+
+When reading a media not written by Linux, the driver reverts
+to linearly searching the next filemark.
