@@ -24,7 +24,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.99.1";
+const char * osst_version = "0.99.2";
 
 /* The "failure to reconnect" firmware bug */
 #define OSST_FW_NEED_POLL_MIN 10601 /*(107A)*/
@@ -47,6 +47,7 @@ const char * osst_version = "0.99.1";
 #include <linux/spinlock.h>
 #include <linux/vmalloc.h>
 #include <linux/blkdev.h>
+#include <linux/moduleparam.h>
 #include <linux/devfs_fs_kernel.h>
 #include <asm/uaccess.h>
 #include <asm/dma.h>
@@ -82,13 +83,13 @@ MODULE_AUTHOR("Willem Riede");
 MODULE_DESCRIPTION("OnStream {DI-|FW-|SC-|USB}{30|50} Tape Driver");
 MODULE_LICENSE("GPL");
 
-MODULE_PARM(max_dev, "i");
+module_param(max_dev, int, 0444);
 MODULE_PARM_DESC(max_dev, "Maximum number of OnStream Tape Drives to attach (4)");
 
-MODULE_PARM(write_threshold_kbs, "i");
+module_param(write_threshold_kbs, int, 0644);
 MODULE_PARM_DESC(write_threshold_kbs, "Asynchronous write threshold (KB; 32)");
 
-MODULE_PARM(max_sg_segs, "i");
+module_param(max_sg_segs, int, 0644);
 MODULE_PARM_DESC(max_sg_segs, "Maximum number of scatter/gather segments to use (9)");
 #else
 static struct osst_dev_parm {
@@ -5419,62 +5420,149 @@ static	struct	osst_support_data support_list[] = {
 	return 0;
 }
 
-#ifdef CONFIG_SCSI_PROC_FS
 /*
- * /proc support for accessing ADR header information
+ * sysfs support for osst driver parameter information
  */
-static struct proc_dir_entry * osst_proc_dir = NULL;
-static char   osst_proc_dirname[] = "scsi/osst";
 
-static int osst_proc_read(char *page, char **start, off_t off, int count, int *eof, void *data)
+static ssize_t osst_version_show(struct device_driver *ddd, char *buf)
 {
-	int l = 0;
-	OS_Scsi_Tape * STp = (OS_Scsi_Tape *) data;
+	return snprintf(buf, PAGE_SIZE, "%s\n", osst_version);
+}
 
-	if (!osst_proc_dir) return 0;
+static DRIVER_ATTR(version, S_IRUGO, osst_version_show, NULL);
 
-	if (STp->header_ok && STp->linux_media)
-		l = sprintf(page, "%d.%d LIN%d %8d %8d %8d \n",
-				  STp->header_cache->major_rev,
-				  STp->header_cache->minor_rev,
-				  STp->linux_media_version,
-				  STp->first_data_ppos,
-				  STp->eod_frame_ppos,
-				  STp->filemark_cnt );
+static void osst_create_driverfs_files(struct device_driver *driverfs)
+{
+	driver_create_file(driverfs, &driver_attr_version);
+}
+
+static void osst_remove_driverfs_files(struct device_driver *driverfs)
+{
+	driver_remove_file(driverfs, &driver_attr_version);
+}
+
+/*
+ * sysfs support for accessing ADR header information
+ */
+
+static ssize_t osst_adr_rev_show(struct class_device *class_dev, char *buf)
+{
+	OS_Scsi_Tape * STp = (OS_Scsi_Tape *) class_get_devdata (class_dev);
+	ssize_t l = 0;
+
+	if (STp && STp->header_ok && STp->linux_media)
+		l = snprintf(buf, PAGE_SIZE, "%d.%d\n", STp->header_cache->major_rev, STp->header_cache->minor_rev);
 	return l;
 }
 
-static void osst_proc_init(void)
+CLASS_DEVICE_ATTR(ADR_rev, S_IRUGO, osst_adr_rev_show, NULL);
+
+static ssize_t osst_linux_media_version_show(struct class_device *class_dev, char *buf)
 {
-	osst_proc_dir = create_proc_entry(osst_proc_dirname, S_IFDIR | S_IRUGO | S_IXUGO, NULL);
-	osst_proc_dir->owner = THIS_MODULE;
+	OS_Scsi_Tape * STp = (OS_Scsi_Tape *) class_get_devdata (class_dev);
+	ssize_t l = 0;
+
+	if (STp && STp->header_ok && STp->linux_media)
+		l = snprintf(buf, PAGE_SIZE, "LIN%d\n", STp->linux_media_version);
+	return l;
 }
 
-static void osst_proc_create(OS_Scsi_Tape * STp, char * name)
+CLASS_DEVICE_ATTR(media_version, S_IRUGO, osst_linux_media_version_show, NULL);
+
+static ssize_t osst_capacity_show(struct class_device *class_dev, char *buf)
 {
-	struct proc_dir_entry * p_entry;
+	OS_Scsi_Tape * STp = (OS_Scsi_Tape *) class_get_devdata (class_dev);
+	ssize_t l = 0;
 
-	if (!osst_proc_dir) return;
-
-	p_entry = create_proc_read_entry(name, 0444, osst_proc_dir, osst_proc_read, (void *) STp);
-	p_entry->owner = THIS_MODULE;
+	if (STp && STp->header_ok && STp->linux_media)
+		l = snprintf(buf, PAGE_SIZE, "%d\n", STp->capacity);
+	return l;
 }
 
-static void osst_proc_destroy(char * name)
-{
-	if (!osst_proc_dir) return; 
+CLASS_DEVICE_ATTR(capacity, S_IRUGO, osst_capacity_show, NULL);
 
-	remove_proc_entry(name, osst_proc_dir);
+static ssize_t osst_first_data_ppos_show(struct class_device *class_dev, char *buf)
+{
+	OS_Scsi_Tape * STp = (OS_Scsi_Tape *) class_get_devdata (class_dev);
+	ssize_t l = 0;
+
+	if (STp && STp->header_ok && STp->linux_media)
+		l = snprintf(buf, PAGE_SIZE, "%d\n", STp->first_data_ppos);
+	return l;
 }
 
-static void osst_proc_cleanup(void)
-{
-	if (!osst_proc_dir) return;
+CLASS_DEVICE_ATTR(BOT_frame, S_IRUGO, osst_first_data_ppos_show, NULL);
 
-	remove_proc_entry(osst_proc_dirname, NULL);
-	osst_proc_dir = NULL;
+static ssize_t osst_eod_frame_ppos_show(struct class_device *class_dev, char *buf)
+{
+	OS_Scsi_Tape * STp = (OS_Scsi_Tape *) class_get_devdata (class_dev);
+	ssize_t l = 0;
+
+	if (STp && STp->header_ok && STp->linux_media)
+		l = snprintf(buf, PAGE_SIZE, "%d\n", STp->eod_frame_ppos);
+	return l;
 }
-#endif
+
+CLASS_DEVICE_ATTR(EOD_frame, S_IRUGO, osst_eod_frame_ppos_show, NULL);
+
+static ssize_t osst_filemark_cnt_show(struct class_device *class_dev, char *buf)
+{
+	OS_Scsi_Tape * STp = (OS_Scsi_Tape *) class_get_devdata (class_dev);
+	ssize_t l = 0;
+
+	if (STp && STp->header_ok && STp->linux_media)
+		l = snprintf(buf, PAGE_SIZE, "%d\n", STp->filemark_cnt);
+	return l;
+}
+
+CLASS_DEVICE_ATTR(file_count, S_IRUGO, osst_filemark_cnt_show, NULL);
+
+static struct class osst_sysfs_class = {
+	.name		= "osst",
+//	.hotplug	= tbd,
+//	.release	= tbd,
+};
+
+static int osst_sysfs_valid = 0;
+
+static void osst_sysfs_init(void)
+{
+	if (class_register(&osst_sysfs_class))
+		printk(KERN_WARNING "osst :W: Unable to register sysfs class\n");
+	else
+		osst_sysfs_valid = TRUE;
+}
+
+static void osst_sysfs_create(dev_t dev, struct device *device, OS_Scsi_Tape * STp, char * name)
+{
+	struct class_device *osst_class_member;
+
+	if (!osst_sysfs_valid) return;
+
+	osst_class_member = simple_add_class_device(&osst_sysfs_class, dev, device, "%s", name);
+	class_set_devdata(osst_class_member, STp);
+	class_device_create_file(osst_class_member, &class_device_attr_ADR_rev);
+	class_device_create_file(osst_class_member, &class_device_attr_media_version);
+	class_device_create_file(osst_class_member, &class_device_attr_capacity);
+	class_device_create_file(osst_class_member, &class_device_attr_BOT_frame);
+	class_device_create_file(osst_class_member, &class_device_attr_EOD_frame);
+	class_device_create_file(osst_class_member, &class_device_attr_file_count);
+}
+
+static void osst_sysfs_destroy(dev_t dev)
+{
+	if (!osst_sysfs_valid) return; 
+
+	simple_remove_class_device(dev);
+}
+
+static void osst_sysfs_cleanup(void)
+{
+	if (osst_sysfs_valid) {
+		class_unregister(&osst_sysfs_class);
+		osst_sysfs_valid = 0;
+	}
+}
 
 /*
  * osst startup / cleanup code
@@ -5630,9 +5718,8 @@ static int osst_probe(struct device *dev)
 	}
 	drive->number = devfs_register_tape(SDp->devfs_name);
 
-#ifdef CONFIG_SCSI_PROC_FS
-	osst_proc_create(tpnt, tape_name(tpnt));
-#endif
+	osst_sysfs_create(MKDEV(OSST_MAJOR, dev_num), dev, tpnt, tape_name(tpnt));
+
 	printk(KERN_INFO
 		"osst :I: Attached OnStream %.5s tape at scsi%d, channel %d, id %d, lun %d as %s\n",
 		SDp->model, SDp->host->host_no, SDp->channel, SDp->id, SDp->lun, tape_name(tpnt));
@@ -5656,9 +5743,7 @@ static int osst_remove(struct device *dev)
 	write_lock(&os_scsi_tapes_lock);
 	for(i=0; i < osst_max_dev; i++) {
 		if((tpnt = os_scsi_tapes[i]) && (tpnt->device == SDp)) {
-#ifdef CONFIG_SCSI_PROC_FS
-			osst_proc_destroy(tape_name(tpnt));
-#endif
+			osst_sysfs_destroy(MKDEV(OSST_MAJOR, i));
 			tpnt->device = NULL;
 			for (mode = 0; mode < ST_NBR_MODES; ++mode) {
 				devfs_remove("%s/ot%s", SDp->devfs_name, osst_formats[mode]);
@@ -5687,14 +5772,14 @@ static int __init init_osst(void)
 	printk(KERN_INFO "osst :I: Tape driver with OnStream support version %s\nosst :I: %s\n", osst_version, cvsid);
 
 	validate_options();
+	osst_sysfs_init();
 
-#ifdef CONFIG_SCSI_PROC_FS
-	osst_proc_init();
-#endif
 	if ((register_chrdev(OSST_MAJOR,"osst", &osst_fops) < 0) || scsi_register_driver(&osst_template.gendrv)) {
 		printk(KERN_ERR "osst :E: Unable to register major %d for OnStream tapes\n", OSST_MAJOR);
+		osst_sysfs_cleanup();
 		return 1;
 	}
+	osst_create_driverfs_files(&osst_template.gendrv);
 
 	return 0;
 }
@@ -5704,12 +5789,11 @@ static void __exit exit_osst (void)
 	int i;
 	OS_Scsi_Tape * STp;
 
+	osst_remove_driverfs_files(&osst_template.gendrv);
 	scsi_unregister_driver(&osst_template.gendrv);
 	unregister_chrdev(OSST_MAJOR, "osst");
+	osst_sysfs_cleanup();
 
-#ifdef CONFIG_SCSI_PROC_FS
-	osst_proc_cleanup();
-#endif
 	if (os_scsi_tapes) {
 		for (i=0; i < osst_max_dev; ++i) {
 			if (!(STp = os_scsi_tapes[i])) continue;
