@@ -20,14 +20,15 @@ Linux.</EM><Br>
 Compile your kernel with support for <TT>ide-scsi
 (CONFIG_BLK_DEV_IDESCSI)</TT> and <TT>osst (CONFIG_CHR_DEV_OSST)</TT>.
 Depending on where your OnStream DI-30 is on the IDE busses, pass<TT><Pre>
-hdX=scsi
+ hdX=scsi
 </Pre></TT> to the kernel as boot parameter, where <TT>X</TT> is<UL>
 <LI><TT>a</TT> for primary IDE channel, master</LI>
 <LI><TT>b</TT> for primary IDE channel, slave</LI>
 <LI><TT>c</TT> for secondary IDE channel, master</LI>
 <LI>...</LI>
 </UL>.
-On a modular setup, you will have to use <TT>hdX=ide-scsi</TT> instead.<Br>
+If you have compiled the ide-scsi driver as module, you will have to use
+<TT>hdX=ide-scsi</TT> instead.<Br>
 Passing boot options is being done via your boot loader; in case you use
 LILO, you can enter it at the boot prompt after the name to boot (e.g. <TT>
 Linux hdc=scsi</TT>), or you may add it to your <TT>/etc/lilo.conf</TT>
