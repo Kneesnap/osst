@@ -121,9 +121,16 @@ block size of 32k.</DD>
 <DT>2001-01-03: (osst 0.8.9)</DT>
 <DD>Preceed locate(3000) with locate(0) because some drives go AWOL when they mistakenly
 detect BOT during such a locate.</DD>
+<DT>2001-01-25: (osst 0.8.10 / 0.9.5)</DT>
+<DD>Osst 0.9.5 is for the released kernel 2.4.0. It has now caught up with the version for the
+2.2.x kernels and implements blocksizes less than 32k. The locate(0) above should not have been
+applied during write error recovery - corrected. Some log output has been rationalized.
+Note that recent official kernel trees do now include osst and to upgrade them to these
+versions all you need to do is copy the new osst.c and osst.h into /usr/src/linux/drivers/scsi
+and re-run 'make modules modules_install'.</DD>
 </DL></P>
 
-<H3>Known problems as of <B>0.8.6.1</B></H3>
+<H3>Known problems as of <B>0.8.10 / 0.9.5</B></H3>
 <UL>
 <LI>Currently none.</LI>
 </UL>
@@ -164,7 +171,7 @@ There are several possibilities to get the <TT>osst</TT>-driver. For your
 convenience, the archives also contain Terry's userspace driver <TT>osg</TT> 
 and some tools.
 <OL>
-<LI>(recommended) Get the very latest <A HRef="onstream-20010103.tar.gz">sources</A>, unpack
+<LI>(recommended) Get the very latest <A HRef="onstream-20010125.tar.gz">sources</A>, unpack
 them (<TT>tar xvzf onstream-200*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux source
 tree (apply patch osst-22.diff resp. osst-24.diff first) installed in
