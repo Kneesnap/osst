@@ -115,7 +115,8 @@
 /* The "failure to reconnect" firmware bug */
 #define OS_NEED_POLL_MIN 10602 /*(107A)*/
 #define OS_NEED_POLL_MAX 10708 /*(108D)*/
-#define OS_NEED_POLL(x) ((x) >= OS_NEED_POLL_MIN && (x) <= OS_NEED_POLL_MAX)
+//#define OS_NEED_POLL(x) ((x) >= OS_NEED_POLL_MIN && (x) <= OS_NEED_POLL_MAX)
+#define OS_NEED_POLL(x) (0)
 
 #include <stdio.h>
 #include <stdlib.h>
