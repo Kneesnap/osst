@@ -164,9 +164,11 @@ Brave souls with FW-30 drives can try it out at their own risk. Reports welcome.
 Be sure to first update your ieee1394 drivers from <A HRef="http://vore.debian.org/linux1394/" >debian</A>.
 Fixes old Buslogic bug. Files shorter than one 32K frame now get written out.
 Osst now supports a proc file for each drive (/proc/scsi/osst/osstX) which provides
-'ADRversion_major.minor linux_media_version first_data_ppos eod_frame_ppos filemrk_cnt'.
-Because of its experimental status the source is only available from this
-<A HRef="onstream-20020518.tar.gz">link</A>.</DD>
+'ADRversion_major.minor linux_media_version first_data_ppos eod_frame_ppos filemrk_cnt'.</DD>
+<DT>2002-12-12: (osst 0.9.12)</DT>
+<DD>Fix a memory alloc/free mismatch that could have made your kernel unstable after rmmod osst.
+Fix a number of tape (re)positioning bugs around filemarks that affected Amanda, Arkeia and Storix
+backup software. Rationalize module parameters.
 </DL></P>
 
 <A Name="problems">
@@ -217,7 +219,7 @@ and some tools.
 <OL>
 <LI>If you're lucky, your distributor has a kernel with a recent version of
 the osst driver. Just use it ;-)
-<LI>(recommended) Get the very latest <A HRef="onstream-20011111.tar.gz">sources</A>, unpack
+<LI>(recommended) Get the very latest <A HRef="onstream-20021212.tar.gz">sources</A>, unpack
 them (<TT>tar xvzf onstream-200*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux
 source tree installed in <TT>/usr/src/linux/</TT>. 
