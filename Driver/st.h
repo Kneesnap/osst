@@ -137,6 +137,7 @@ typedef struct {
   int      last_mark_addr;
   int      first_data_addr;
   int      eod_frame_addr;
+  int      write_type;				/* used in write error recovery */
   unsigned long cmd_start_time;
   unsigned long max_cmd_time;
 
@@ -150,6 +151,14 @@ typedef struct {
 } Scsi_Tape;
 
 extern Scsi_Tape * scsi_tapes;
+
+/* Values of write_type */
+#define OS_WRITE_DATA      0
+#define OS_WRITE_EOD       1
+#define OS_WRITE_NEW_MARK  2
+#define OS_WRITE_LAST_MARK 3
+#define OS_WRITE_HEADER    4
+#define OS_WRITE_FILLER    5
 
 /* Values of eof */
 #define	ST_NOEOF	0
