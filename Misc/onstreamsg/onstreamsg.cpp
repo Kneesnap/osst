@@ -370,7 +370,8 @@ void WaitForReady(OnStream* , bool = false);
 
 void Debug(const int nDebugLevel, const char *format, ...);
 
-void cpAndSwap(void *dest, void *source, unsigned int width) {
+void cpAndSwap(void *dest, void *source, unsigned int width) 
+{
 	unsigned int destPos = 0;
 	unsigned int sourcePos = width - 1;
 
@@ -386,7 +387,8 @@ void cpAndSwap(void *dest, void *source, unsigned int width) {
 	}
 }
 
-void FormatAuxFrame(struct AUX_FRAME AuxFrame, unsigned char* FAuxFrame) {
+void FormatAuxFrame(struct AUX_FRAME AuxFrame, unsigned char* FAuxFrame) 
+{
 	unsigned int counter;
 
 	memset(FAuxFrame, 0, 512);
@@ -422,9 +424,10 @@ void unFormatAuxFrame(unsigned char* FAuxFrame, struct AUX_FRAME *AuxFrame) {
 	unsigned int counter;
 
 	memset(AuxFrame, 0, sizeof(AuxFrame));
-	if (FAuxFrame[0] != '\0' || FAuxFrame[1] != '\0' || FAuxFrame[2] != '\0' || FAuxFrame[3] != '\0') {
+	if (FAuxFrame[0] != '\0' || FAuxFrame[1] != '\0' || FAuxFrame[2] != '\0' 
+	 || FAuxFrame[3] != '\0')
 		return;
-	}
+
 	memcpy(&AuxFrame->ApplicationSig, &FAuxFrame[4], 4);
 	cpAndSwap(&AuxFrame->UpdateFrameCounter, &FAuxFrame[12], 4);
 	cpAndSwap(&AuxFrame->FrameType, &FAuxFrame[16], 2);
@@ -447,7 +450,8 @@ void unFormatAuxFrame(unsigned char* FAuxFrame, struct AUX_FRAME *AuxFrame) {
 	memcpy(AuxFrame->DriverUnique, &FAuxFrame[224], 32);
 }
 
-OnStream::OnStream() {
+OnStream::OnStream() 
+{
 	cbCommandBuffer = 0;
 	pCommandBuffer  = NULL;
 	cbResultBuffer  = 0;
@@ -463,7 +467,8 @@ OnStream::OnStream() {
 
 }
 
-OnStream::OnStream(const char* szDevice) {
+OnStream::OnStream(const char* szDevice) 
+{
 	cbCommandBuffer = 0;
 	pCommandBuffer  = NULL;
 	cbResultBuffer  = 0;
@@ -481,26 +486,28 @@ OnStream::OnStream(const char* szDevice) {
 	}
 }
 
-OnStream::~OnStream() {
-	if (NULL != pCommandBuffer) {
+OnStream::~OnStream() 
+{
+	if (NULL != pCommandBuffer)
 		free(pCommandBuffer);
-	}
-	if (NULL != pResultBuffer) {
+
+	if (NULL != pResultBuffer)
 		free(pResultBuffer);
-	}
-	if (NULL != pTempBuffer) {
+
+	if (NULL != pTempBuffer)
 		free(pTempBuffer);
-	}
-	if (-1 != nFD) {
+
+	if (-1 != nFD)
 		CloseDevice();
-	}
 }
 
-inline UINT32 OnStream::FWRev(void) {
+inline UINT32 OnStream::FWRev(void) 
+{
 	return Firmware;
 }
 
-void OnStream::NeedCommandBytes(ssize_t nBytes) {
+void OnStream::NeedCommandBytes(ssize_t nBytes) 
+{
 	void* pTemp;
 
 	if (cbCommandBuffer != nBytes) {
@@ -509,16 +516,17 @@ void OnStream::NeedCommandBytes(ssize_t nBytes) {
 			Debug(0, "OnStream::NeedCommandBytes: fatal: realloc() returned NULL\n");
 			abort();
 		}
-		if (nBytes > 0) {
+		if (nBytes > 0)
 			pCommandBuffer = (UINT8*) pTemp;
-		} else {
+		else
 			pCommandBuffer = NULL;
-		}
+		
 		cbCommandBuffer = nBytes;
 	}
 }
 
-void OnStream::NeedResultBytes(ssize_t nBytes) {
+void OnStream::NeedResultBytes(ssize_t nBytes) 
+{
 	void* pTemp;
 
 	if (cbResultBuffer != nBytes) {
@@ -527,16 +535,17 @@ void OnStream::NeedResultBytes(ssize_t nBytes) {
 			Debug(0, "OnStream::NeedResultBytes: fatal: realloc() returned NULL\n");
 			abort();
 		}
-		if (nBytes > 0) {
+		if (nBytes > 0)
 			pResultBuffer = (UINT8*) pTemp;
-		} else {
+		else
 			pResultBuffer = NULL;
-		}
+
 		cbResultBuffer = nBytes;
 	}
 }
 
-void OnStream::NeedTempBytes(ssize_t nBytes) {
+void OnStream::NeedTempBytes(ssize_t nBytes) 
+{
 	void* pTemp;
 
 	if (cbTempBuffer != nBytes) {
@@ -545,44 +554,51 @@ void OnStream::NeedTempBytes(ssize_t nBytes) {
 			Debug(0, "OnStream::NeedTempBytes: fatal: realloc() returned NULL\n");
 			abort();
 		}
-		if (nBytes > 0) {
+		if (nBytes > 0)
 			pTempBuffer = (UINT8*) pTemp;
-		} else {
+		else
 			pTempBuffer = NULL;
-		}
+
 		cbTempBuffer = nBytes;
 	}
 }
 
-UINT8 OnStream::SenseKey(void) {
+UINT8 OnStream::SenseKey(void) 
+{
 	return SG.sense_buffer[2] & 0x0F;
 }
 
-UINT8 OnStream::ASC(void) {
+UINT8 OnStream::ASC(void) 
+{
 	return SG.sense_buffer[12];
 }
 
-UINT8 OnStream::ASCQ(void) {
+UINT8 OnStream::ASCQ(void) 
+{
 	return SG.sense_buffer[13];
 }
 
-OnStreamError OnStream::GetLastError(void) {
+OnStreamError OnStream::GetLastError(void) 
+{
 	return LastError;
 }
 
-bool OnStream::OpenDevice(const char* szDeviceName) {
+bool OnStream::OpenDevice(const char* szDeviceName) 
+{
 	nFD = open(szDeviceName, O_RDWR);
 	return (-1 != nFD);
 }
 
-bool OnStream::CloseDevice(void) {
-	if (-1 != nFD) {
+bool OnStream::CloseDevice(void) 
+{
+	if (-1 != nFD)
 		close(nFD);
-	}
+
 	return true;
 }
 
-bool OnStream::StartRead(void) {
+bool OnStream::StartRead(void) 
+{
 	NeedCommandBytes(6);
 	NeedResultBytes(0);
 
@@ -596,7 +612,8 @@ bool OnStream::StartRead(void) {
 	return SCSICommand();
 }
 
-bool OnStream::StartWrite(void) {
+bool OnStream::StartWrite(void) 
+{
 	NeedCommandBytes(6);
 	NeedResultBytes(0);
 
@@ -633,7 +650,8 @@ UINT32 OnStream::ParseFirmwareRev (const char * str)
 	return rev;
 }
 
-bool OnStream::IsOnstream(void) {
+bool OnStream::IsOnstream(void) 
+{
 	NeedCommandBytes(6);
 	NeedResultBytes(36);
 
@@ -644,9 +662,9 @@ bool OnStream::IsOnstream(void) {
 	pCommandBuffer[4] = 0x24;
 	pCommandBuffer[5] = 0x00;
 
-	if (false == SCSICommand()) {
+	if (false == SCSICommand())
 		return false;
-	}
+
 	if ((pResultBuffer[0] & 0x1F) != 0x01) {
 		Debug(0, "Device is not a tape drive\n");
 		return false;
@@ -680,7 +698,8 @@ bool OnStream::IsOnstream(void) {
 	return true;
 }
 
-bool OnStream::Read(void* pBuffer) {
+bool OnStream::Read(void* pBuffer) 
+{
 	NeedCommandBytes(6);
 	NeedResultBytes(33280);
 
@@ -691,18 +710,20 @@ bool OnStream::Read(void* pBuffer) {
 	pCommandBuffer[4] = 0x01; // Transfer length, 7-0
 	pCommandBuffer[5] = 0x00; // reserved
 
-	if (false == SCSICommand()) {
+	if (false == SCSICommand())
 		return false;
-	}
+
 	memmove(pBuffer, pResultBuffer, 33280);
 	return true;
 }
 
-void OnStream::GetLastSense(void *sense) {
+void OnStream::GetLastSense(void *sense) 
+{
 	memcpy(sense, pLastSense, 16);
 }
 
-bool OnStream::RequestSense(void *sense) {
+bool OnStream::RequestSense(void *sense) 
+{
 	NeedCommandBytes(6);
 	NeedResultBytes(16);
 
@@ -713,14 +734,15 @@ bool OnStream::RequestSense(void *sense) {
 	pCommandBuffer[4] = 0x10; // Allocation length
 	pCommandBuffer[5] = 0x00; // reserved
 
-	if (false == SCSICommand()) {
+	if (false == SCSICommand())
 		return false;
-	}
+
 	memmove(sense, pResultBuffer, 16);
 	return true;
 }
 
-bool OnStream::DeleteBuffer(unsigned int number) {
+bool OnStream::DeleteBuffer(unsigned int number) 
+{
 	NeedCommandBytes(14);
 	NeedResultBytes(0);
 
@@ -742,7 +764,8 @@ bool OnStream::DeleteBuffer(unsigned int number) {
 	return SCSICommand();
 }
 
-bool OnStream::ModeSense(void *sense) {
+bool OnStream::ModeSense(void *sense)
+ {
 	NeedCommandBytes(6);
 	NeedResultBytes(32768);
 
@@ -752,14 +775,15 @@ bool OnStream::ModeSense(void *sense) {
 	*((UINT32*) &pCommandBuffer[3]) = htonl(32768); // Allocation length (bytes 3 and 4)
 	pCommandBuffer[5] = 0x00; // Reserved
 
-	if (false == SCSICommand(30, 0)) {
+	if (false == SCSICommand(30, 0))
 		return false;
-	}
+
 	memmove(sense, pResultBuffer, 32768);
 	return true;
 }
 
-bool OnStream::GetTapeParameters(unsigned char result[22]) {
+bool OnStream::GetTapeParameters(unsigned char result[22]) 
+{
 	NeedCommandBytes(6);
 	NeedResultBytes(22);
 
@@ -770,14 +794,15 @@ bool OnStream::GetTapeParameters(unsigned char result[22]) {
 	pCommandBuffer[4] = 0x16; // Allocation length (bytes 3 and 4)
 	pCommandBuffer[5] = 0x00; // Reserved
 
-	if (false == SCSICommand(30, 0)) {
+	if (false == SCSICommand(30, 0))
 		return false;
-	}
+
 	memmove(result, pResultBuffer, 16);
 	return true;
 }
 
-bool OnStream::BufferStatus(unsigned int *max, unsigned int *current) {
+bool OnStream::BufferStatus(unsigned int *max, unsigned int *current) 
+{
 	NeedCommandBytes(6);
 	NeedResultBytes(8);
 
@@ -789,9 +814,9 @@ bool OnStream::BufferStatus(unsigned int *max, unsigned int *current) {
 	pCommandBuffer[5] = 0x00; // Reserved
 
 	Debug(8, "Sending Buffer Status\n");
-	if (false == SCSICommand(30, 0)) {
+	if (false == SCSICommand(30, 0))
 		return false;
-	}
+
 	if (debug > 5) {
 		int counter;
 		for (counter = 0; counter < 8; counter++) {
@@ -844,7 +869,8 @@ void OnStream::Drain ()
 	free (buf);
 }
  
-bool OnStream::VendorID(char ID[4]) {
+bool OnStream::VendorID(char ID[4]) 
+{
 	NeedCommandBytes(18);
 	NeedResultBytes(0);
 
@@ -866,7 +892,8 @@ bool OnStream::VendorID(char ID[4]) {
 	return SCSICommand();
 }
 
-bool OnStream::DataTransferMode(bool Aux) {
+bool OnStream::DataTransferMode(bool Aux) 
+{
 	NeedCommandBytes(18);
 	NeedResultBytes(0);
 
@@ -883,16 +910,16 @@ bool OnStream::DataTransferMode(bool Aux) {
 	pCommandBuffer[10] = 0xB0; // 7: PS 6: reserved 5-0: Page code (30 Data Transfer Mode)
 	pCommandBuffer[11] = 0x02; // ??
 	pCommandBuffer[12] = 0x00; // reserved
-	if (Aux) {
+	if (Aux)
 		pCommandBuffer[13] = 0xA2; // 7: Streaming mode 6: reserved 5: 32.5k record 4: 32k record 3-2: reserved 1: 32.5k playback 0: 32k playback
-	} else {
+	else
 		pCommandBuffer[13] = 0x91; // 7: Streaming mode 6: reserved 5: 32.5k record 4: 32k record 3-2: reserved 1: 32.5k playback 0: 32k playback
-	}
 
 	return SCSICommand();
 }
 
-bool OnStream::ReadPosition(void) {
+bool OnStream::ReadPosition(void) 
+{
 	NeedCommandBytes(10);
 	NeedResultBytes(20);
 
@@ -910,10 +937,10 @@ bool OnStream::ReadPosition(void) {
 	return SCSICommand();
 }
 
-bool OnStream::Write(void* pBuffer, unsigned int len) {
-	if (len != 32768 && len != 33280 && len != 0) {
+bool OnStream::Write(void* pBuffer, unsigned int len) 
+{
+	if (len != 32768 && len != 33280 && len != 0)
 		return false;
-	}
 	
 	NeedCommandBytes(6 + len);
 	NeedResultBytes(0);
@@ -922,22 +949,23 @@ bool OnStream::Write(void* pBuffer, unsigned int len) {
 	pCommandBuffer[1] = 0x01; // 7-1: reserved; 0: Fixed
 	pCommandBuffer[2] = 0x00; // Number of blocks in this write
 	pCommandBuffer[3] = 0x00; // Number of blocks in this write
-	if (len > 0) {
+	if (len > 0)
 		pCommandBuffer[4] = 0x01; // Number of blocks in this write
-	} else {
+	else
 		pCommandBuffer[4] = 0x00; // Number of blocks in this write
-	}
+
 	pCommandBuffer[5] = 0x00; // reserved;
-	if (pBuffer != NULL) {
+	if (pBuffer != NULL)
 		memmove(&pCommandBuffer[6], pBuffer, len);
-	}
 
 	return SCSICommand();
 }
 
-bool OnStream::Locate(UINT32 nLogicalBlock, bool write = false) {
+bool OnStream::Locate(UINT32 nLogicalBlock, bool write) 
+{
 	if (write) {
-		if (!Flush()) return false;
+		if (!Flush()) 
+			return false;
 		WaitForReady(this);
 	}
 	NeedCommandBytes(10);
@@ -955,9 +983,12 @@ bool OnStream::Locate(UINT32 nLogicalBlock, bool write = false) {
 }
 
 /* This is the new (1.06) way of recovering write errors */
-UINT32 OnStream::SkipLocate(UINT32 skip) {
-	if (Firmware < 10600) return 0;
-	if (!ReadPosition()) return 0;
+UINT32 OnStream::SkipLocate(UINT32 skip) 
+{
+	if (Firmware < 10600) 
+		return 0;
+	if (!ReadPosition()) 
+		return 0;
 	UINT32 first = ntohl (*((UINT32*) &pResultBuffer[4]));
 	UINT32 last  = ntohl (*((UINT32*) &pResultBuffer[8]));
 	UINT32 nLogicalBlock = last + skip;
@@ -975,16 +1006,19 @@ UINT32 OnStream::SkipLocate(UINT32 skip) {
 	pCommandBuffer[8] = 0x00; // reserved;
 	pCommandBuffer[9] = 0x80; // SKIP: Don't throw away buffers
 
-	if (!SCSICommand()) return 0;
+	if (!SCSICommand()) 
+		return 0;
 	/* With the skip, it seems, we don't need to restart writing */
 	/* StartWrite(); */
-	if (!ReadPosition()) return 0;
+	if (!ReadPosition()) 
+		return 0;
 	first = ntohl (*((UINT32*) &pResultBuffer[4]));
 	last  = ntohl (*((UINT32*) &pResultBuffer[8]));
 	return first;
 }
 
-bool OnStream::Rewind(void) {
+bool OnStream::Rewind(void) 
+{
 	NeedCommandBytes(6);
 	NeedResultBytes(0);
 
@@ -1000,7 +1034,8 @@ bool OnStream::Rewind(void) {
 
 
 /* Flush is done by writefilemarks (!) */
-bool OnStream::Flush(void) {
+bool OnStream::Flush(void) 
+{
 	NeedCommandBytes(6);
 	NeedResultBytes(0);
 
@@ -1014,7 +1049,8 @@ bool OnStream::Flush(void) {
 	return SCSICommand();
 }
 
-bool OnStream::LURewind(void) {
+bool OnStream::LURewind(void) 
+{
 	NeedCommandBytes(6);
 	NeedResultBytes(0);
 
@@ -1028,7 +1064,8 @@ bool OnStream::LURewind(void) {
 	return SCSICommand();
 }
 
-bool OnStream::LULoad(void) {
+bool OnStream::LULoad(void) 
+{
 	NeedCommandBytes(6);
 	NeedResultBytes(0);
 
@@ -1042,7 +1079,8 @@ bool OnStream::LULoad(void) {
 	return SCSICommand();
 }
 
-bool OnStream::LURetention(void) {
+bool OnStream::LURetention(void) 
+{
 	NeedCommandBytes(6);
 	NeedResultBytes(0);
 
@@ -1056,7 +1094,8 @@ bool OnStream::LURetention(void) {
 	return SCSICommand();
 }
 
-bool OnStream::LURetentionAndLoad(void) {
+bool OnStream::LURetentionAndLoad(void) 
+{
 	NeedCommandBytes(6);
 	NeedResultBytes(0);
 
@@ -1070,7 +1109,8 @@ bool OnStream::LURetentionAndLoad(void) {
 	return SCSICommand();
 }
 
-bool OnStream::LURewindAndEject(void) {
+bool OnStream::LURewindAndEject(void) 
+{
 	NeedCommandBytes(6);
 	NeedResultBytes(0);
 
@@ -1084,7 +1124,8 @@ bool OnStream::LURewindAndEject(void) {
 	return SCSICommand();
 }
 
-bool OnStream::LURetentionAndEject(void) {
+bool OnStream::LURetentionAndEject(void) 
+{
 	NeedCommandBytes(6);
 	NeedResultBytes(0);
 
@@ -1098,7 +1139,8 @@ bool OnStream::LURetentionAndEject(void) {
 	return SCSICommand();
 }
 
-bool OnStream::TestUnitReady(void) {
+bool OnStream::TestUnitReady(void) 
+{
 	NeedCommandBytes(6);
 	NeedResultBytes(0);
 
@@ -1117,7 +1159,8 @@ bool OnStream::TestUnitReady(void) {
 // Inputs:  file descriptor to wait on and optional timeout
 // Outputs: true if ready for writing
 //          false if an error occured or not ready within timeout period
-bool OnStream::WaitForWrite(const int nSec, const int nUsec) {
+bool OnStream::WaitForWrite(const int nSec, const int nUsec) 
+{
 	fd_set fds;
 	timeval tv;
 	int rc;
@@ -1129,15 +1172,14 @@ bool OnStream::WaitForWrite(const int nSec, const int nUsec) {
 
 	while (true) {
 		rc = select(nFD + 1, NULL, &fds, NULL, &tv);
-		if (rc > 0) {
+		if (rc > 0)
 			return true;
-		}
-		if ((rc < 0) && (EINTR != errno)) {
+
+		if ((rc < 0) && (EINTR != errno))
 			return false;
-		}
-		if (0 == rc) {
+
+		if (0 == rc)
 			return false;
-		}
 	}
 }
 
@@ -1146,7 +1188,8 @@ bool OnStream::WaitForWrite(const int nSec, const int nUsec) {
 // Inputs:  file descriptor to wait on and optional timeout
 // Outputs: true if ready for reading
 //          false if an error occured or not ready within timeout period
-bool OnStream::WaitForRead(const int nSec, const int nUsec) {
+bool OnStream::WaitForRead(const int nSec, const int nUsec) 
+{
 	fd_set fds;
 	timeval tv;
 	int rc;
@@ -1158,19 +1201,19 @@ bool OnStream::WaitForRead(const int nSec, const int nUsec) {
 
 	while (true) {
 		rc = select(nFD+1, &fds, NULL, NULL, &tv);
-		if (rc > 0) {
+		if (rc > 0)
 			return true;
-		}
-		if ((rc < 0) && (EINTR != errno)) {
+
+		if ((rc < 0) && (EINTR != errno))
 			return false;
-		}
-		if (0 == rc) {
+
+		if (0 == rc) 
 			return false;
-		}
 	}
 }
 
-void signalHandler(int sig) {
+void signalHandler(int sig) 
+{
 	signalled = sig;
 	Debug(0, "Got signal %d. Completeing current action...", sig);
 	/* Reset to standard behaviour: Next signal will be fatal ... */
@@ -1193,7 +1236,8 @@ void signalHandler(int sig) {
 //          -6          SG driver failed silently
 //          otherwise   number of bytes read (not counting sg_header)
 //          false if an error occured
-bool OnStream::SCSICommand(const int nSec, const int nUsec) {
+bool OnStream::SCSICommand(const int nSec, const int nUsec) 
+{
 	sg_header* pSG;
 	ssize_t rc;
 
@@ -1259,12 +1303,12 @@ bool OnStream::SCSICommand(const int nSec, const int nUsec) {
 		return false;
 	}
 */
-	if (debug > 6) {
+	if (debug > 6)
 		DumpSCSIResult(pSG, &pTempBuffer[cbSGHeader]);
-	}
-	if (cbResultBuffer > 0) {
+
+	if (cbResultBuffer > 0)
 		memmove(pResultBuffer, pTempBuffer + cbSGHeader, pSG->pack_len - cbSGHeader);
-	}
+
 	memmove(&SG, pTempBuffer, cbSGHeader);
 	NeedResultBytes(rc - cbSGHeader);
 #if 0	
@@ -1276,33 +1320,31 @@ bool OnStream::SCSICommand(const int nSec, const int nUsec) {
 	return true;
 }
 
-bool OnStream::ShowPosition(unsigned int *host, unsigned int *tape) {
-	if (!ReadPosition()) {
+bool OnStream::ShowPosition(unsigned int *host, unsigned int *tape) 
+{
+	if (!ReadPosition())
 		return false;
-	}
 
 	if (pResultBuffer[0] & 0xc0) {
-		if (pResultBuffer[0] & 0x80) {
+		if (pResultBuffer[0] & 0x80)
 			Debug(3, "BOP\n");
-		} else {
+		else
 			Debug(3, "EOP\n");
-		}
 	}
 	Debug(3, "First Frame postion to/from host: %d\n", ntohl(*((UINT32*) &pResultBuffer[4])));
-	if (host != NULL) {
+	if (host != NULL)
 		*host = ntohl(*((UINT32*) &pResultBuffer[4]));
-	}
+
 	Debug(3, "Last Frame postion to/from tape: %d\n", ntohl(*((UINT32*) &pResultBuffer[8])));
-	if (tape != NULL) {
+	if (tape != NULL)
 		*tape = ntohl(*((UINT32*) &pResultBuffer[8]));
-	}
+
 	Debug(3, "Blocks in tape buffer: %d\n", *((UINT8*) &pResultBuffer[15]));
 	return true;
 }
 		
 enum Sense CheckSense(OnStream *pOnStream);
-void WaitForReady(OnStream* pOnStream, bool fReadyOnNoMedium = false);
-enum Sense OnStream::WaitPosition (unsigned int CurrentFrame, int timeout = 30, int ahead = 0)
+enum Sense OnStream::WaitPosition (unsigned int CurrentFrame, int timeout, int ahead)
 {
 	unsigned int first, last; int cntr = 0; enum Sense sense;
 	/* The tape should not need longer than half a minute */
@@ -1327,7 +1369,8 @@ enum Sense OnStream::WaitPosition (unsigned int CurrentFrame, int timeout = 30, 
 	return STimeoutWaitPos;
 }
 
-void OnStream::DumpSCSIResult(sg_header* pSG, UINT8* pBuffer) {
+void OnStream::DumpSCSIResult(sg_header* pSG, UINT8* pBuffer) 
+{
 	Debug(0, "pack_len:      %d\n",   pSG->pack_len);
 	Debug(0, "pack_id:       %d\n",   pSG->pack_id);
 	Debug(0, "result:        %02x\n", pSG->result);
@@ -1342,7 +1385,8 @@ void OnStream::DumpSCSIResult(sg_header* pSG, UINT8* pBuffer) {
 	//write(1, &pTempBuffer[cbSGHeader], rc - cbSGHeader);
 }
 
-struct TAPE_PARAMETERS GetTapeParameters(OnStream* pOnStream) {
+struct TAPE_PARAMETERS GetTapeParameters(OnStream* pOnStream) 
+{
 	unsigned char buf[22];
 	struct TAPE_PARAMETERS tp;
 
@@ -1355,7 +1399,8 @@ struct TAPE_PARAMETERS GetTapeParameters(OnStream* pOnStream) {
 	return tp;
 }
 
-void WaitForReady(OnStream* pOnStream, bool fReadyOnNoMedium = false) {
+void WaitForReady(OnStream* pOnStream, bool fReadyOnNoMedium) 
+{
 	bool fNotReady = true;
 	UINT32 uThisSense = 0;
 	UINT32 uLastSense = 0;
@@ -1429,7 +1474,8 @@ void WaitForReady(OnStream* pOnStream, bool fReadyOnNoMedium = false) {
 	Debug(2, "Ready.\n");
 }
 
-enum Sense CheckSense(OnStream *pOnStream) {
+enum Sense CheckSense(OnStream *pOnStream) 
+{
 	switch ((pOnStream->SenseKey() << 16) | (pOnStream->ASC() << 8) | pOnStream->ASCQ()) {
 		case 0x000000: // NO ADDITIONAL SENSE INFORMATION
 			return SNoSense;
@@ -1492,7 +1538,8 @@ enum Sense CheckSense(OnStream *pOnStream) {
 	}
 }
 
-bool DeleteFrames(TAPEBUFFER** FirstBuffer, unsigned int EntriesToDelete) {
+bool DeleteFrames(TAPEBUFFER** FirstBuffer, unsigned int EntriesToDelete) 
+{
 	TAPEBUFFER *ThisTapeBuffer = *FirstBuffer, *NextTapeBuffer;
 	unsigned int counter = 0;
 
@@ -1513,7 +1560,9 @@ bool DeleteFrames(TAPEBUFFER** FirstBuffer, unsigned int EntriesToDelete) {
 	return true;
 }
 
-void CheckWrittenFrames(OnStream *pOnStream, TAPEBUFFER** FirstBuffer, unsigned int addedFrames, unsigned int* previousFrames) {
+void CheckWrittenFrames(OnStream *pOnStream, TAPEBUFFER** FirstBuffer, 
+			unsigned int addedFrames, unsigned int* previousFrames) 
+{
 	unsigned int MaxBuffer, CurrentBuffer, writtenFrames;
 
 	pOnStream->BufferStatus(&MaxBuffer, &CurrentBuffer);
@@ -1527,7 +1576,8 @@ void CheckWrittenFrames(OnStream *pOnStream, TAPEBUFFER** FirstBuffer, unsigned 
 	*previousFrames = CurrentBuffer;
 }
 
-bool FlushBuffer(OnStream *pOnStream) {
+bool FlushBuffer(OnStream *pOnStream) 
+{
 	unsigned int MaxBuffer, CurrentBuffer;
 
 	if (false == pOnStream->BufferStatus(&MaxBuffer, &CurrentBuffer)) {
@@ -1540,7 +1590,10 @@ bool FlushBuffer(OnStream *pOnStream) {
 	return pOnStream->DeleteBuffer(CurrentBuffer);
 }
 
-unsigned int RequeueData(OnStream *pOnStream, TAPEBUFFER** TapeBuffer, unsigned int addedFrames, unsigned int *CurrentBuffer, unsigned int skip, bool fRetry = false) {
+unsigned int RequeueData(OnStream *pOnStream, TAPEBUFFER** TapeBuffer, 
+			 unsigned int addedFrames, unsigned int *CurrentBuffer, 
+			 unsigned int skip, bool fRetry = false) 
+{
 	unsigned char sense[16];
 	unsigned int CurrentFrame, BadFrames;
 	unsigned int counter;
@@ -1612,7 +1665,8 @@ unsigned int RequeueData(OnStream *pOnStream, TAPEBUFFER** TapeBuffer, unsigned 
 	return BadFrames;
 }
 
-void WaitForWrite(OnStream *pOnStream, TAPEBUFFER** TapeBuffer, unsigned int *CurrentTapeBuffer) {
+void WaitForWrite(OnStream *pOnStream, TAPEBUFFER** TapeBuffer, unsigned int *CurrentTapeBuffer) 
+{
 	// Wait for Write
 	unsigned int CurrentBuffer, MaxBuffer;
 	int skip; unsigned char sense[16];
@@ -1646,18 +1700,18 @@ void WaitForWrite(OnStream *pOnStream, TAPEBUFFER** TapeBuffer, unsigned int *Cu
 }
 
 
-void AddFrameToBuffer(TAPEBUFFER **LastBuffer, void *buf) {
+void AddFrameToBuffer(TAPEBUFFER **LastBuffer, void *buf) 
+{
 	TAPEBUFFER *ThisTapeBuffer;
 
 	Debug(6, "Adding 1 frame to tape buffer\n");
 	ThisTapeBuffer = (TAPEBUFFER *) malloc(sizeof(TAPEBUFFER));
 	ThisTapeBuffer->Next = NULL;
-	if (*LastBuffer != NULL) {
+	if (*LastBuffer != NULL)
 		(*LastBuffer)->Next = ThisTapeBuffer;
-	}
-	if (TapeBuffer == NULL) {
+
+	if (TapeBuffer == NULL)
 		TapeBuffer = *LastBuffer;
-	}
 
 	ThisTapeBuffer->Frame = (unsigned char *) malloc(33280);
 	memcpy(ThisTapeBuffer->Frame, buf, 33280);
@@ -1667,7 +1721,8 @@ void AddFrameToBuffer(TAPEBUFFER **LastBuffer, void *buf) {
 	*LastBuffer = ThisTapeBuffer;
 }
 
-void Debug(const int nDebugLevel, const char *format, ...) {
+void Debug(const int nDebugLevel, const char *format, ...) 
+{
 	char data[1024];
 	va_list args;
 
@@ -1676,15 +1731,15 @@ void Debug(const int nDebugLevel, const char *format, ...) {
 	va_end(args);
 
 	if (debug >= nDebugLevel) {
-		if (fDebugFile == NULL) {
+		if (fDebugFile == NULL)
 			fprintf(stderr, data);
-		} else {
+		else
 			fprintf(fDebugFile, data);
-		}
 	}
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) 
+{
 	OnStream* pOnStream;
 	Sense CurrentSense;
 	unsigned char buf[33280];
