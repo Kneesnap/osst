@@ -1,5 +1,5 @@
 #
-# spec file for package onstream (Version 0.9.13_0.7.91)
+# spec file for package onstream (Version 0.9.13_0.7.99)
 # 
 # Copyright  (c)  2000  SuSE GmbH  Nuernberg, Germany.
 #
@@ -18,9 +18,9 @@ Packager:     feedback@suse.de
 Copyright:	GPL
 Group:        Base/Kernel
 Autoreqprov:  on
-Version:      0.9.13_0.7.91
+Version:      0.9.13_0.7.99
 Summary:      OnStream SC-x0 tape support tools
-Source:	      onstream-20000529.tar.gz
+Source:	      onstream-20000611.tar.gz
 #Patch:		onstream.dif
 BuildRoot:	/var/tmp/%{name}-buildroot
 
@@ -61,6 +61,7 @@ install -d -o root -g root -m 755 $RPM_BUILD_ROOT/usr/bin
 install -s -o root -g root -m 755 onstreamsg/osg $RPM_BUILD_ROOT/usr/bin/
 install -s -o root -g root -m 755 tools/os_dump tools/os_write tools/stream $RPM_BUILD_ROOT/usr/bin/
 install -d $RPM_BUILD_ROOT/dev/
+driver/Makedevs.sh 4 $RPM_BUILD_ROOT/dev
 cd driver
 make install DESTDIR=$RPM_BUILD_ROOT 
 %{?suse_check}
