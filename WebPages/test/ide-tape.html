@@ -1,0 +1,60 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<Head>
+<Title>OnStream IDE Tape driver for Linux patches</Title>
+	<Link HRef="mailto:osst@linux1.onstream.nl">
+	<Meta HTTP-Equiv="Content-Type" Content="text/html; charset=iso-8859-1">
+	<Meta Name="Author" Content="garloff@suse.de">
+	<Meta Name="Generator" Content="Text Editor (xemacs/jed, Linux)">
+	<Meta Name="Keywords" Content="OnStream IDE Tape DI-30 DI-50 ADR">
+	<Meta Name="Description" Content="onstream ide-tape patches page">
+</Head>
+<Body Background="/gif/bg_pingu.gif" BGColor=#f0f0f0>
+<A HRef="index.html"><Img Src="/gif/left.gif" Align=middle Alt="Back" Width=16 Height=16>
+Back</A>
+<Center><H1>Onstream IDE tapes (DI-30)</H1></Center>
+This page should help you to get your OnStream DI-30/50 running with Linux.
+<H3>ide-scsi &amp; osst</H3>
+<EM>This is the recommended way of getting you DI-30 running with
+Linux</EM><Br>.
+Compile your kernel with support for <TT>ide-scsi
+(CONFIG_BLK_DEV_IDESCSI)</TT> and <TT>osst (CONFIG_CHR_DEV_OSST)</TT>.
+Depending on where your OnStream DI-30 is on the IDE busses, pass<TT><Pre>
+hdX=scsi
+</Pre></TT> to the kernel as boot parameter, where <TT>X</TT> is<UL>
+<LI><TT>a</TT> for primary IDE channel, master</LI>
+<LI><TT>b</TT> for primary IDE channel, slave</LI>
+<LI><TT>c</TT> for secondary IDE channel, master</LI>
+<LI>...</LI>
+</UL>.
+<P>Load <TT>ide-scsi</TT> and <TT>osst</TT> if necessary. You should now see the 
+DI-30 as SCSI device under <TT>/proc/scsi/scsi</TT> and find syslog messages
+of the <TT>osst</TT> driver attaching to it. If not, something has gone
+wrong and you should check the kernel messages (syslog). Look into
+<TT>/var/log/messages</TT>, use <TT>dmesg</TT> or just look at the syslog
+console (default: <TT>Ctrl-Alt-F10</TT> on most distributions).</P>
+You should be able to use the tape via the <TT>/dev/(n)osstX</TT> devices
+nodes now. (Look into the README to create the device nodes.)
+
+<H3>ide-tape</H3>
+There has been support for the OnStream DI-x0 drives in the
+<TT>ide-tape</TT> driver since quite some time. It has been created by Gadi
+Oxman. However, it does not support all the recent features of <TT>osst</TT>
+like variable blocksizes and the advanced filemarks. Interchanging tapes
+written by <TT>osst</TT> and <TT>ide-tape</TT> therefore does not fully
+work.<Br>
+Apart from this, some people have reported not to be able to get
+<TT>ide-tape</TT> to work at all. I can't comment on this, as I don't have a
+DI-x0. You should be able to access the tapes via <TT>/dev/(n)htX</TT>.</Br>
+Here are two patches, one against <A HRef="ide-tape-ide2218.dif">2.2.18</A>
+and one against <A HRef="ide-tape-2.4.0pre.dif">2.4.0pre</A> that should
+help you to get it going, if you really want to use <TT>ide-tape</TT>.
+
+
+<!--<P>
+<Img Src="/gif/construction.gif" Alt="under construction" Width=40 Height=32>
+</P>-->
+<HR>
+<I>(w) by <A HRef="mailto:garloff@suse.de">KG</A>, $Id$</I>
+</Body>
+</HTML>
