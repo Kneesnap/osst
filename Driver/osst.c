@@ -24,7 +24,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.9.5";
+const char * osst_version = "0.9.6";
 
 /* The "failure to reconnect" firmware bug */
 #define OSST_FW_NEED_POLL_MIN 10602 /*(107A)*/
@@ -355,7 +355,6 @@ static void osst_write_behind_check(OS_Scsi_Tape *STp)
 	else
 		STp->nbr_finished++;
 #endif
-
 	down(&(STp->sem));
 	(STp->buffer)->last_SRpnt->sr_request.sem = NULL;
 
@@ -2728,7 +2727,6 @@ static int osst_flush_write_buffer(OS_Scsi_Tape *STp, Scsi_Request ** aSRpnt)
 #endif
 			osst_init_aux(STp, OS_FRAME_TYPE_DATA, STp->frame_seq_number++,
 				      STp->logical_blk_num - blks, STp->block_size, blks);
-//			STp->logical_blk_num += blks;
 			break;
 		   case OS_WRITE_EOD:
 			osst_init_aux(STp, OS_FRAME_TYPE_EOD, STp->frame_seq_number++,
@@ -3251,11 +3249,8 @@ if (SRpnt) printk(KERN_ERR "osst%d: Not supposed to have SRpnt at line %d\n", de
 			retval = (-EIO);
 			goto out;
 		}
+		SRpnt = NULL;			/* Prevent releasing this request! */
 	}
-//    else if (SRpnt != NULL) {
-//	scsi_release_request(SRpnt);	/* FIXME -- this relesae no longer in st - why? */
-	SRpnt = NULL;			/* Prevent releasing this request! */
-//    }
 	STps->at_sm &= (total == 0);
 	if (total > 0)
 		STps->eof = ST_NOEOF;
@@ -4423,7 +4418,6 @@ static int os_scsi_tape_flush(struct file * filp)
 		if (result != 0 && result != (-ENOSPC))
 			goto out;
 	}
-
 	if ( STps->rw == ST_WRITING && !(STp->device)->was_reset) {
 
 #if DEBUG
@@ -4486,7 +4480,7 @@ out:
 	if (STp->rew_at_close) {
 		result2 = osst_position_tape_and_confirm(STp, &SRpnt, STp->first_data_ppos);
 		STps->drv_file = STps->drv_block = STp->frame_seq_number = STp->logical_blk_num = 0;
-		if (result == 0)
+		if (result == 0 && result2 < 0)
 			result = result2;
 	}
 	if (SRpnt) scsi_release_request(SRpnt);
