@@ -54,20 +54,23 @@ Successfully tested with firmware 1.05 and 1.08.</DD>
 <DD>Fix error handling skipping over second header group.</DD>
 <DT>2000-05-21: (osst 0.7.3)</DT>
 <DD>Fix I/O error on read after seek.</DD>
-<BT>2000-05-24: (osst 0.7.9)</DT>
+<DT>2000-05-24: (osst 0.7.9)</DT>
 <DD>On own character device (major 206) has been registered. The driver has
 been adapted to use it and is now able to coexist with st. (Mostly untested,
 sorry!) A <A HRef="README.osst">README.osst</A> file has been added. Some
 test's and we'll be ready for BETA!</DD>
+<DT>2000-05-27: (osst 0.7.91)</DT>
+<DD>Osst coexistance with st in the 2.2.15 kernel tree has now been tested.
+After applying the osst-22.diff patch you will find in the sources (see
+Download below) st will no longer detect OnStream tape drives other than
+the ADR series (which do not need osst). Copy in osst.[ch] as explained in
+the README, compile and install a new kernel as usual, create the osst devices
+and try it out!</DD>
 </DL></P>
 
-<H3>Known problems as of <B>0.7.2</B></H3>
+<H3>Known problems as of <B>0.7.91</B></H3>
 <UL>
-<LI>The driver does currently prevent from accessing non-OnStream tapes on
-the same machine, as it is not able to drive normal tape devices. It can
-not coexist with the standard <TT>st</TT> driver, either, as it uses the
-same device nodes. This will be fixed in a later version. 
-The module can be unloaded after use though.</LI>
+<LI>Currently none.</LI>
 </UL>
 
 <H3>Feedback</H3>
@@ -106,7 +109,7 @@ There are several possibilities to get the <TT>osst</TT>-driver. For your
 convenience, the archives also contain Terry's userspace driver <TT>osg</TT> 
 and some tools.
 <OL>
-<LI>(recommended) Get the <A HRef="onstream-20000524.tar.gz">sources</A>, unpack
+<LI>(recommended) Get the <A HRef="onstream-20000527.tar.gz">sources</A>, unpack
 them (<TT>tar xvzf onstream-2000*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux source
 tree installed in <TT>/usr/src/linux/</TT>. 
