@@ -173,12 +173,16 @@ backup software. Rationalize module parameters.</DD>
 <DD>Backported 0.9.12 changes to Linux 2.2: osst-0.8.16. Forward ported them to Linux 2.5 kernel: 
 osst-0.99.0. You need at least 2.5.53 if you use a DI-x0 on 2.5.xx system (even it still lacks
 a couple of fixes that hopefully will make it in 2.5.54).</DD>
+<DT>2003-6-27: (osst 0.9.13)</DT>
+<DD>Fixed a time out that occured with DI-x0 drives when skipping to EOD when there are several GB
+recorded on the tape. To make osst work for the Bacula backup application, made the driver write
+the EOD marker and update the Header when writing a file is terminated by moving the tape using ioctl.</DD>
 </DL></P>
 
 <A Name="problems">
-<H3>Known problems as of <B>0.8.16 / 0.9.12 / 0.99.0</B></H3>
+<H3>Known problems as of <B>0.8.16 / 0.9.13 / 0.99.0</B></H3>
 <UL>
-<LI>None.
+<LI>None for 2.4 kernel series; 0.8.x for 2.2 kernels and 0.99.y for 2.5 kernels need catching up to 0.9.13.
 </LI>
 </UL>
 
@@ -222,7 +226,7 @@ and some tools.
 <OL>
 <LI>If you're lucky, your distributor has a kernel with a recent version of
 the osst driver. Just use it ;-)
-<LI>(recommended) Get the very latest <A HRef="onstream-20021231.tar.gz">sources</A>, unpack
+<LI>(recommended) Get the very latest <A HRef="onstream-20030627.tar.gz">sources</A>, unpack
 them (<TT>tar xvzf onstream-200*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux
 source tree installed in <TT>/usr/src/linux/</TT>. 
