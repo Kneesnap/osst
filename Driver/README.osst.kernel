@@ -45,7 +45,7 @@ that it used the same kernel structures and the same device node as st.
 So you could only have either of them being present in the kernel. This has
 been fixed by registering an own device, now.
 st and osst can coexist, each only accessing the devices it can support by
-their own device.
+themselves.
 
 
 Installation
@@ -89,7 +89,7 @@ filemarks, eject the tape, ...
 
 There's one limitation: You need to use a blocksize of 32kB.
 
-(This limitation is worked on and will be fixed in version 0.8.7 of
+(This limitation is worked on and will be fixed in version 0.8.8 of
  this driver.)
 
 If you just want to get started with standard software, here is an example
