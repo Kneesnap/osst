@@ -5,9 +5,6 @@
 #include <asm/byteorder.h>
 #include <linux/config.h>
 #include <linux/completion.h>
-#ifdef CONFIG_DEVFS_FS
-#include <linux/devfs_fs_kernel.h>
-#endif
 
 /*	FIXME - rename and use the following two types or delete them!
  *              and the types really should go to st.h anyway...
@@ -532,7 +529,7 @@ typedef struct {
 
 /* The OnStream tape drive descriptor */
 typedef struct {
-  struct Scsi_Device_Template *driver;
+  struct scsi_driver *driver;
   unsigned capacity;
   Scsi_Device* device;
   struct semaphore lock;       /* for serialization */
@@ -557,10 +554,6 @@ typedef struct {
   /* Mode characteristics */
   ST_mode modes[ST_NBR_MODES];
   int current_mode;
-  devfs_handle_t de_r[ST_NBR_MODES];  /*  Rewind entries     */
-  devfs_handle_t de_n[ST_NBR_MODES];  /*  No-rewind entries  */
-  struct device driverfs_dev_r[ST_NBR_MODES];
-  struct device driverfs_dev_n[ST_NBR_MODES];
 
   /* Status variables */
   int partition;
