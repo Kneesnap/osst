@@ -24,7 +24,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.9.5p2";
+const char * osst_version = "0.9.5p3";
 
 /* The "failure to reconnect" firmware bug */
 #define OSST_FW_NEED_POLL_MIN 10602 /*(107A)*/
@@ -127,6 +127,8 @@ static int debugging = 1;
 /* Internal ioctl to set both density (uppermost 8 bits) and blocksize (lower
    24 bits) */
 #define SET_DENS_AND_BLK 0x10001
+
+static rwlock_t osst_dev_arr_lock = RW_LOCK_UNLOCKED;
 
 static int osst_nbr_buffers;
 static int osst_buffer_size       = OSST_BUFFER_SIZE;
@@ -237,14 +239,17 @@ static int osst_chk_result(OS_Scsi_Tape * STp, Scsi_Request * SRpnt)
 		STp->recover_erreg++;
 #if DEBUG
 		if (debugging) {
+			
 			if (SRpnt->sr_cmnd[0] == READ_6)
 				stp = "read";
 			else if (SRpnt->sr_cmnd[0] == WRITE_6)
 				stp = "write";
 			else
 				stp = "ioctl";
-			printk(OSST_DEB_MSG "osst%d: Recovered %s error (%d).\n", dev, stp,
-					     os_scsi_tapes[dev]->recover_count);
+			//read_lock (&osst_arr_dev_lock);
+			printk(OSST_DEB_MSG "osst%d: Recovered %s error (%d).\n",
+			       dev, stp, STp->recover_count);
+			//read_unlock (&osst_arr_dev_lock);
 		}
 #endif
 		if ((sense[2] & 0xe0) == 0)
@@ -261,7 +266,9 @@ static void osst_sleep_done (Scsi_Cmnd * SCpnt)
 	OS_Scsi_Tape * STp;
 
 	if ((dev = TAPE_NR(SCpnt->request.rq_dev)) < osst_template.nr_dev) {
+		read_lock (&osst_dev_arr_lock);
 		STp = os_scsi_tapes[dev];
+		read_unlock (&osst_dev_arr_lock);
 		if ((STp->buffer)->writing &&
 		    (SCpnt->sense_buffer[0] & 0x70) == 0x70 &&
 		    (SCpnt->sense_buffer[2] & 0x40)) {
@@ -2937,8 +2944,10 @@ static ssize_t osst_write(struct file * filp, const char * buf, size_t count, lo
 	ST_mode * STm;
 	ST_partstat * STps;
 	int dev = TAPE_NR(inode->i_rdev);
-
+	
+	read_lock (&osst_dev_arr_lock);
 	STp = os_scsi_tapes[dev];
+	read_unlock (&osst_dev_arr_lock);
 
 	if (down_interruptible(&STp->lock))
 		return (-ERESTARTSYS);
@@ -3268,7 +3277,9 @@ static ssize_t osst_read(struct file * filp, char * buf, size_t count, loff_t *p
 	Scsi_Request *SRpnt = NULL;
 	int dev = TAPE_NR(inode->i_rdev);
 
+	read_lock (&osst_dev_arr_lock);
 	STp = os_scsi_tapes[dev];
+	read_unlock (&osst_dev_arr_lock);
 
 	if (down_interruptible(&STp->lock))
 		return (-ERESTARTSYS);
@@ -4003,7 +4014,7 @@ os_bypass:
 /* Open the device */
 static int os_scsi_tape_open(struct inode * inode, struct file * filp)
 {
-	unsigned short flags;
+	unsigned short fflags;
 	int i, b_size, need_dma_buffer, new_session = FALSE, retval = 0;
 	unsigned char cmd[MAX_COMMAND_SIZE];
 	Scsi_Request * SRpnt;
@@ -4012,15 +4023,21 @@ static int os_scsi_tape_open(struct inode * inode, struct file * filp)
 	ST_partstat * STps;
 	int dev = TAPE_NR(inode->i_rdev);
 	int mode = TAPE_MODE(inode->i_rdev);
+	unsigned long flags;
 
-	if (dev >= osst_template.dev_max || (STp = os_scsi_tapes[dev]) == NULL || !STp->device)
+	write_lock_irqsave (&osst_dev_arr_lock, flags);
+	if (dev >= osst_template.dev_max || (STp = os_scsi_tapes[dev]) == NULL || !STp->device) {
+		write_unlock_irqrestore (&osst_dev_arr_lock, flags);
 		return (-ENXIO);
+	}
 
 	if( !scsi_block_when_processing_errors(STp->device) ) {
+		write_unlock_irqrestore (&osst_dev_arr_lock, flags);
 		return -ENXIO;
 	}
 
 	if (STp->in_use) {
+		write_unlock_irqrestore (&osst_dev_arr_lock, flags);
 #if DEBUG
 		printk(OSST_DEB_MSG "osst%d: Device already in use.\n", dev);
 #endif
@@ -4028,6 +4045,7 @@ static int os_scsi_tape_open(struct inode * inode, struct file * filp)
 	}
 	STp->in_use       = 1;
 	STp->rew_at_close = (MINOR(inode->i_rdev) & 0x80) == 0;
+	write_unlock_irqrestore (&osst_dev_arr_lock, flags);
 
 	if (STp->device->host->hostt->module)
 		 __MOD_INC_USE_COUNT(STp->device->host->hostt->module);
@@ -4045,17 +4063,19 @@ static int os_scsi_tape_open(struct inode * inode, struct file * filp)
 	}
 	STm = &(STp->modes[STp->current_mode]);
 
-	flags = filp->f_flags;
-	STp->write_prot = ((flags & O_ACCMODE) == O_RDONLY);
+	fflags = filp->f_flags;
+	STp->write_prot = ((fflags & O_ACCMODE) == O_RDONLY);
 
 	STp->raw = (MINOR(inode->i_rdev) & 0x40) != 0;
 
 	/* Allocate a buffer for this user */
 	need_dma_buffer = STp->restr_dma;
+	write_lock_irqsave (&osst_dev_arr_lock, flags);
 	for (i=0; i < osst_nbr_buffers; i++)
 		if (!osst_buffers[i]->in_use &&
 		   (!need_dma_buffer || osst_buffers[i]->dma))
 			break;
+	write_unlock_irqrestore (&osst_dev_arr_lock, flags);
 	if (i >= osst_nbr_buffers) {
 		STp->buffer = new_tape_buffer(FALSE, need_dma_buffer);
 		if (STp->buffer == NULL) {
@@ -4331,7 +4351,7 @@ static int os_scsi_tape_open(struct inode * inode, struct file * filp)
 		if (debugging)
 			printk(OSST_DEB_MSG "osst%d: Write protected\n", dev);
 #endif
-		if ((flags & O_ACCMODE) == O_WRONLY || (flags & O_ACCMODE) == O_RDWR) {
+		if ((fflags & O_ACCMODE) == O_WRONLY || (fflags & O_ACCMODE) == O_RDWR) {
 			retval = (-EROFS);
 			goto err_out;
 		}
@@ -4398,7 +4418,9 @@ static int os_scsi_tape_flush(struct file * filp)
 	return 0;
 
 	dev = TAPE_NR(devt);
+	read_lock (&osst_dev_arr_lock);
 	STp = os_scsi_tapes[dev];
+	read_unlock (&osst_dev_arr_lock);
 	STm = &(STp->modes[STp->current_mode]);
 	STps = &(STp->ps[STp->partition]);
 
@@ -4485,21 +4507,31 @@ static int os_scsi_tape_close(struct inode * inode, struct file * filp)
 	int result = 0;
 	OS_Scsi_Tape * STp;
 	Scsi_Request * SRpnt = NULL;
+	unsigned long flags;
 
 	kdev_t devt = inode->i_rdev;
 	int dev;
 
 	dev = TAPE_NR(devt);
+	read_lock (&osst_dev_arr_lock);
 	STp = os_scsi_tapes[dev];
+	read_unlock (&osst_dev_arr_lock);
 
 	if (STp->door_locked == ST_LOCKED_AUTO)
 		osst_int_ioctl(STp, &SRpnt, MTUNLOCK, 0);
 	if (SRpnt) scsi_release_request(SRpnt);
 
-	if (STp->buffer != NULL)
+	if (STp->buffer != NULL) {
+		//normalize_buffer (STp->buffer);
+                write_lock_irqsave (&osst_dev_arr_lock, flags);
 		STp->buffer->in_use = 0;
+		//STp->buffer = NULL;
+	} else {
+                write_lock_irqsave (&osst_dev_arr_lock, flags);
+	}
 
 	STp->in_use = 0;
+	write_unlock_irqrestore (&osst_dev_arr_lock, flags);
 	if (STp->device->host->hostt->module)
 		__MOD_DEC_USE_COUNT(STp->device->host->hostt->module);
 	if(osst_template.module)
@@ -4521,7 +4553,9 @@ static int osst_ioctl(struct inode * inode,struct file * file,
 	Scsi_Request *SRpnt = NULL;
 	int dev = TAPE_NR(inode->i_rdev);
 
+	read_lock (&osst_dev_arr_lock);
 	STp = os_scsi_tapes[dev];
+	read_unlock (&osst_dev_arr_lock);
 
 	if (down_interruptible(&STp->lock))
 		return -ERESTARTSYS;
@@ -4822,10 +4856,15 @@ out:
 static OSST_buffer * new_tape_buffer( int from_initialization, int need_dma )
 {
 	int i, priority, b_size, order, got = 0, segs = 0;
+	unsigned long flags;
 	OSST_buffer *tb;
 
-	if (osst_nbr_buffers >= osst_template.dev_max)
+	read_lock (&osst_dev_arr_lock);
+	if (osst_nbr_buffers >= osst_template.dev_max) {
+		read_unlock (&osst_dev_arr_lock);
 		return NULL;  /* Should never happen */
+	}
+	read_unlock (&osst_dev_arr_lock);
 
 	if (from_initialization)
 		priority = GFP_ATOMIC;
@@ -4914,7 +4953,10 @@ static OSST_buffer * new_tape_buffer( int from_initialization, int need_dma )
 	tb->dma = need_dma;
 	tb->buffer_size = got;
 	tb->writing = 0;
+
+	write_lock_irqsave (&osst_dev_arr_lock, flags);
 	osst_buffers[osst_nbr_buffers++] = tb;
+	write_unlock_irqrestore (&osst_dev_arr_lock, flags);
 
 	return tb;
 }
@@ -5244,32 +5286,38 @@ static int osst_attach(Scsi_Device * SDp)
 	OS_Scsi_Tape * tpnt;
 	ST_mode * STm;
 	ST_partstat * STps;
-	int i;
+	int i, dev_num;
+	unsigned long flags;
 #ifdef CONFIG_DEVFS_FS
 	int mode;
 #endif
 
 	if (SDp->type != TYPE_TAPE || !osst_supports(SDp))
-		 return 1;
+		return 1;
 
+	write_lock_irqsave (&osst_dev_arr_lock, flags);
 	if (osst_template.nr_dev >= osst_template.dev_max) {
-		 SDp->attached--;
-		 return 1;
+		SDp->attached--;
+		write_unlock_irqrestore (&osst_dev_arr_lock, flags);
+		return 1;
 	}
-	
+
 	/* find a free minor number */
 	for (i=0; os_scsi_tapes[i] && i<osst_template.dev_max; i++);
-	if(i >= osst_template.dev_max) panic ("Scsi_devices corrupt (osst)");
+	if (i >= osst_template.dev_max) 
+		panic ("Scsi_devices corrupt (osst)");
 
 	/* allocate a OS_Scsi_Tape for this device */
 	tpnt = (OS_Scsi_Tape *)kmalloc(sizeof(OS_Scsi_Tape), GFP_ATOMIC);
 	if (tpnt == NULL) {
-		 SDp->attached--;
-		 printk(KERN_ERR "osst: Can't allocate device descriptor.\n");
-		 return 1;
+		SDp->attached--;
+		write_unlock_irqrestore (&osst_dev_arr_lock, flags);
+		printk(KERN_ERR "osst: Can't allocate device descriptor.\n");
+		return 1;
 	}
-	memset(tpnt, 0, sizeof(OS_Scsi_Tape));
+	memset (tpnt, 0, sizeof(OS_Scsi_Tape));
 	os_scsi_tapes[i] = tpnt;
+	dev_num = i;
 	tpnt->capacity = 0xfffff;
 
 	/* allocate a buffer for this device */
@@ -5379,8 +5427,13 @@ static int osst_attach(Scsi_Device * SDp)
 	tpnt->modes[0].defined = TRUE;
 	tpnt->density_changed = tpnt->compression_changed = tpnt->blksize_changed = FALSE;
 	init_MUTEX(&tpnt->lock);
-
 	osst_template.nr_dev++;
+	write_unlock_irqrestore (&osst_dev_arr_lock, flags);
+	
+	printk(KERN_WARNING
+		"Attached OnStream scsi tape osst%d at scsi%d, channel %d, id %d, lun %d\n",
+		dev_num, SDp->host->host_no, SDp->channel, SDp->id, SDp->lun);
+
 	return 0;
 };
 
@@ -5388,11 +5441,7 @@ static int osst_detect(Scsi_Device * SDp)
 {
 	if (SDp->type != TYPE_TAPE) return 0;
 	if ( ! osst_supports(SDp) ) return 0;
-	
-	printk(KERN_WARNING
-		"Detected OnStream scsi tape osst%d at scsi%d, channel %d, id %d, lun %d\n",
-		osst_template.dev_noticed++,
-		SDp->host->host_no, SDp->channel, SDp->id, SDp->lun);
+	osst_template.dev_noticed++;
 	return 1;
 }
 
@@ -5402,15 +5451,18 @@ static int osst_registered = 0;
 static int osst_init()
 {
   int i;
+  unsigned long flags;
 
   if (osst_template.dev_noticed == 0) return 0;
 
+  write_lock_irqsave (&osst_dev_arr_lock, flags);
   if(!osst_registered) {
 #ifdef CONFIG_DEVFS_FS
 	if (devfs_register_chrdev(MAJOR_NR,"osst",&osst_fops)) {
 #else
 	if (register_chrdev(MAJOR_NR,"osst",&osst_fops)) {
 #endif
+		write_unlock_irqrestore (&osst_dev_arr_lock, flags);
 		printk(KERN_ERR "osst: Unable to get major %d for OnStream tapes\n",MAJOR_NR);
 		return 1;
 	}
@@ -5421,10 +5473,12 @@ static int osst_init()
   osst_template.dev_max = OSST_MAX_TAPES;
   if (osst_template.dev_max > 128 / ST_NBR_MODES)
 	printk(KERN_INFO "osst: Only %d tapes accessible.\n", 128 / ST_NBR_MODES);
+
   os_scsi_tapes =
 	(OS_Scsi_Tape **)kmalloc(osst_template.dev_max * sizeof(OS_Scsi_Tape *),
 				   GFP_ATOMIC);
   if (os_scsi_tapes == NULL) {
+	write_unlock_irqrestore (&osst_dev_arr_lock, flags);
 	printk(KERN_ERR "osst: Unable to allocate array for OnStream SCSI tapes.\n");
 #ifdef CONFIG_DEVFS_FS
 	devfs_unregister_chrdev(MAJOR_NR, "osst");
@@ -5441,21 +5495,23 @@ static int osst_init()
 	(OSST_buffer **)kmalloc(osst_template.dev_max * sizeof(OSST_buffer *),
 				    GFP_ATOMIC);
   if (osst_buffers == NULL) {
+	kfree (os_scsi_tapes); os_scsi_tapes = NULL;
+	write_unlock_irqrestore (&osst_dev_arr_lock, flags);
 	printk(KERN_ERR "osst: Unable to allocate tape buffer pointers.\n");
 #ifdef CONFIG_DEVFS_FS
 	devfs_unregister_chrdev(MAJOR_NR, "osst");
 #else
 	unregister_chrdev(MAJOR_NR, "osst");
 #endif
-	kfree(os_scsi_tapes);
 	return 1;
   }
   osst_nbr_buffers = 0;
+  write_unlock_irqrestore (&osst_dev_arr_lock, flags);
 
 #if DEBUG
   printk(OSST_DEB_MSG "osst: Buffer size %d bytes, write threshold %d bytes.\n",
 	 osst_buffer_size, osst_write_threshold);
-#endif
+#endif	  
   return 0;
 }
 
@@ -5464,10 +5520,12 @@ static void osst_detach(Scsi_Device * SDp)
 {
   OS_Scsi_Tape * tpnt;
   int i;
+  unsigned long flags;
 #ifdef CONFIG_DEVFS_FS
   int mode;
 #endif
-
+	
+  write_lock_irqsave (&osst_dev_arr_lock, flags);
   for(i=0; i<osst_template.dev_max; i++) {
 	tpnt = os_scsi_tapes[i];
 	if(tpnt != NULL && tpnt->device == SDp) {
@@ -5485,9 +5543,11 @@ static void osst_detach(Scsi_Device * SDp)
 		SDp->attached--;
 		osst_template.nr_dev--;
 		osst_template.dev_noticed--;
+		write_unlock_irqrestore (&osst_dev_arr_lock, flags);
 		return;
 	}
   }
+  write_unlock_irqrestore (&osst_dev_arr_lock, flags);
   return;
 }
 
@@ -5501,6 +5561,7 @@ static int __init init_osst(void)
 static void __exit exit_osst (void)
 {
   int i;
+  unsigned long flags;
   OS_Scsi_Tape * STp;
 
   scsi_unregister_module(MODULE_SCSI_DEV, &osst_template);
@@ -5509,6 +5570,7 @@ static void __exit exit_osst (void)
 #else
   unregister_chrdev(MAJOR_NR, "osst");
 #endif
+  write_lock_irqsave (&osst_dev_arr_lock, flags);
   osst_registered--;
   if(os_scsi_tapes != NULL) {
 	for (i=0; i < osst_template.dev_max; ++i) {
@@ -5531,6 +5593,7 @@ static void __exit exit_osst (void)
 	}
   }
   osst_template.dev_max = 0;
+  write_unlock_irqrestore (&osst_dev_arr_lock, flags);
   printk(KERN_INFO "osst: Unloaded.\n");
 }
 
