@@ -149,10 +149,12 @@ Reflected the ability to use multiple blocksizes in READMEs.</DD>
 <DT>2001-10-10: (osst 0.8.14 / 0.9.9)</DT>
 <DD>Made changes required to have Arkeia work with osst.
 Have 'mt load' open door and wait for medium to be inserted when there is no tape in the drive.
-A few minor bug fixes. Tested with kernels 2.2.20pre10 and 2.4.9ac18 respectively.
+A few minor bug fixes. Tested with kernels 2.2.20pre10 and 2.4.9ac18 respectively.</DD>
+<DT>2001-11-01: (osst 0.8.15)</DT>
+<DD>Applied missing backport bug fix from 0.9.9.</DD>
 </DL></P>
 
-<H3>Known problems as of <B>0.8.14 / 0.9.9</B></H3>
+<H3>Known problems as of <B>0.8.15 / 0.9.9</B></H3>
 <UL>
 <LI>If you do not have a very recent kernel (2.4.7 or newer) you cannot use osst 0.9.9;
 in that case extract 0.9.8 from <A HRef="onstream-20010603.tar.gz">this archive</A>.
@@ -195,7 +197,7 @@ There are several possibilities to get the <TT>osst</TT>-driver. For your
 convenience, the archives also contain Terry's userspace driver <TT>osg</TT> 
 and some tools.
 <OL>
-<LI>(recommended) Get the very latest <A HRef="onstream-20011011.tar.gz">sources</A>, unpack
+<LI>(recommended) Get the very latest <A HRef="onstream-20011101.tar.gz">sources</A>, unpack
 them (<TT>tar xvzf onstream-200*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux source
 tree (recent 2.4.x kernel trees are fine, otherwise apply patch osst-22.diff 
