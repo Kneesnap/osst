@@ -319,7 +319,7 @@ ITEM    {
 	"MAXUSE"        "100000"
         "SIZESEG"       "96000"
 	"COMMENT"       "OnStream ADR2-60"
-	"FORM_FACTOR" "ADR"
+	"FORM_FACTOR" "ADR2"
 }
 			
 </PRE>
@@ -331,6 +331,11 @@ ITEM    {
 	"FORM_FACTOR"   "ADR"
 	"TIME_BEFORE_CLEAN"     "50"
 }
+ITEM    {
+	"NAME"  "ONSTREAM_ADR2"
+	"FORM_FACTOR"   "ADR2"
+	"TIME_BEFORE_CLEAN"     "50"
+}
 </PRE><P>
 You may want to lower the <TT>THROUGHPUT</TT> for the <TT>ADR_30</TT> to
 <TT>700</TT> in case you  have a USB30 device and you may want to increase
@@ -338,9 +343,8 @@ it to <TT>2000</TT> for a DI-30+(Fast) or SC-30/50 drive.<Br>
 Note: There is some controversary whether a <TT>"BLOCK_SIZE"	"32768"</TT> 
 statement should be added to the drvtype definition or not. In theory it
 should be there, but in practice it seems to prevent successful restores.<Br>
-Another note: You may introduce another drivetype <TT>ADR2</TT> to reflect
-that compatibility between ADR and ADR2 is only one-way. (ADR2 drives can
-handle ADR media but not the other way round.)
+Another note: I introduced a second drivetype <TT>ADR2</TT> for the ADR-2
+tapes as they are not really compatible with ADR tapes.
 
 <A Name="tapeinfo">
 <H3>tapeinfo</H3>
