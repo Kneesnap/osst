@@ -12,7 +12,7 @@
 Vendor:       SuSE GmbH, Nuernberg, Germany
 Distribution: SuSE Linux 7.0a (i386)
 Name:         onstream
-Release:      0
+Release:      1
 Packager:     feedback@suse.de
 
 Copyright:	GPL
@@ -20,7 +20,7 @@ Group:        Base/Kernel
 Autoreqprov:  on
 Version:      0.9.13_0.8.0
 Summary:      OnStream SC-x0 tape support tools
-Source:	      onstream-20000625.tar.gz
+Source:	      onstream-20000626.tar.gz
 #Patch:		onstream.dif
 BuildRoot:	/var/tmp/%{name}-buildroot
 
