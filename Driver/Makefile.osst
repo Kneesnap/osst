@@ -49,6 +49,6 @@ load_module: install_mod
 		echo "Give root password for loading of kernel module"; \
 		su -c \
 		'if test ! -z "$(shell lsmod | grep $(TARGET_BASE))"; then echo "Remove osst"; \
-		 rmmod $(TARGET_BASE); fi; \
+		 rmmod $(TARGET_BASE); fi; sync; \
 		 echo "Load $(TARGET)"; modprobe $(TARGET_BASE)'; \
 	fi	

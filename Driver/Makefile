@@ -1,7 +1,9 @@
 # Makefile for the osst (OnStream SC-30/50/70 ADR tape) driver
 # (w) 3/2000, garloff@suse.de
 
+ifndef TOPDIR
 KDIR := /usr/src/linux
+#KDIR := /lib/modules/$(shell uname -r)/build
 
 TARGET := osst.o
 TARGETS := Rules.make arch $(TARGET)
@@ -29,3 +31,4 @@ install: $(TARGETS)
 load: $(TARGETS)
 	$(MAKE) -f Makefile.osst KDIR=$(KDIR) load_module
 	
+endif
