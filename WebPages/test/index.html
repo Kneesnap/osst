@@ -49,10 +49,12 @@ now kept in the headers: LIN4 signature. Automatic conversion on write.
 Better error recovery.</DD>
 <DT>2000-05-14: (osst 0.7.1)</DT>
 <DD>Bugfixes. Maintains soft error count.
-Successfully tested with firmware 1.05 and 1.08.
+Successfully tested with firmware 1.05 and 1.08.</DD>
+<DT>2000-05-15: (osst 0.7.2)</DT>
+<DD>Fix error handling skipping over second header group.
 </DL></P>
 
-<H3>Known problems as of <B>0.7.1</B></H3>
+<H3>Known problems as of <B>0.7.2</B></H3>
 <UL>
 <LI>The driver does currently prevent from accessing non-OnStream tapes on
 the same machine, as it is not able to drive normal tape devices. It can
@@ -97,7 +99,7 @@ There are several possibilities to get the <TT>osst</TT>-driver. For your
 convenience, the archives also contain Terry's userspace driver <TT>osg</TT> 
 and some tools.
 <OL>
-<LI>(recommended) Get the <A HRef="onstream-20000514.tar.gz">sources</A>, unpack
+<LI>(recommended) Get the <A HRef="onstream-20000515.tar.gz">sources</A>, unpack
 them (<TT>tar xvzf onstream-2000*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux source
 tree installed in <TT>/usr/src/linux/</TT>. 
