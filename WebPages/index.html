@@ -2,7 +2,7 @@
 <HTML>
 <Head>
 <Title>OnStream Linux SCSI tape driver development</Title>
-	<Link HRef="mailto:osst@linux.onstream.nl">
+	<Link HRef="mailto:osst@linux1.onstream.nl">
 	<Meta HTTP-Equiv="Content-Type" Content="text/html; charset=iso-8859-1">
 	<Meta Name="Author" Content="garloff@suse.de">
 	<Meta Name="Generator" Content="Text Editor (xemacs/jed, Linux)">
@@ -24,12 +24,12 @@
  GPL and submitted to the kernel folks for inclusion into the mainstream
  kernel.</P>
 <P>This project is a joint effort of indiviuals that try to get their
- OnStream SC-x0 ADR tape drive to run with Linux. They are supported by
+ OnStream SC-x0 ADR SCSI tape drive to run with Linux. They are supported by
  <A HRef="http://www.onstream.com/">OnStream</A> and <A HRef="http://www.suse.com/">SuSE</A>.
  This machine is dedicated for the support of this and is located in
  Eindhoven, NL. It should be reachable via the IP address
  <TT>195.193.200.24</TT> and 
- -- in a few days -- via the name <TT>linux.onstream.nl</TT></A>.
+ -- in a few days -- via the name <TT>linux1.onstream.nl</TT></A>.
 </P>
 <P>This web page is a trial to coordinate this effort. Besides from pointers
  to relevant information or software, it should also give a short
@@ -50,7 +50,8 @@
  some support files like include headers. A branch with the tag <TT>L23</TT>
  is created for the Linux-2.3 versions of the <TT>st</TT>driver. That way,
  changes to the 2.2 version should be easily transferable to the 2.3 branch
- and vice versa. Of course, there can be added new files like scripts to test
+ and vice versa. Here lives the kernel tape driver for OnStream tapes osst.
+ Of course, there can be added new files like scripts to test
  or <TT>TODO</TT> lists ...</P>
 <P>The <TT>Docu</TT> directory contains the docu from OnStream, namely the
  ADR spec as a PDF. More documentation will go here. The <TT>Misc</TT>
@@ -68,7 +69,7 @@
 <H3>Mailinglist</H3></A>
 <P>A mailing list is there to provide an easy way for the developers to
  communicate. The name is 
- <TT><A HRef="mailto:osst@linux.onstream.nl">osst@linux.onstream.nl</A></TT>,
+ <TT><A HRef="mailto:osst@linux1.onstream.nl">osst@linux1.onstream.nl</A></TT>,
  and it's a majordomo list. So subscribe requests etc. go to
  <TT>osst-request</TT>.</P>
 <P>At the time of writing, the mailing list is unfortunately not yet
@@ -100,11 +101,18 @@
  <DT>2000-02-22</DT>
  <DD>CVS is up and running, and almost completely filled with the base data.
      For the mailing list, the DNS entry needs to be there, first.</DD>
+ <DT>2000-03-03</DT>
+ <DD>While the userspace osg gets better and better, the kernelspace
+     OnStream SCSI tape driver osst starts to become useable. Reading
+     and writing basically works, but the error recovery needs to be
+     implemented before an alpha release can be published.</DD>
 </DL>
 
-<P>
-<Img Src="/gif/construction.gif" Alt="Under Construction" Width=40 Height=32>
-</P>
+<A Name="credits">
+<H3>Credits</H3></A>
+The <A HRef="developers.html">developers</A> involved to make make this
+project work. 
+
 <HR>
 <A HRef="http://www.suse.com/">
 <Img Src="/gif/suse_button.gif" Alt="Powered SuSE Linux" Width=100 Height=40></A>
