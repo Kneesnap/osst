@@ -22,7 +22,7 @@ Version:      0.9.13_0.7.2
 Summary:      OnStream SC-x0 tape support tools
 Source:	      onstream-20000515.tar.gz
 #Patch:		onstream.dif
-BuildRoot:	/var/lib/%{name}-buildroot
+BuildRoot:	/var/tmp/%{name}-buildroot
 
 %description
 OnStream's SC-x0 tapes are not compliant with the SCSI2 spec for Serial
