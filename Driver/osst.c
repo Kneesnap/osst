@@ -669,7 +669,7 @@ static int osst_wait_frame(Scsi_Tape * STp, int curr, int minlast, int to)
 /*
  * Read the next OnStream tape block at the current location
  */
-static int osst_read_block(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt)
+static int osst_read_block(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int timeout)
 {
 	unsigned char	cmd[10];
 	Scsi_Cmnd     * SCpnt  = * aSCpnt;
@@ -679,10 +679,7 @@ static int osst_read_block(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt)
 	int		dev    = TAPE_NR(STp->devt);
 #endif
 
-	/* KG: This is a hack: The timeout should be passed along and not be based
-	 * on a heuristic. It works though. (The locate to the header might involve
-	 * a rewind, while normally, you don't expect that.) */
-	retval = osst_wait_frame (STp, STp->first_frame_position, 0, STp->first_frame_position == 5? 180: 30);
+	retval = osst_wait_frame (STp, STp->first_frame_position, 0, timeout);
 #if 0//def DEBUG
 	printk ("osst_read: wait for frame returned %i\n", retval);
 #endif
@@ -793,14 +790,14 @@ static int osst_get_logical_blk(Scsi_Tape * STp, int logical_blk_num, int quiet)
                         position = osst_get_frame_position(STp);
 #if DEBUG
                         printk(KERN_INFO "st%d: blank block detected, positioning tape to block %d\n",
-					 dev, position + 60);
+					 dev, position + 40);
 #endif
-                        osst_set_frame_position(STp, position + 60);
+                        osst_set_frame_position(STp, position + 40);
                         cnt += 40;
                         continue;
                 }
                 if (!STp->logical_blk_in_buffer)
-			osst_read_block(STp, &SCpnt);
+			osst_read_block(STp, &SCpnt, 30);
                 if (osst_verify_frame(STp, logical_blk_num, quiet))
                         break;
                 if (osst_verify_frame(STp, -1, quiet)) {
@@ -1181,7 +1178,7 @@ static void osst_update_last_marker(Scsi_Tape * STp, int last_mark_addr, int nex
 #endif
 	osst_set_frame_position(STp, last_mark_addr);
 	osst_initiate_read (STp, &SCpnt);
-	reslt = osst_read_block(STp, &SCpnt);
+	reslt = osst_read_block(STp, &SCpnt, 180);
 	if (SCpnt) scsi_release_command(SCpnt);
 	if (reslt) {
 		printk(KERN_WARNING "st%i: couldn't read last marker\n", dev);
@@ -1342,7 +1339,7 @@ static int __osst_analyze_headers(Scsi_Tape * STp, int block, Scsi_Cmnd ** aSCpn
 	if (osst_set_frame_position(STp, block))
 		printk(KERN_WARNING "st%i: Couldn't position tape\n", dev);
 	if (osst_initiate_read (STp, aSCpnt)) return 0;
-	if (osst_read_block(STp, aSCpnt)) {
+	if (osst_read_block(STp, aSCpnt, 180)) {
 		printk(KERN_INFO "st%i: couldn't read header frame\n", dev);
 		return 0;
 	}
