@@ -18,9 +18,9 @@ Packager:     feedback@suse.de
 Copyright:	GPL
 Group:        Base/Kernel
 Autoreqprov:  on
-Version:      0.9.13_0.7.99a
+Version:      0.9.13_0.8.0
 Summary:      OnStream SC-x0 tape support tools
-Source:	      onstream-20000621.tar.gz
+Source:	      onstream-20000625.tar.gz
 #Patch:		onstream.dif
 BuildRoot:	/var/tmp/%{name}-buildroot
 
