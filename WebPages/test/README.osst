@@ -1,6 +1,6 @@
 README file for the osst driver
 ===============================
-(w) Kurt Garloff <garloff@suse.de> 10/2000
+(w) Kurt Garloff <garloff@suse.de> 04/2001
 
 This file describes the osst driver as of version 0.8.x/0.9.x, the released
 version of the osst driver.
@@ -233,6 +233,10 @@ Status
 have been sent, but mostly reported success or only minor trouble.
 All the issues have been addressed.
 Check the web pages for more info about the current developments.
+
+0.8.6.x and 0.9.4.x have been integrated into the mainstream kernels 2.2.19
+and 2.4.0 repsectively. Newer versions with variable block size support will
+be submitted soon.
 
 
 Acknowledgments
