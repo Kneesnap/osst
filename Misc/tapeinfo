@@ -59,6 +59,10 @@ while test "$err" = "0"; do
   if test ! -z "$inspect" -a "$inspect" != "0"; then
     if test ! -z "`echo $info | grep tar`"; then
       tar tvf /tmp/tape_$tp.$myno 2>/dev/null | head -n$inspect
+    elif test "$info" = "ASCII text"; then
+      head -n$inspect /tmp/tape_$tp.$myno
+    else #if test "$info" = "data"; then
+      hexdump -C /tmp/tape_$tp.$myno | head -n$inspect
     fi
   fi
   newno=`$MT -f $tape status | grep "^File number=" | sed 's/^File number=\([0-9]*\).*$/\1/'`
