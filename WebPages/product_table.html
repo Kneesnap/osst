@@ -24,7 +24,7 @@
 </TBody>
 <TR><TD colspan="6"><Em>1<sup>st</sup> generation Echo drives (ADR tapes, QIC-172)</Em>
 <TR>
-<TH>(old) <A HRef="http://www.onstream.com/products/di30.html">DI30</A>/50<Br>
+<TH><A HRef="http://www.onstream.com/products/di30.html">DI30</A><Br>
  DI30 FAST
 <TD>IDE
 <TD>DI-30
@@ -34,8 +34,8 @@
  (<A HRef="Firmware/di30fix_static">static variant</A>)
 <TD><A HRef="Firmware/IDE109.bin">IDE 1.09</A>
 <TR>
-<TH>(new) DI30/50<Br>
- <A HRef="http://www.onstream.com/products/di30fast.html">DI30 FAST</A>
+<TH>(new) DI30+<Br>
+ <A HRef="http://www.onstream.com/products/di30fast.html">DI30+ FAST</A>
 <TD>IDE
 <TD>DI-30
 <TD><A HRef="test/ide-tape.html">ide-scsi + osst</A><Br>
@@ -112,8 +112,9 @@
 Note: Please make sure you identify your drive correctly before downloading
 and executing the firmware updater. Have a look at <TT>/proc/scsi/scsi</TT> 
 (after having loaded the SCSI transport/emulation driver).<Br>
-The old DI-30 (Fast) and the new DI-30 (Fast) may be recognized by the
-previous firmware revision.<Br> 
+The old DI-30 (Fast) and the new DI-30+ (Fast) may be recognized by the
+previous firmware revision or by a sticker on the inside of the drive door.
+Don't try to flash a 4.xx firmware into a 1.0x drive or vice versa!<Br>
 <B>
 Look at the <A HRef="Firmware/">Firmware updater page</A> and read the
 instructions and the disclaimer before you actually try to do any firmware
