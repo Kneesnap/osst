@@ -23,7 +23,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.6.2";
+const char * osst_version = "0.6.3";
 
 /* The "failure to reconnect" firmware bug */
 #define OS_NEED_POLL_MIN 10602 /*(107A)*/
@@ -49,12 +49,12 @@ const char * osst_version = "0.6.2";
 
 /* The driver prints some debugging information on the console if DEBUG
    is defined and non-zero. */
-#define DEBUG 0
+#define DEBUG 1
 
 /* The message level for the debug messages is currently set to KERN_NOTICE
    so that people can easily see the messages. Later when the debugging messages
    in the drivers are more widely classified, this may be changed to KERN_DEBUG. */
-#define ST_DEB_MSG  KERN_DEBUG
+#define ST_DEB_MSG  KERN_NOTICE
 
 #define MAJOR_NR SCSI_TAPE_MAJOR
 #include <linux/blk.h>
@@ -1308,6 +1308,31 @@ static int osst_write_eod(Scsi_Tape * STp)
 	return osst_flush_write_buffer(STp, 0);
 }
 
+static int osst_write_filler(Scsi_Tape * STp, int block, int count)
+{
+	int	      dev = TAPE_NR(STp->devt);
+
+#if DEBUG
+	printk(ST_DEB_MSG "osst%i: reached onstream write filler group %d\n", dev, block);
+#endif
+	osst_init_aux(STp, OS_FRAME_TYPE_FILL, 0);
+	osst_wait_ready(STp, 60 * 5);
+	osst_set_frame_position(STp, block, 0);
+	while (count--) {
+	    memcpy(STp->buffer->b_data, "Filler", 6);
+	    STp->buffer->buffer_bytes = 6;
+	    STp->dirty = 1;
+	    if (osst_flush_write_buffer(STp, 0)) {
+		printk(KERN_INFO "osst%i: couldn't write filler frame\n", dev);
+		return (-EIO);
+	    }
+	}
+#if DEBUG
+	printk(ST_DEB_MSG "osst%i: exiting onstream write filler group\n", dev);
+#endif
+	return osst_flush_drive_buffer(STp);
+}
+
 static int __osst_write_header(Scsi_Tape * STp, int block, int count)
 {
 	os_header_t   header;
@@ -1333,7 +1358,7 @@ static int __osst_write_header(Scsi_Tape * STp, int block, int count)
 	while (count--) {
 	    memcpy(STp->buffer->b_data, &header, sizeof(header));
 	    STp->buffer->buffer_bytes = sizeof(header);
-	    STp->dirty   = 1;
+	    STp->dirty = 1;
 	    if (osst_flush_write_buffer(STp, 0)) {
 		printk(KERN_INFO "osst%i: couldn't write header frame\n", dev);
 		return (-EIO);
@@ -1358,6 +1383,8 @@ static int osst_write_header(Scsi_Tape * STp, int locate_eod)
 	STp->update_frame_cntr++;
 	reslt  = __osst_write_header(STp,     5, 5);
 	reslt |= __osst_write_header(STp, 0xbae, 5);
+	if (STp->update_frame_cntr == 0)
+		osst_write_filler(STp, 0xbb3, 5);
 
 	if (locate_eod) {
 #if DEBUG
@@ -1375,28 +1402,20 @@ static int __osst_analyze_headers(Scsi_Tape * STp, int block, Scsi_Cmnd ** aSCpn
 	os_header_t * header;
 	os_aux_t    * aux;
 	char          id_string[8];
+	int	      linux_media_version,
+		      update_frame_cntr;
 
-	if (STp->raw) {
-		STp->header_ok = STp->linux_media = 1;
+	if (STp->raw)
 		return 1;
+
+	if (block == 5 || block == 0xbae || STp->buffer->last_result_fatal) {
+		if (osst_set_frame_position(STp, block, 0))
+			printk(KERN_WARNING "osst%i: Couldn't position tape\n", dev);
+		if (osst_initiate_read (STp, aSCpnt)) {
+			printk(KERN_WARNING "osst%i: Couldn't initiate read\n", dev);
+			return 0;
+		}
 	}
-	STp->header_ok = STp->linux_media = 0;
-	STp->update_frame_cntr = 0;
-	STp->wrt_pass_cntr = 0;
-	STp->eod_frame_addr = STp->first_data_addr = 0x0000000A;
-	STp->first_mark_addr = STp->last_mark_addr = -1;
-#if DEBUG
-	printk(KERN_INFO "osst%i: reading header\n", dev);
-#endif
-	/* KG: Doesn't the locate clear the buffer? */
-	/* WR: Yes, but we only come here to read subsequent blocks if we failed
-	 *     to find a valid header block the first time. That could be due to
-	 *     all sorts of problems, including read errors, so I believe we are
-	 *     more likely to succeed this way, without performance penalty for
-         *     the normal case. */
-	if (osst_set_frame_position(STp, block, 0))
-		printk(KERN_WARNING "osst%i: Couldn't position tape\n", dev);
-	if (osst_initiate_read (STp, aSCpnt)) return 0;
 	if (osst_read_block(STp, aSCpnt, 180)) {
 #if DEBUG
 		printk(KERN_INFO "osst%i: couldn't read header frame\n", dev);
@@ -1405,6 +1424,12 @@ static int __osst_analyze_headers(Scsi_Tape * STp, int block, Scsi_Cmnd ** aSCpn
 	}
 	header = (os_header_t *) STp->buffer->b_data;
 	aux = STp->buffer->aux;
+	if (aux->frame_type != OS_FRAME_TYPE_HEADER) {
+#if DEBUG
+		printk(ST_DEB_MSG "osst%i: skipping non-header frame (%d)\n", dev, block);
+#endif
+		return 0;
+	}
 	if (strncmp(header->ident_str, "ADR_SEQ", 7) != 0 &&
 	    strncmp(header->ident_str, "ADR-SEQ", 7) != 0) {
                 strncpy(id_string, header->ident_str, 7);
@@ -1418,41 +1443,72 @@ static int __osst_analyze_headers(Scsi_Tape * STp, int block, Scsi_Cmnd ** aSCpn
 	if (header->par_num != 1)
 		printk(KERN_INFO "osst%i: warning: %d partitions defined, only one supported\n", 
 				 dev, header->par_num);
-	STp->wrt_pass_cntr = ntohs(header->partition.wrt_pass_cntr);
-	STp->first_data_addr = ntohl(header->partition.first_frame_addr);
-	STp->eod_frame_addr = ntohl(header->partition.eod_frame_addr);
-	STp->filemark_cnt = ntohl(aux->filemark_cnt);
-	STp->first_mark_addr = ntohl(aux->next_mark_addr);
-	STp->last_mark_addr = ntohl(aux->last_mark_addr);
-	STp->update_frame_cntr = ntohl(aux->update_frame_cntr);
-	memcpy(STp->application_sig, aux->application_sig, 4); STp->application_sig[4] = 0;
-	if (memcmp(STp->application_sig, "LIN", 3) == 0) {
+	memcpy(id_string, aux->application_sig, 4);
+	id_string[4] = 0;
+	if (memcmp(id_string, "LIN", 3) == 0) {
 		STp->linux_media = 1;
-		STp->linux_media_version = STp->application_sig[3] - '0';
-		if (STp->linux_media_version != 3)
+		linux_media_version = id_string[3] - '0';
+		if (linux_media_version != 3)
 			printk(KERN_INFO "osst%i: Linux media version %d detected (current 3)\n",
-					 dev, STp->linux_media_version);
+					 dev, linux_media_version);
 	} else {
-		printk(KERN_INFO "osst%i: non Linux media detected (%c%c%c%c)\n", dev, STp->application_sig[0],
-			STp->application_sig[1], STp->application_sig[2], STp->application_sig[3]);
-		STp->linux_media = 0;
+		printk(KERN_INFO "osst%i: non Linux media detected (%s)\n", dev, id_string);
+		return 0;
 	}
+	if (linux_media_version < STp->linux_media_version) {
+#if DEBUG
+		printk(ST_DEB_MSG "osst%i: skipping frame %d with linux_media_version %d\n",
+				  dev, block, linux_media_version);
+#endif
+		return 0;
+	}
+	if (linux_media_version > STp->linux_media_version) {
+#if DEBUG
+		printk(ST_DEB_MSG "osst%i: frame %d sets linux_media_version to %d\n",
+				   dev, block, linux_media_version);
+#endif
+		memcpy(STp->application_sig, id_string, 5);
+		STp->linux_media_version = linux_media_version;
+		STp->update_frame_cntr = -1;
+	}
+	update_frame_cntr = ntohl(aux->update_frame_cntr);
+	if (update_frame_cntr < (signed)STp->update_frame_cntr) {
+#if DEBUG
+		printk(ST_DEB_MSG "osst%i: skipping frame %d with update_frame_counter %d\n",
+				   dev, block, update_frame_cntr);
+#endif
+		return 0;
+	}
+	if (update_frame_cntr > (signed)STp->update_frame_cntr) {
+#if DEBUG
+		printk(ST_DEB_MSG "osst%i: frame %d sets update_frame_counter to %d\n",
+				   dev, block, update_frame_cntr);
+#endif
+		STp->wrt_pass_cntr     = ntohs(header->partition.wrt_pass_cntr);
+		STp->eod_frame_addr    = ntohl(header->partition.eod_frame_addr);
+		STp->first_data_addr   = ntohl(header->partition.first_frame_addr);
+		STp->filemark_cnt      = ntohl(aux->filemark_cnt);
+		STp->first_mark_addr   = ntohl(aux->next_mark_addr);
+		STp->last_mark_addr    = ntohl(aux->last_mark_addr);
+		STp->update_frame_cntr = update_frame_cntr;
 #if DEBUG
 	printk(ST_DEB_MSG "osst%i: detected write pass counter %d, update frame counter %d, filemark counter %d\n",
 			  dev, STp->wrt_pass_cntr, STp->update_frame_cntr, STp->filemark_cnt);
-	printk(ST_DEB_MSG "osst%i: first frame on tape = %d, last = %d, eod frame = %d\n", dev,
+	printk(ST_DEB_MSG "osst%i: first data frame on tape = %d, last = %d, eod frame = %d\n", dev,
 			  STp->first_data_addr,
 			  ntohl(header->partition.last_frame_addr),
 			  ntohl(header->partition.eod_frame_addr));
 	printk(ST_DEB_MSG "osst%i: first mark on tape = %d, last = %d, eod frame = %d\n", 
 			  dev, STp->first_mark_addr, STp->last_mark_addr, STp->eod_frame_addr);
 #endif
+	}
 	return 1;
 }
 
 static int osst_analyze_headers(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt)
 {
 	int position, block;
+	int valid = 0;
 	int dev = TAPE_NR(STp->devt);
 
         position = osst_get_frame_position(STp);
@@ -1461,30 +1517,27 @@ static int osst_analyze_headers(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt)
 		STp->header_ok = STp->linux_media = 1;
 		return 1;
 	}
-	STp->header_ok = STp->linux_media = 0;
-
-#if 0
-	if (osst_set_frame_position(STp, 5, 0))
-		printk(KERN_WARNING "osst%i: Couldn't position tape\n", dev);
-	if (osst_initiate_read (STp, aSCpnt)) return 0;
+	STp->header_ok = STp->linux_media = STp->linux_media_version = 0;
+	STp->update_frame_cntr = STp->wrt_pass_cntr = -1;
+	STp->eod_frame_addr = STp->first_data_addr = -1;
+	STp->first_mark_addr = STp->last_mark_addr = -1;
+#if DEBUG
+	printk(KERN_INFO "osst%i: reading header\n", dev);
 #endif
 	
 	for (block = 5; block < 10; block++)
 		if (__osst_analyze_headers(STp, block, aSCpnt))
-			goto ok;
-#if 0
-	if (osst_set_frame_position(STp, 0xbae, 0))
-		printk(KERN_WARNING "osst%i: Couldn't position tape\n", dev);
-	if (osst_initiate_read (STp, aSCpnt)) return 0;
-#endif
-	
+			valid = 1;
+
 	/* let's try both the ADR 1.1 and the ADR 1.2 locations... */
 	for (block = 0xbae; block < 0xbb8; block++)
 		if (__osst_analyze_headers(STp, block, aSCpnt))
-			goto ok;
-	printk(KERN_ERR "osst%i: failed to find valid ADRL header, new media?\n", dev);
-	return 0;
-ok:
+			valid = 1;
+
+	if (!valid) {
+		printk(KERN_ERR "osst%i: failed to find valid ADRL header, new media?\n", dev);
+		return 0;
+	}
 	if (position < STp->first_data_addr)
 		position = STp->first_data_addr;
 	
