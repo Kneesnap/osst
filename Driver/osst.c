@@ -5,7 +5,7 @@
   History:
 
   OnStream SCSI Tape support (osst) cloned from st.c by
-  Willem Riede (wriede@monmouth.com) Feb 2000
+  Willem Riede (osst@riede.org) Feb 2000
   Fixes ... Kurt Garloff <garloff@suse.de> Mar 2000
 
   Rewritten from Dwayne Forsyth's SCSI tape driver by Kai Makisara.
@@ -23,7 +23,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.9.0";
+const char * osst_version = "0.9.1";
 
 /* The "failure to reconnect" firmware bug */
 #define OS_NEED_POLL_MIN 10602 /*(107A)*/
@@ -3480,17 +3480,32 @@ static int osst_int_ioctl(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, unsigned i
 	 case MTOFFL:
 	 case MTLOAD:
 	 case MTUNLOAD:
+	 case MTRETEN:
 		 cmd[0] = START_STOP;
+		 cmd[1] = 1;			/* Don't wait for completion */
 		 if (cmd_in == MTLOAD)
-			 cmd[4] |= 1;
-		 cmd[1] = 1;  /* Don't wait for completion */
+			 cmd[4] = 1;		/* load */
+		 if (cmd_in == MTRETEN)
+			 cmd[4] = 3;		/* retension then mount */
+		 if (cmd_in == MTOFFL)
+			 cmd[4] = 4;		/* rewind then eject */
 		 timeout = STp->timeout;
 #if DEBUG
 		 if (debugging) {
-			 if (cmd_in != MTLOAD)
-			   printk(OSST_DEB_MSG "osst%d: Unloading tape.\n", dev);
-			 else
-			   printk(OSST_DEB_MSG "osst%d: Loading tape.\n", dev);
+			 switch (cmd_in) {
+				 case MTUNLOAD:
+					 printk(OSST_DEB_MSG "osst%d: Unloading tape.\n", dev);
+					 break;
+				 case MTLOAD:
+					 printk(OSST_DEB_MSG "osst%d: Loading tape.\n", dev);
+					 break;
+				 case MTRETEN:
+					 printk(OSST_DEB_MSG "osst%d: Retensioning tape.\n", dev);
+					 break;
+				 case MTOFFL:
+					 printk(OSST_DEB_MSG "osst%d: Ejecting tape.\n", dev);
+					 break;
+			 }
 		 }
 #endif
 		 fileno = blkno = at_sm = logical_blk_num = 0 ;
@@ -3501,17 +3516,6 @@ static int osst_int_ioctl(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, unsigned i
 			 printk(OSST_DEB_MSG "osst%d: No op on tape.\n", dev);
 #endif
 		 return 0;  /* Should do something ? */
-		 break;
-	 case MTRETEN:
-		 cmd[0] = START_STOP;
-		 cmd[1] = 1;  /* Don't wait for completion */
-		 timeout = STp->timeout;
-		 cmd[4] = 3;
-#if DEBUG
-		 if (debugging)
-			 printk(OSST_DEB_MSG "osst%d: Retensioning tape.\n", dev);
-#endif
-		 fileno = blkno = at_sm = logical_blk_num = 0;
 		 break;
 	 case MTEOM:
 #if DEBUG
@@ -4897,8 +4901,36 @@ static struct file_operations osst_fops = {
 	release:	os_scsi_tape_close,
 };
 
+static int osst_supports(Scsi_Device * SDp)
+{
+	struct	osst_support_data {
+		char *vendor;
+		char *model;
+		char *rev;
+		char *driver_hint; /* Name of the correct driver, NULL if unknown */
+	};
 
-static int osst_attach(Scsi_Device * SDp){
+static	struct	osst_support_data support_list[] = {
+		/* {"XXX", "Yy-", "", NULL},  example */
+		SIGS_FROM_OSST,
+		{NULL, }};
+
+	struct	osst_support_data *rp;
+
+	/* We are willing to drive OnStream SC-x0 as well as the
+	 * 	 * IDE, ParPort, FireWire, USB variants, if accessible by
+	 * 	 	 * emulation layer (ide-scsi, usb-storage, ...) */
+
+	for (rp=&(support_list[0]); rp->vendor != NULL; rp++)
+		if (!strncmp(rp->vendor, SDp->vendor, strlen(rp->vendor)) &&
+		    !strncmp(rp->model, SDp->model, strlen(rp->model)) &&
+		    !strncmp(rp->rev, SDp->rev, strlen(rp->rev))) 
+			return 1;
+	return 0;
+}
+
+static int osst_attach(Scsi_Device * SDp)
+{
 	OS_Scsi_Tape * tpnt;
 	ST_mode * STm;
 	ST_partstat * STps;
@@ -4907,7 +4939,7 @@ static int osst_attach(Scsi_Device * SDp){
 	int mode;
 #endif
 
-	if (SDp->type != TYPE_TAPE || !OSST_SUPPORTS(SDp))
+	if (SDp->type != TYPE_TAPE || !osst_supports(SDp))
 		 return 1;
 
 	if (osst_template.nr_dev >= osst_template.dev_max) {
@@ -5043,18 +5075,14 @@ static int osst_attach(Scsi_Device * SDp){
 
 static int osst_detect(Scsi_Device * SDp)
 {
-  if (SDp->type != TYPE_TAPE) return 0;
-  /* We are willing to drive OnStream SC-x0 as well as the
-   * IDE, ParPort, USB variants, if accessible by emulation
-   * layer (ide-scsi, usb-storage, ...) */
-  if (!OSST_SUPPORTS(SDp)) return 0;
-
-  printk(KERN_WARNING
-	 "Detected OnStream scsi tape osst%d at scsi%d, channel %d, id %d, lun %d\n",
-	 osst_template.dev_noticed++,
-	 SDp->host->host_no, SDp->channel, SDp->id, SDp->lun);
-
-  return 1;
+	if (SDp->type != TYPE_TAPE) return 0;
+	if ( ! osst_supports(SDp) ) return 0;
+	
+	printk(KERN_WARNING
+		"Detected OnStream scsi tape osst%d at scsi%d, channel %d, id %d, lun %d\n",
+		osst_template.dev_noticed++,
+		SDp->host->host_no, SDp->channel, SDp->id, SDp->lun);
+	return 1;
 }
 
 static int osst_registered = 0;
