@@ -131,6 +131,10 @@ and re-run 'make modules modules_install'.</DD>
 <DT>2001-02-08: (osst 0.8.11 / 0.9.6)</DT>
 <DD>Fixed a hang of 0.9.6 when using tar's default 10K transfer size.
 Fixed a buglet in close of the rewinding device in both versions.</DD>
+<DT>2001-03-31: (osst 0.8.12 / 0.9.7)</DT>
+<DD>Junfeng Yang (Stanford) reported potential invalid pointer dereferences in two functions within
+osst, identified by their CHECKER tool. There was a theoretical possibility that an invalid pointer
+would be used, though I doubt that anyone would ever be hit by this. Corrected all the same.</DD>
 </DL></P>
 
 <H3>Known problems as of <B>0.8.11 / 0.9.6</B></H3>
@@ -174,10 +178,11 @@ There are several possibilities to get the <TT>osst</TT>-driver. For your
 convenience, the archives also contain Terry's userspace driver <TT>osg</TT> 
 and some tools.
 <OL>
-<LI>(recommended) Get the very latest <A HRef="onstream-20010208.tar.gz">sources</A>, unpack
+<LI>(recommended) Get the very latest <A HRef="onstream-20010331.tar.gz">sources</A>, unpack
 them (<TT>tar xvzf onstream-200*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux source
-tree (apply patch osst-22.diff resp. osst-24.diff first) installed in
+tree (recent 2.4.x kernel trees are fine, otherwise apply patch osst-22.diff 
+resp. osst-24.diff first) installed in
 <TT>/usr/src/linux/</TT>. Alternatively, here are the 
 <A HRef="onstream-0861-0943.tar.gz">sources for 0.8.6.1/0.9.4.3</A>, the
 latest stable versions with a fixed blocksize of 32k used in the RPMS below.
