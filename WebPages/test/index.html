@@ -312,14 +312,35 @@ Add this to your tape definition file
 <TT>/usr/knox/arkeia/dbase/f3tape/tptypes.lst</TT>
 <PRE>
 ITEM    {
-	"NAME"          "ADR30"
+	"NAME"  "ADR30"
 	"CAPACITY"      "14429"
-	"THROUGHPUT"    "2000"
-	"MAXUSE"        "1000000"
-	"SIZESEG"       "96000"  
-	"COMMENT"       "OnStream 15/30Gig"
-	"FORM_FACTOR"   "ADR"   
+	"THROUGHPUT"    "1000"
+	"MAXUSE"        "100000"
+	"SIZESEG"       "96000"
+	"COMMENT"       "OnStream ADR30"
+	"FORM_FACTOR" "ADR"
 }
+
+ITEM    {
+	"NAME"  "ADR50"
+	"CAPACITY"      "24300"
+	"THROUGHPUT"    "2000"
+	"MAXUSE"        "100000"
+	"SIZESEG"       "96000"
+	"COMMENT"       "OnStream ADR50"
+	"FORM_FACTOR" "ADR"
+}
+
+ITEM    {
+	"NAME"  "ADR60"
+	"CAPACITY"      "29200"
+	"THROUGHPUT"	"2400"
+	"MAXUSE"        "100000"
+        "SIZESEG"       "96000"
+	"COMMENT"       "OnStream ADR2-60"
+	"FORM_FACTOR" "ADR"
+}
+			
 </PRE>
 and the following to your drive type definition file
 <TT>/usr/knox/arkeia/dbase/f3drv/drvtypes.lst</TT>
@@ -327,8 +348,13 @@ and the following to your drive type definition file
 ITEM    {
 	"NAME"  "ONSTREAM_ADR"
 	"FORM_FACTOR"   "ADR"
+	"TIME_BEFORE_CLEAN"     "50"
+	"BLOCK_SIZE"    "32768"
 }
 </PRE>
+You may want to lower the <TT>THROUGHPUT</TT> to <TT>700</TT>in case you
+have a USB30 device and you may want to increase it to <TT>2000</TT>
+for a DI-30+(Fast) or SC-30/50 drive which deliver 2MB/s.
 <HR>
 <I>(w) by <A HRef="mailto:garloff@suse.de">KG</A>, $Id$</I>
 </Body>
