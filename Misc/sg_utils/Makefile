@@ -18,7 +18,7 @@ ILIBS =
 
 INCLUDES =
 
-CFLAGS = -g -O2 -Wall -pedantic
+CFLAGS = -g -O2 -Wall #-pedantic
 
 LDFLAGS =
 

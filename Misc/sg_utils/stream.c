@@ -207,7 +207,8 @@ int trywrite (int fout)
 
 int main (int argc, char *argv[])
 {
-	int rd, wr; int ready; int ctr = 0;
+	int rd, wr; int ready; int ctr = 0; int lastempty = 0;
+	int wasempty = 0; time_t start = time (0);
 	//time_t clk = clock ();
 	struct timeval timeout;
 	fd_set fdsin, fdsout, fdsexc;
@@ -244,15 +245,17 @@ int main (int argc, char *argv[])
 		if (wr && !empty && inbuf() > 9*bufsize / 10)
 			wr += trywrite (fdout);
 		if (reportlevel && !(ctr++ % 128)) 
-			fprintf (stderr, "stream: buffer %2i%% %9i %11Li %11Li %7i %7i\r",
+			fprintf (stderr, "stream: buffer %2i%% %9i %11Li %11Li %6.3fMB/s \r",
 				 100*inbuf() / bufsize, inbuf (), readtotal, 
-				 writetotal, rd, wr);
+				 writetotal, writetotal/(1+1024*1024*difftime (time(0), start)));
 #if 1
 		if (wrappos + readpos - writepos != readtotal - writetotal && !eof) {
 			fprintf (stderr, "\nstream: Oops!\n");
 			abort ();
 		}
 #endif
+		if (inbuf () <= chunksize) lastempty++; else lastempty = 0;
+		if (lastempty == 1) wasempty++;
 		if (rd == 0 && wr == 0) {
 			/* Prepare filedescriptor sets for select() */
 			FD_ZERO (&fdsin ); FD_ZERO (&fdsout); FD_ZERO (&fdsexc);
@@ -278,7 +281,9 @@ int main (int argc, char *argv[])
 	}
 	if (reportlevel) fprintf (stderr, "\n");
 	if (debug) fprintf (stderr, "stream: normal exit (%i %i)\n", empty, eof);
-	if (verbose) fprintf (stderr, "stream: read %Li bytes, wrote %Li\n",
-			      readtotal, writetotal);
+	if (verbose) fprintf (stderr, "stream: read %Li bytes, wrote %Li\n"
+			      "stream: Buf was %i times empty, avg. speed %6.3fMB/s\n",
+			      readtotal, writetotal,
+			      wasempty, writetotal/(1+1024*1024*difftime (time(0), start)));
 	return 0;
 }
