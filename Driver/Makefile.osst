@@ -21,7 +21,7 @@ MODLIB := $(DESTDIR)$(INSTALL_MOD_PATH)/lib/modules/$(KERNELRELEASE)
 install_mod: $(MODLIB)/$(TARGETMODDIR)/osst.o
 
 $(MODLIB)/$(TARGETMODDIR)/osst.o: osst.o
-	@if test $(shell id -u) == 0; then \
+	@if test $(shell id -u) = 0; then \
 		echo "Install osst"; install -o root -g root -d $(MODLIB)/$(TARGETMODDIR); \
 		install -o root -g root -m 0644 osst.o $(MODLIB)/$(TARGETMODDIR)/; \
 		echo "depmod -a $(KERNELRELEASE)"; depmod -a $(KERNELRELEASE); \
@@ -34,7 +34,7 @@ $(MODLIB)/$(TARGETMODDIR)/osst.o: osst.o
 	fi	
 
 load_module: install_mod
-	@if test $(shell id -u) == 0; then \
+	@if test $(shell id -u) = 0; then \
 		if test ! -z "$(shell lsmod | grep osst)"; then echo "Remove osst"; \
 		rmmod osst; fi; \
 		echo "Load osst"; modprobe osst; \
