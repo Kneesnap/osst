@@ -24,7 +24,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.9.4.2";
+const char * osst_version = "0.9.4.3";
 
 /* The "failure to reconnect" firmware bug */
 #define OSST_FW_NEED_POLL_MIN 10602 /*(107A)*/
