@@ -654,7 +654,7 @@ static int osst_wait_frame(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, int curr,
 #if DEBUG
 	char	notyetprinted = 1;
 #endif
-	if (STp->ps[STp->partition].rw != ST_READING)
+	if (minlast >= 0 && STp->ps[STp->partition].rw != ST_READING)
 		printk(KERN_ERR "osst%i: waiting for frame without having initialized read!\n", dev);
 
 	while (time_before (jiffies, startwait + to*HZ))
