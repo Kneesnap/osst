@@ -391,15 +391,14 @@ typedef struct os_header_s {
 typedef struct {
   unsigned char in_use;
   unsigned char dma;	/* DMA-able buffer */
-  int this_size;        /* allocated size of the structure */
   int buffer_size;
   int buffer_blocks;
   int buffer_bytes;
   int read_pointer;
   int writing;
-  int last_result;
-  int last_result_fatal;
-  Scsi_Cmnd *last_SCpnt;
+  int midlevel_result;
+  int syscall_result;
+  Scsi_Request *last_SRpnt;
   unsigned char *b_data;
   os_aux_t *aux;               /* onstream AUX structure at end of each block */
   unsigned short use_sg;       /* zero or number of segments for this adapter */
@@ -413,7 +412,8 @@ typedef struct {
   kdev_t devt;
   unsigned capacity;
   Scsi_Device* device;
-  struct semaphore sem;
+  struct semaphore lock;       /* for serialization */
+  struct semaphore sem;        /* for SCSI commands */
   OSST_buffer * buffer;
 
   /* Drive characteristics */
@@ -455,6 +455,7 @@ typedef struct {
   unsigned char density;
   unsigned char door_locked;
   unsigned char rew_at_close;
+  unsigned char inited;
   int block_size;
   int min_block;
   int max_block;
@@ -499,8 +500,6 @@ typedef struct {
   unsigned char last_sense[16];
 #endif
 } OS_Scsi_Tape;
-
-extern Scsi_Tape * scsi_tapes;
 
 /* Values of write_type */
 #define OS_WRITE_DATA      0
