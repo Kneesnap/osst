@@ -13,6 +13,12 @@ TARGET=osg
 #==============================================================================
 
 CFLAGS=-fno-exceptions $(OPTFLAGS) $(WFLAGS) $(DEFS)
+
+ARCH=$(shell uname -m)
+ifeq "$(ARCH)" "ppc"
+CFLAGS += -fsigned-char
+endif
+
 LFLAGS=$(LIBPATH)
 CC=gcc
 CPP=g++
