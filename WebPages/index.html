@@ -44,8 +44,8 @@
 <P>For the joint development, a <A HRef="http://www.cyclic.com/">CVS</A>
  repository is installed on this machine. It handles the driver sources and
  also the web pages.</P>
-<P>The repository contains the modules <TT>WebPages</TT>, <TT>Driver</TT>, 
- <TT>Docu</TT> and <TT>Misc</TT>.</P>
+<P>The repository contains the modules (=directories) <TT>WebPages</TT>,
+ <TT>Driver</TT>,  <TT>Docu</TT>, <TT>Firmware</TT> and <TT>Misc</TT>.</P>
 <P>In <TT>Driver</TT> you find the stock 2.2.14 kernel <TT>st</TT> driver and
  some support files like include headers. A branch with the tag <TT>L23</TT>
  is created for the Linux-2.3 versions of the <TT>st</TT>driver. That way,
@@ -58,15 +58,17 @@
  directory contains the IDE driver for the OnStream of Gadi Oxman, and the
  userspace OnStream SCSI driver from Terry Hardie. Other sourcecode related
  to the OnStream should also go here.</P>
+<P>The <TT>Firmware</TT> directory contains DOS and Wind*ws programs to
+ update the firmware of your OnStream tape device.</P>
 <P>CVS read access is granted upon request. If you have some small
  contributions, the diffs (use <TT>diff -u</TT>) should be send to the 
- <A HRef="#mailinglist"> mailling list</A> and someone will have a look and
- check it into the 
- CVS. If you are contributing a lot, it will be easier to give you read-write
+ <A HRef="#mailinglist"> mailing list</A> and someone will have a look and
+ check it into the CVS. 
+ If you are contributing a lot, it will be easier to give you read-write
  access to the repository, so this will happen.</P>
 
 <A Name="mailinglist">
-<H3>Mailinglist</H3></A>
+<H3>Mailing list</H3></A>
 <P>A mailing list is there to provide an easy way for the developers to
  communicate. The name is 
  <TT><A HRef="mailto:osst@linux1.onstream.nl">osst@linux1.onstream.nl</A></TT>,
@@ -122,6 +124,8 @@
      a tarball with the driver (ALPHA state at the moment) to download and
      some instructions on how to use it and how to report success or failure
      back to the developers.</DD>
+ <DT>2000-05-05</DT>
+ <DD>The <TT>Firmware</TT> dir has been added to CVS</DD>
 </DL>
 
 <A Name="credits">
