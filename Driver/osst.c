@@ -2627,7 +2627,7 @@ static ssize_t osst_write(struct file * filp, const char * buf, size_t count, lo
 
     /* Write must be integral number of blocks */
     if (STp->block_size != 0 && (count % STp->block_size) != 0) {
-	printk(KERN_WARNING "osst%d: Write not multiple of tape block size (%d bytes).\n",
+	printk(KERN_WARNING "osst%d: Write (%d bytes) not multiple of tape block size (32k).\n",
 	       dev, count);
 	return (-EIO);
     }
