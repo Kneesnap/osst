@@ -158,6 +158,15 @@ A few minor bug fixes. Tested with kernels 2.2.20pre10 and 2.4.9ac18 respectivel
 <DT>2001-11-11: (osst 0.9.10)</DT>
 <DD>Accomodate 64 bit PCI API in linux-2.4.13 that broke osst.
 Make recoverable read/write log messages less intimidating.</DD>
+<DT>2002-05-18: (osst 0.9.11)</DT>
+<DD>This is an experimental version for FW-30 support. crashes for me on write error recovery.
+Brave souls with FW-30 drives can try it out at their own risk. Reports welcome. 
+Be sure to first update your ieee1394 drivers from <A HRef="http://vore.debian.org/linux1394/" >debian</A>.
+Fixes old Buslogic bug. Files shorter than one 32K frame now get written out.
+Osst now supports a proc file for each drive (/proc/scsi/osst/osstX) which provides
+'ADRversion_major.minor linux_media_version first_data_ppos eod_frame_ppos filemrk_cnt'.
+Because of its experimental status the source is only available from this
+<A HRef="onstream-20020518.tar.gz">link</A>.</DD>
 </DL></P>
 
 <A Name="problems">
