@@ -42,9 +42,9 @@
 <A Name="status">
 <H3>Status.</H3>
 </A><P>
-The driver currently supports 2.4.x kernels. A 2.2 version is also
+The driver currently supports 2.6.x and 2.4.y kernels. A 2.2 version is also
 available, but has not been updated with some of the latest fixes.
-Likewise, a 2.6 version is available. Osst comes standard with all recent
+Osst comes standard with all recent
 kernels from <A HRef="http://kernel.org/">kernel.org</A> or your favorite distribution.
 </P>
 <P>
@@ -61,6 +61,25 @@ responsible for this. There is no warranty of whatever kind. In short:
 <EM>The <A HRef="http://www.fsf.org/copyleft/gpl.html">GNU GPL</A>
 applies.</EM></P>
 <DL>
+ <DT>2003-12-29</DT>
+ <DD>Osst-0.99.2 released. Provides initial sysfs support which replaces the /proc support in 0.99.1.
+   For each attached drive, a directory with attributes is created:
+   <PRE>
+#ls /sys/class/osst/osst0
+ADR_rev  BOT_frame  capacity  dev  device  driver  EOD_frame  file_count  media_version
+   </PRE>
+ <DT>2003-12-23</DT>
+ <DD>Osst-0.99.1 released. It brings the 2.6.x version of osst up to par with the 2.4.y version (0.9.14).
+   Tested against released 2.6.0 kernel.</DD>
+ <DT>2003-12-14</DT>
+ <DD>Osst-0.9.14 released. It fixes an issue with behavior expected by Bacula, a backup software package.
+  <BR>Changes:
+  <BR>
+  - Made osst adhere to standard Unix behavior when reading at EOD 
+    (return zero bytes read twice, then i/o error)
+  <BR>
+  - Implemented SETBLK ioctl (only allowed before first write - does not
+    affect read, as osst uses the block size used when the file was written)</DD>
  <DT>2003-12-01</DT>
  <DD>Migration of the osst repository to SourceForge complete.</DD>
  <DT>2003-06-28</DT>
@@ -126,6 +145,8 @@ converter <TT>CONFIG_USB_STORAGE_FREECOM</TT>.
 <UL>
  <LI> There are <A HRef="product_table.html">firmware updates</A> available for various
       OnStream drives.
+ <LI> This <A HRef="http://www.hastec.nl/drivers/onstream/support.htm">site</A> offers Manuals
+      and Technical Support Documents for the OnStream drives.
  <LI> This <A HRef="backupsw.html">page</A> contains important information for using
       osst with various backup software packages.
  <LI> On the <A HRef="http://www.t10.org/">T10 committee web site</A> you can find
