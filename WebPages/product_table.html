@@ -24,8 +24,8 @@
 </TBody>
 <TR><TD colspan="6"><Em>1<sup>st</sup> generation Echo drives (ADR tapes, QIC-172)</Em>
 <TR>
-<TH>(old)<Br>
- <A HRef="http://www.onstream.com/products/di30.html">DI30</A>/50
+<TH>(old) <A HRef="http://www.onstream.com/products/di30.html">DI30</A>/50<Br>
+ DI30 Fast
 <TD>IDE
 <TD>DI-30
 <TD><A HRef="test/ide-tape.html">ide-scsi + osst</A><Br>
@@ -34,7 +34,7 @@
  (<A HRef="Firmware/di30fix_static">static variant</A>)
 <TD><A HRef="Firmware/IDE109.bin">IDE 1.09</A>
 <TR>
-<TH>(new) DI30+/<Br>
+<TH>(new) DI30/50<Br>
  <A HRef="http://www.onstream.com/products/di30fast.html">DI30 FAST</A>
 <TD>IDE
 <TD>DI-30
@@ -42,8 +42,8 @@
  or ide-tape
 <TD><A HRef="Firmware/di30-2fix">di30-2fix</A>(2.07)<Br>
  (<A HRef="Firmware/di30-2fix_static">static variant</A>)
-<TD><A HRef="Firmware/V411J.bin" Type="application/octet-stream">411J</A><Br>
- or <A HRef="Firmware/V411K.bin" Type="application/octet-stream">411K</A>
+<TD><A HRef="Firmware/V411J.bin" Type="application/octet-stream">IDE 411J</A><Br>
+ or <A HRef="Firmware/V411K.bin" Type="application/octet-stream">IDE 411K</A>
 <TR>
 <TH><A HRef="http://www.onstream.com/products/dp30.html">DP30</A>
 <TD>EPP
@@ -62,7 +62,7 @@
 <TD><A HRef="Firmware/IDE109.bin">IDE 1.09</A>
 <TR>
 <TH><A HRef="http://www.onstream.com/products/fw30.html">FW30</A>
-<TD>USB1
+<TD>IEEE1394
 <TD>FW-30
 <TD><A HRef="test/index.html#fw-30">sbp2 + osst</A>
 <TD><A HRef="Firmware/di30fix">di30fix</A>(2.07)<Br>
@@ -84,11 +84,11 @@
 <A HRef="http://www.onstream.com/products/adr50.html">50</A>/
 <A HRef="http://www.onstream.com/products/adr50e.html">50e</A>
 <TD>SCSI3
-<TD>ADR50Drive
+<TD>ADR50 Drive
 <TD>st
 <TD><A HRef="Firmware/adrfix">adrfix</A>(2.02)<Br>
  (<A HRef="Firmware/adrfix_static">static variant</A>)
-<TD><A HRef="Firmware/ADR239.osi">2.39</A>
+<TD><A HRef="Firmware/ADR239.osi">LVD 2.39</A>
 <TR>
 <TH>ADR30ide/50ide
 <TD>IDE
@@ -96,7 +96,7 @@
 <TD>ide-scsi + st<Br>or ide-tape
 <TD><A HRef="Firmware/adridefix">adridefix</A>(2.06)<Br>
  (<A HRef="Firmware/adridefix_static">static variant</A>)
-<TD><A HRef="Firmware/Bus301G.bin">301G</A>
+<TD><A HRef="Firmware/Bus301G.bin">IDE 301G</A>
 <TR><TD colspan="6"><Em>2<sup>nd</sup> generation ADR<sup>2</sup> drives (ADR+ADR<sup>2</sup> tapes, QIC-157)</Em>
 <TR>
 <TH><A HRef="http://www.onstream.com/products/adr2_60ide.html">ADR<sup>2</sup>60ide</A>
@@ -105,14 +105,14 @@
 <TD>ide-scsi + st<Br>or ide-tape
 <TD><A HRef="Firmware/adr2idefix">adr2idefix</A>(2.07)<Br>
  (<A HRef="Firmware/adr2idefix_static">static variant</A>)
-<TD><A HRef="Firmware/Bus5_04.bin">5.04</A>
+<TD><A HRef="Firmware/Bus5_04.bin">IDE 5.04</A>
 </TBody>
 </Table>
 <P>
 Note: Please make sure you identify your drive correctly before downloading
 and executing the firmware updater. <TT>/proc/scsi/scsi</TT> ((after having
-loaded the SCSI transport/emulation driver). The DI-30 and the DI-30+ may be
-recognized at the previous firmware.<Br>
+loaded the SCSI transport/emulation driver). The old DI-30 (Fast) and the
+new DI-30 (Fast) may be recognized by the previous firmware revision.<Br>
 <B>
 Look at the <A HRef="Firmware/">Firmware updater page</A> and read the
 instructions and the disclaimer before you actually try to do any firmware
