@@ -1,5 +1,5 @@
 #
-# spec file for package onstream (Version 0.9.13_0.7.9)
+# spec file for package onstream (Version 0.9.13_0.7.91)
 # 
 # Copyright  (c)  2000  SuSE GmbH  Nuernberg, Germany.
 #
@@ -18,9 +18,9 @@ Packager:     feedback@suse.de
 Copyright:	GPL
 Group:        Base/Kernel
 Autoreqprov:  on
-Version:      0.9.13_0.7.9
+Version:      0.9.13_0.7.91
 Summary:      OnStream SC-x0 tape support tools
-Source:	      onstream-20000524.tar.gz
+Source:	      onstream-20000529.tar.gz
 #Patch:		onstream.dif
 BuildRoot:	/var/tmp/%{name}-buildroot
 
@@ -73,7 +73,7 @@ make install DESTDIR=$RPM_BUILD_ROOT
 /lib/modules/%kversion/scsi/osst.o
 /dev/osst*
 /dev/nosst*
-%doc README COPYING driver/README.osst driver/dev-reg.txt
+%doc README COPYING driver/README.osst driver/dev-reg.txt driver/osst-22.diff
 
 %clean
 rm -rf $RPM_BUILD_ROOT
