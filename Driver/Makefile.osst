@@ -14,7 +14,7 @@ TOPDIR := $(KDIR)
 
 CFLAGS := -I. -I $(KDIR)/drivers/scsi $(CFLAGS) -DMODULE -DOSST_MAJOR=206 -D"DEVICE_OFF(dev)=" -DOSST_EXTRA_DEVS=2
 
-osst.o: osst.c osst.h arch Rules.make
+osst.o: osst.c osst.h osst_detect.h osst_options.h arch Rules.make
 
 MODLIB := $(DESTDIR)$(INSTALL_MOD_PATH)/lib/modules/$(KERNELRELEASE)
 
