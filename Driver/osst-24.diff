@@ -1,7 +1,7 @@
-diff -uNr linux-2.4.0-test9-pre7/Documentation/Configure.help linux-2.4.0-test9-pre7.osst/Documentation/Configure.help
---- linux-2.4.0-test9-pre7/Documentation/Configure.help	Wed Sep 27 00:27:04 2000
-+++ linux-2.4.0-test9-pre7.osst/Documentation/Configure.help	Wed Sep 27 00:44:46 2000
-@@ -5088,6 +5088,30 @@
+diff -uNr linux-2.4.0-t11.ac2.reiser.ide.misc/Documentation/Configure.help linux-2.4.0-t11.ac2.reiser.ide.osst/Documentation/Configure.help
+--- linux-2.4.0-t11.ac2.reiser.ide.misc/Documentation/Configure.help	Wed Nov 22 20:26:26 2000
++++ linux-2.4.0-t11.ac2.reiser.ide.osst/Documentation/Configure.help	Wed Nov 22 21:18:53 2000
+@@ -5195,6 +5195,30 @@
    module, say M here and read Documentation/modules.txt and
    Documentation/scsi.txt .
  
@@ -32,10 +32,10 @@ diff -uNr linux-2.4.0-test9-pre7/Documentation/Configure.help linux-2.4.0-test9-
  SCSI CDROM support
  CONFIG_BLK_DEV_SR
    If you want to use a SCSI CDROM under Linux, say Y and read the
-diff -uNr linux-2.4.0-test9-pre7/MAINTAINERS linux-2.4.0-test9-pre7.osst/MAINTAINERS
---- linux-2.4.0-test9-pre7/MAINTAINERS	Wed Sep 27 00:27:05 2000
-+++ linux-2.4.0-test9-pre7.osst/MAINTAINERS	Wed Sep 27 00:36:03 2000
-@@ -872,6 +872,13 @@
+diff -uNr linux-2.4.0-t11.ac2.reiser.ide.misc/MAINTAINERS linux-2.4.0-t11.ac2.reiser.ide.osst/MAINTAINERS
+--- linux-2.4.0-t11.ac2.reiser.ide.misc/MAINTAINERS	Sat Nov 18 01:45:23 2000
++++ linux-2.4.0-t11.ac2.reiser.ide.osst/MAINTAINERS	Wed Nov 22 21:18:53 2000
+@@ -902,6 +902,13 @@
  W:	http://www.linuxtr.net
  S:	Maintained
  
@@ -49,9 +49,9 @@ diff -uNr linux-2.4.0-test9-pre7/MAINTAINERS linux-2.4.0-test9-pre7.osst/MAINTAI
  OPL3-SA2, SA3, and SAx DRIVER
  P:	Scott Murray
  M:	scott@spiteful.org
-diff -uNr linux-2.4.0-test9-pre7/drivers/scsi/Config.in linux-2.4.0-test9-pre7.osst/drivers/scsi/Config.in
---- linux-2.4.0-test9-pre7/drivers/scsi/Config.in	Wed Sep 27 00:27:08 2000
-+++ linux-2.4.0-test9-pre7.osst/drivers/scsi/Config.in	Wed Sep 27 00:39:27 2000
+diff -uNr linux-2.4.0-t11.ac2.reiser.ide.misc/drivers/scsi/Config.in linux-2.4.0-t11.ac2.reiser.ide.osst/drivers/scsi/Config.in
+--- linux-2.4.0-t11.ac2.reiser.ide.misc/drivers/scsi/Config.in	Wed Nov 22 20:24:43 2000
++++ linux-2.4.0-t11.ac2.reiser.ide.osst/drivers/scsi/Config.in	Wed Nov 22 21:18:53 2000
 @@ -8,6 +8,8 @@
  
  dep_tristate '  SCSI tape support' CONFIG_CHR_DEV_ST $CONFIG_SCSI
@@ -61,9 +61,9 @@ diff -uNr linux-2.4.0-test9-pre7/drivers/scsi/Config.in linux-2.4.0-test9-pre7.o
  dep_tristate '  SCSI CD-ROM support' CONFIG_BLK_DEV_SR $CONFIG_SCSI
  
  if [ "$CONFIG_BLK_DEV_SR" != "n" ]; then
-diff -uNr linux-2.4.0-test9-pre7/drivers/scsi/Makefile linux-2.4.0-test9-pre7.osst/drivers/scsi/Makefile
---- linux-2.4.0-test9-pre7/drivers/scsi/Makefile	Wed Sep 27 00:27:08 2000
-+++ linux-2.4.0-test9-pre7.osst/drivers/scsi/Makefile	Wed Sep 27 00:37:09 2000
+diff -uNr linux-2.4.0-t11.ac2.reiser.ide.misc/drivers/scsi/Makefile linux-2.4.0-t11.ac2.reiser.ide.osst/drivers/scsi/Makefile
+--- linux-2.4.0-t11.ac2.reiser.ide.misc/drivers/scsi/Makefile	Wed Sep 20 22:12:13 2000
++++ linux-2.4.0-t11.ac2.reiser.ide.osst/drivers/scsi/Makefile	Wed Nov 22 21:18:53 2000
 @@ -112,6 +112,7 @@
  obj-$(CONFIG_SCSI_FCAL)		+= fcal.o
  
@@ -72,9 +72,9 @@ diff -uNr linux-2.4.0-test9-pre7/drivers/scsi/Makefile linux-2.4.0-test9-pre7.os
  obj-$(CONFIG_BLK_DEV_SD)	+= sd_mod.o
  obj-$(CONFIG_BLK_DEV_SR)	+= sr_mod.o
  obj-$(CONFIG_CHR_DEV_SG)	+= sg.o
-diff -uNr linux-2.4.0-test9-pre7/drivers/scsi/osst_detect.h linux-2.4.0-test9-pre7.osst/drivers/scsi/osst_detect.h
---- linux-2.4.0-test9-pre7/drivers/scsi/osst_detect.h	Thu Jan  1 01:00:00 1970
-+++ linux-2.4.0-test9-pre7.osst/drivers/scsi/osst_detect.h	Wed Sep 27 00:36:03 2000
+diff -uNr linux-2.4.0-t11.ac2.reiser.ide.misc/drivers/scsi/osst_detect.h linux-2.4.0-t11.ac2.reiser.ide.osst/drivers/scsi/osst_detect.h
+--- linux-2.4.0-t11.ac2.reiser.ide.misc/drivers/scsi/osst_detect.h	Thu Jan  1 01:00:00 1970
++++ linux-2.4.0-t11.ac2.reiser.ide.osst/drivers/scsi/osst_detect.h	Wed Nov 22 21:18:53 2000
 @@ -0,0 +1,6 @@
 +#define SIGS_FROM_OSST \
 +       {"OnStream", "SC-", "", "osst"}, \
@@ -82,9 +82,9 @@ diff -uNr linux-2.4.0-test9-pre7/drivers/scsi/osst_detect.h linux-2.4.0-test9-pr
 +       {"OnStream", "DP-", "", "osst"}, \
 +       {"OnStream", "FW-", "", "osst"}, \
 +       {"OnStream", "USB", "", "osst"}
-diff -uNr linux-2.4.0-test9-pre7/drivers/scsi/st.c linux-2.4.0-test9-pre7.osst/drivers/scsi/st.c
---- linux-2.4.0-test9-pre7/drivers/scsi/st.c	Wed Sep 27 00:27:09 2000
-+++ linux-2.4.0-test9-pre7.osst/drivers/scsi/st.c	Wed Sep 27 00:36:03 2000
+diff -uNr linux-2.4.0-t11.ac2.reiser.ide.misc/drivers/scsi/st.c linux-2.4.0-t11.ac2.reiser.ide.osst/drivers/scsi/st.c
+--- linux-2.4.0-t11.ac2.reiser.ide.misc/drivers/scsi/st.c	Tue Nov 14 22:16:37 2000
++++ linux-2.4.0-t11.ac2.reiser.ide.osst/drivers/scsi/st.c	Wed Nov 22 21:18:53 2000
 @@ -175,7 +175,7 @@
  static int st_int_ioctl(Scsi_Tape *, unsigned int, unsigned long);
  
@@ -94,10 +94,10 @@ diff -uNr linux-2.4.0-test9-pre7/drivers/scsi/st.c linux-2.4.0-test9-pre7.osst/d
  #ifndef SIGS_FROM_OSST
  #define SIGS_FROM_OSST \
  	{"OnStream", "SC-", "", "osst"}, \
-diff -uNr linux-2.4.0-test9-pre7/include/linux/blk.h linux-2.4.0-test9-pre7.osst/include/linux/blk.h
---- linux-2.4.0-test9-pre7/include/linux/blk.h	Wed Sep 27 00:27:11 2000
-+++ linux-2.4.0-test9-pre7.osst/include/linux/blk.h	Wed Sep 27 01:07:25 2000
-@@ -164,6 +164,14 @@
+diff -uNr linux-2.4.0-t11.ac2.reiser.ide.misc/include/linux/blk.h linux-2.4.0-t11.ac2.reiser.ide.osst/include/linux/blk.h
+--- linux-2.4.0-t11.ac2.reiser.ide.misc/include/linux/blk.h	Sun Nov 19 05:58:13 2000
++++ linux-2.4.0-t11.ac2.reiser.ide.osst/include/linux/blk.h	Wed Nov 22 21:18:53 2000
+@@ -163,6 +163,14 @@
  #define DEVICE_INTR do_st  
  #define DEVICE_NR(device) (MINOR(device) & 0x7f)
  
@@ -112,7 +112,7 @@ diff -uNr linux-2.4.0-test9-pre7/include/linux/blk.h linux-2.4.0-test9-pre7.osst
  #elif (MAJOR_NR == SCSI_CDROM_MAJOR)
  
  #define DEVICE_NAME "CD-ROM"
-@@ -329,7 +337,7 @@
+@@ -328,7 +336,7 @@
  #define DEVICE_OFF(device) do {} while (0)
  #endif
  
@@ -121,10 +121,10 @@ diff -uNr linux-2.4.0-test9-pre7/include/linux/blk.h linux-2.4.0-test9-pre7.osst
  #if !defined(IDE_DRIVER)
  
  #ifndef CURRENT
-diff -uNr linux-2.4.0-test9-pre7/include/linux/major.h linux-2.4.0-test9-pre7.osst/include/linux/major.h
---- linux-2.4.0-test9-pre7/include/linux/major.h	Wed Sep 27 00:27:11 2000
-+++ linux-2.4.0-test9-pre7.osst/include/linux/major.h	Wed Sep 27 00:36:03 2000
-@@ -150,6 +150,8 @@
+diff -uNr linux-2.4.0-t11.ac2.reiser.ide.misc/include/linux/major.h linux-2.4.0-t11.ac2.reiser.ide.osst/include/linux/major.h
+--- linux-2.4.0-t11.ac2.reiser.ide.misc/include/linux/major.h	Tue Oct  3 18:30:18 2000
++++ linux-2.4.0-t11.ac2.reiser.ide.osst/include/linux/major.h	Wed Nov 22 21:18:53 2000
+@@ -154,6 +154,8 @@
  #define MSR_MAJOR		202
  #define CPUID_MAJOR		203
  
@@ -133,9 +133,9 @@ diff -uNr linux-2.4.0-test9-pre7/include/linux/major.h linux-2.4.0-test9-pre7.os
  /*
   * Tests for SCSI devices.
   */
-diff -uNr linux-2.4.0-test9-pre7/include/linux/mtio.h linux-2.4.0-test9-pre7.osst/include/linux/mtio.h
---- linux-2.4.0-test9-pre7/include/linux/mtio.h	Wed Sep 27 01:07:44 2000
-+++ linux-2.4.0-test9-pre7.osst/include/linux/mtio.h	Wed Sep 27 02:51:59 2000
+diff -uNr linux-2.4.0-t11.ac2.reiser.ide.misc/include/linux/mtio.h linux-2.4.0-t11.ac2.reiser.ide.osst/include/linux/mtio.h
+--- linux-2.4.0-t11.ac2.reiser.ide.misc/include/linux/mtio.h	Sun Nov 19 05:57:42 2000
++++ linux-2.4.0-t11.ac2.reiser.ide.osst/include/linux/mtio.h	Wed Nov 22 21:18:53 2000
 @@ -105,6 +105,8 @@
  #define MT_ISEVEREX_FT40A	0x32	/* Everex FT40A (QIC-40) */
  #define MT_ISDDS1		0x51	/* DDS device without partitions */
