@@ -21,7 +21,7 @@ endif
 
 osst.o: osst.c osst.h osst_detect.h osst_options.h arch Rules.make
 
-MODLIB := $(DESTDIR)$(INSTALL_MOD_PATH)/lib/modules/$(KERNELRELEASE)
+MODLIB := $(DESTDIR)$(INSTALL_MOD_PATH)/lib/modules/$(KERNELRELEASE)/kernel/drivers
 
 install_mod: $(MODLIB)/$(TARGETMODDIR)/$(TARGET)
 
