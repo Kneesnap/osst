@@ -42,6 +42,11 @@ applies.</EM></P>
 <DD>The first public ALPHA release for the adventureous testers.</DD>
 <DT>2000-04-17: (osst 0.6.4)</DT>
 <DD>Should fix the blocking problem.</DD>
+<DT>2000-05-02: (osst 0.7.0)</DT>
+<DD>Added the "fast open" feature: The headers are cached and if the tape
+has not been changed, they don't need to be reread. A list of filesmarks is
+now kept in the headers: LIN4 signature. Automatic conversion on write.
+Better error recovery.
 </DL></P>
 
 <H3>Known problems as of <B>0.6.3</B></H3>
@@ -96,7 +101,7 @@ There are several possibilities to get the <TT>osst</TT>-driver. For your
 convenience, the archives also contain Terry's userspace driver <TT>osg</TT> 
 and some tools.
 <OL>
-<LI>(recommended) Get the <A HRef="onstream-20000417.tar.gz">sources</A>, unpack
+<LI>(recommended) Get the <A HRef="onstream-20000502.tar.gz">sources</A>, unpack
 them (<TT>tar xvzf onstream-2000*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux source
 tree installed in <TT>/usr/src/linux/</TT>. 
@@ -137,7 +142,9 @@ and adjust the permissions according to your needs. (Here, it's
 <A HRef="../developers.html">Credits</A> go to Willem Riede for developing
 this driver. Some contributions come from me, Terry Hardie, and Kai Mikasara
 and some of the code was designed after Gadi Oxman's DI-30 (IDE) driver.
-Jack Bombeeck did always support this project very well.
+Jack Bombeeck did always support this project very well.<Br>
+Thanks also to all the testers which provided useful info for debugging
+problems and suggestions for improving the driver.
 
 <!--<P>
 <Img Src="/gif/construction.gif" Alt="under construction" Width=40 Height=32>
