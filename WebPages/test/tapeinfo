@@ -1,0 +1,84 @@
+#!/bin/sh
+# tapeinfo (w) 2000-06-29 garloff@suse.de
+# License: Artistic
+# Scans a (OnStream) tape for its contents
+# Usage: tapeinfo tapedev blocksize inspectlines blocks stats reset
+# (currently only tar archives are inspected)
+tape=/dev/nosst0
+bs=32k
+inspect=3
+blks=32
+stats=1
+reset=0
+test -z "$1" || tape=$1
+test -z "$2" || bs=$2
+test -z "$3" || inspect=$3
+test -z "$4" || blks=$4
+test -z "$5" || stats=$5
+test -z "$6" || reset=$6
+tp=`basename $tape`
+tm=`date +%s`
+if test -z "`type -p mtst`"; then
+  MT=mt
+else
+  MT=mtst
+fi
+
+export LANG=POSIX
+
+echo "Info for tape $tape (bs=$bs):"
+resp=`$MT -f $tape status`
+type=`echo $resp | sed 's/.*rive type = \([0-9-]*\).*/\1/'`
+if test -z "`echo $resp | grep 'rive type'`"; then
+  type=`echo $resp | sed 's/\([^:]*:\).*/\1/'`
+  type=${type% tape drive:}
+fi
+file=`echo $resp | sed 's/.*ile number *= *\([0-9]*\).*/\1/'`
+sblk=`$MT -f $tape tell | sed 's/.*t block \([0-9]*\).*/\1/'`
+tbs=`echo "$resp" | grep "^Tape block size" | sed 's/^Tape block size \([0-9]*\).*$/\1/'`
+echo -e "Tape type $type. Block size $tbs\nCurrent file $file (block $sblk). Scanning ..."
+$MT -f $tape rewind >/dev/null
+err=$?
+declare -i no
+no=0
+while test "$err" = "0"; do
+  oldno=`$MT -f $tape status | grep "^File number=" | sed 's/^File number=\([0-9]*\).*$/\1/'`
+  resp=`$MT -f $tape tell`
+  blocks=`echo $resp | sed 's/.*t block \([0-9]*\).*/\1/'`
+  myno=`printf %02i $oldno`
+  echo -n "File $myno (block`printf %7i $blocks`): "
+  dd if=$tape of=/tmp/tape_$tp.$myno bs=$bs count=$blks 2>/dev/null
+  err=$?
+  if test "$err" != "0" -o ! -s /tmp/tape_$tp.$myno; then
+    echo "<EOD>"
+    rm -f /tmp/tape_$tp.$myno
+    break
+  fi
+  info=`file /tmp/tape_$tp.$myno | sed 's#/tmp/tape_[^\.]*\.[0-9]*: ##'`
+  echo $info
+  if test ! -z "$inspect" -a "$inspect" != "0"; then
+    if test ! -z "`echo $info | grep tar`"; then
+      tar tvf /tmp/tape_$tp.$myno 2>/dev/null | head -n$inspect
+    fi
+  fi
+  newno=`$MT -f $tape status | grep "^File number=" | sed 's/^File number=\([0-9]*\).*$/\1/'`
+  if test "$newno" -eq "$oldno"; then
+    $MT -f $tape fsf >/dev/null
+  else
+    echo "                        (short file)"
+  fi
+  err=$?
+  let no+=1
+done
+myno=`printf %02i $[no-1]`
+echo -n "/tmp/tape_$tp.00 -- tape_$tp.$myno left for inspection; tape at "
+if test ! -z "$reset" -a "$reset" != "0"; then
+  $MT -f $tape seek $sblk >/dev/null
+  echo "block `$MT -f $tape tell | sed 's/.*t block //'`"
+else
+  echo "<EOD>."
+fi
+if test ! -z "$stats" -a "$stats" != "0"; then
+  tm2=`date +%s`
+  echo "$no files on tape. Scanning took $[tm2-tm] seconds."
+fi
