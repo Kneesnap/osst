@@ -23,7 +23,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.9.4";
+const char * osst_version = "0.9.4.1";
 
 /* The "failure to reconnect" firmware bug */
 #define OSST_FW_NEED_POLL_MIN 10602 /*(107A)*/
@@ -673,7 +673,8 @@ static int osst_wait_frame(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, int curr,
 		int result;
 		result = osst_get_frame_position (STp, aSRpnt);
 		if (result == -EIO)
-			result = osst_write_error_recovery(STp, aSRpnt, 0);
+			if ((result = osst_write_error_recovery(STp, aSCpnt, 0)) == 0)
+				return 0;	/* successfull recovery leaves drive ready for frame */
 		if (result < 0) break;
 		if (STp->first_frame_position == curr &&
 		    ((minlast < 0 &&
@@ -2413,11 +2414,15 @@ static int osst_get_frame_position(OS_Scsi_Tape *STp, Scsi_Request ** aSRpnt)
 	else {
 
 		if (result == -EIO) {	/* re-read position */
+			unsigned char mysense[16];
+			memcpy (mysense, SCpnt->sense_buffer, 16);
 			memset (scmd, 0, MAX_COMMAND_SIZE);
 			scmd[0] = READ_POSITION;
 			STp->buffer->b_data = mybuf; STp->buffer->buffer_size = 24;
 			SRpnt = osst_do_scsi(SRpnt, STp, scmd, 20, SCSI_DATA_READ,
 						    STp->timeout, MAX_READY_RETRIES, TRUE);
+			if (!STp->buffer->last_result_fatal)
+				memcpy (SCpnt->sense_buffer, mysense, 16);
 		}
 		STp->first_frame_position = ((STp->buffer)->b_data[4] << 24)
 					  + ((STp->buffer)->b_data[5] << 16)
