@@ -1,0 +1,37 @@
+206 char	OnStream SC-x0 tape devices
+		  0 = /dev/osst0	First OnStream SCSI tape, mode 0
+		  1 = /dev/osst1	Second OnStream SCSI tape, mode 0
+		    ...
+		 32 = /dev/osst0l	First OnStream SCSI tape, mode 1
+		 33 = /dev/osst1l	Second OnStream SCSI tape, mode 1
+		    ...
+		 64 = /dev/osst0m	First OnStream SCSI tape, mode 2
+		 65 = /dev/osst1m	Second OnStream SCSI tape, mode 2
+		    ...
+		 96 = /dev/osst0a	First OnStream SCSI tape, mode 3
+		 97 = /dev/osst1a	Second OnStream SCSI tape, mode 3
+		      ...
+		128 = /dev/nosst0	First OnStream SCSI tape, mode 0, no rewind
+		129 = /dev/nosst1	Second OnStream SCSI tape, mode 0, no rewind
+		    ...
+		160 = /dev/nosst0l	First OnStream SCSI tape, mode 1, no rewind
+		161 = /dev/nosst1l	Second OnStream SCSI tape, mode 1, no rewind
+		    ...
+		192 = /dev/nosst0m	First OnStream SCSI tape, mode 2, no rewind
+		193 = /dev/nosst1m	Second OnStream SCSI tape, mode 2, no rewind
+		    ...
+		224 = /dev/nosst0a	First OnStream SCSI tape, mode 3, no rewind
+		225 = /dev/nosst1a	Second OnStream SCSI tape, mode 3, no rewind
+		    ...
+
+		"No rewind" refers to the omission of the default
+		automatic rewind on device close.  The MTREW or MTOFFL
+		ioctl()'s can be used to rewind the tape regardless of
+		the device used to access it.
+		The OnStream SC-x0 SCSI tapes do not support the standard
+		SCSI SASD command set and therefore need their own driver
+		"osst". Note that the IDE, USB (and maybe ParPort) versions
+		may be driven via ide-scsi or usb-storage SCSI emulation 
+		and this osst device and driver as well.
+		The ADR-x0 drives are QIC-157 compliant and don't need osst.
+
