@@ -102,6 +102,16 @@ big endian platforms such as the Power PC.</DD>
 <DD>Deal with the complications of read errors occurring near but not at the location where
 a recovered write error occurred. Better handling of rewriting part of a tape (not recommended).
 Made sure tape is left in a suitable position and state when reposition commands fail.</DD>
+<DT>2000-12-09: (osst 0.8.7)</DT>
+<DD>This version implements blocksizes less than 32k. The default at startup is 512 bytes.
+You can change it like this: 'mt defblksize 1024' 
+or another size (that divides into 32k) of your choice.
+The blocksize for files written is determined by the
+default at the time of open. I don't allow changes
+during a write.
+The blocksize for reading is set to the size used to
+write it when you start reading.
+.</DD>
 </DL></P>
 
 <H3>Known problems as of <B>0.8.2</B></H3>
@@ -145,7 +155,7 @@ There are several possibilities to get the <TT>osst</TT>-driver. For your
 convenience, the archives also contain Terry's userspace driver <TT>osg</TT> 
 and some tools.
 <OL>
-<LI>(recommended) Get the <A HRef="onstream-20001029.tar.gz">sources</A>, unpack
+<LI>(recommended) Get the <A HRef="onstream-20001209.tar.gz">sources</A>, unpack
 them (<TT>tar xvzf onstream-2000*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux source
 tree (apply patch osst-22.diff resp. osst-24.diff first) installed in
