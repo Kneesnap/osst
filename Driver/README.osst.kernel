@@ -1,6 +1,8 @@
 README file for the osst driver
 ===============================
-(w) Kurt Garloff <garloff@suse.de> 04/2001
+ (w) Kurt Garloff <garloff@suse.de> 04/2001
+ (w) Willem Riede <osst@riede.org>  07/2001
+ $Id$
 
 This file describes the osst driver as of version 0.8.x/0.9.x, the released
 version of the osst driver.
@@ -45,7 +47,7 @@ that it used the same kernel structures and the same device node as st.
 So you could only have either of them being present in the kernel. This has
 been fixed by registering an own device, now.
 st and osst can coexist, each only accessing the devices it can support by
-themselves.
+their own device.
 
 
 Installation
@@ -53,6 +55,15 @@ Installation
 osst got integrated into the linux kernel. Select it during kernel
 configuration as module or compile statically into the kernel.
 Compile your kernel and install the modules.
+
+make config			# or menuconfig / xconfig if you prefer
+				# enable the OSST driver (SCSI section)!
+make dep
+make bzlilo			# to recompile your kernel and have it
+				# installed
+make modules			# to compile the kernel modules
+make modules_install		# to install your modules
+depmod -a			# append kernel version if necessary
 
 Now, your osst driver is inside the kernel or available as a module,
 depending on your choice during kernel config. You may still need to create
@@ -73,9 +84,6 @@ You may find it convenient to create a symbolic link
 ln -s nosst0 /dev/tape
 to make programs assuming a default name of /dev/tape more convenient to
 use.
-
-The device nodes for osst have to be created. Use the Makedevs.sh script
-attached to this file.
 
 
 Using it
@@ -135,6 +143,12 @@ blank if not applicable, and S is the severity:
 This output is sent to klogd with corresponding priority. If you don't see
 it in your system log (typically /var/log/messages), check your syslog.conf.
 
+Please note that during normal write operation, you will see some messages.
+A number of write errors per tape is normal; but all of them should be
+recovered by relocating the affected frames to a safe position behind the
+bad spot on the tape. Nothing to worry about. If you don't trust this, try
+reading back your backup and check whether this succeeds.
+
 
 USB and IDE
 -----------
@@ -188,7 +202,6 @@ Status
 have been sent, but mostly reported success or only minor trouble.
 All the issues have been addressed.
 Check the web pages for more info about the current developments.
-0.9.x is the tree for the 2.3/2.4 kernel.
 
 0.8.6.x and 0.9.4.x have been integrated into the mainstream kernels 2.2.19
 and 2.4.0 repsectively. Newer versions with variable block size support will
@@ -209,7 +222,7 @@ The people from OnStream, especially Jack Bombeeck did support this project
 and always tried to answer HW or FW related questions. Furthermore, he
 pushed the FW developers to do the right things.
 SuSE did support this project by allowing me to work on it during my working
-time for them and by integrating the driver into their distro.
+time for them and by quickly integrating the driver into their distro.
 
 More people did help by sending useful comments. Sorry to those who have
 been forgotten. Thanks to all the GNU/FSF and Linux developers who made this
@@ -223,7 +236,6 @@ Makedevs.sh
 #!/bin/sh
 # Script to create OnStream SC-x0 device nodes (major 206)
 # Usage: Makedevs.sh [nos [path to dev]]
-# $Id$
 major=206
 nrs=4
 dir=/dev
