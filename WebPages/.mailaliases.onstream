@@ -1,0 +1,11 @@
+# OnStream SCSI tape driver
+alias VELZEN "Michiel van Velzen" <Michiel.vanVelzen@OnStream.com>
+alias GADI "Gadi Oxman" <gadio@netvision.net.il>
+alias BOMBEECK "Jack Bombeeck" <Jack.Bombeeck@Onstream.com>
+alias SWANN "John Swann" <John.Swann@Onstream.com>
+alias WILLEM "Willem Riede" <wriede@monmouth.com>
+alias NIESSEN Arnold Niessen <arnold.niessen@philips.com>
+alias TERRY Terry Hardie <terryh@orcas.net>
+alias CARL "Carl A. Kolasky" <carlk@carol.net>
+alisa KURT Kurt Garloff <garloff@suse.de>
+alias OSST <BOMBEECK>,<WILLEM>,<TERRY>,<CARL>,<KURT>
