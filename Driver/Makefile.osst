@@ -3,6 +3,7 @@
 # (w) 3/2000 garloff@suse.de
 
 TARGET = osst.o
+TARGET_BASE = osst
 TARGETMODDIR = scsi
 
 default: $(TARGET)
@@ -18,32 +19,32 @@ osst.o: osst.c osst.h osst_detect.h osst_options.h arch Rules.make
 
 MODLIB := $(DESTDIR)$(INSTALL_MOD_PATH)/lib/modules/$(KERNELRELEASE)
 
-install_mod: $(MODLIB)/$(TARGETMODDIR)/osst.o
+install_mod: $(MODLIB)/$(TARGETMODDIR)/$(TARGET)
 
-$(MODLIB)/$(TARGETMODDIR)/osst.o: osst.o
+$(MODLIB)/$(TARGETMODDIR)/$(TARGET): $(TARGET)
 	@if test $(shell id -u) = 0; then \
-		echo "Install osst"; install -o root -g root -d $(MODLIB)/$(TARGETMODDIR); \
-		install -o root -g root -m 0644 osst.o $(MODLIB)/$(TARGETMODDIR)/; \
+		echo "Install $(TARGET)"; install -o root -g root -d $(MODLIB)/$(TARGETMODDIR); \
+		install -o root -g root -m 0644 $(TARGET) $(MODLIB)/$(TARGETMODDIR)/; \
 		echo "depmod -a $(KERNELRELEASE)"; depmod -a $(KERNELRELEASE); \
 		if test ! -e /dev/osst0; then ./Makedevs.sh 4 $(DESTDIR)/dev; fi; \
 	else \
 		echo "Give root password for installation of kernel module"; \
 		su -c \
-		'echo "Install osst"; install -o root -g root -d $(MODLIB)/$(TARGETMODDIR); \
-		 install -o root -g root -m 0644 osst.o $(MODLIB)/$(TARGETMODDIR)/; \
+		'echo "Install $(TARGET)"; install -o root -g root -d $(MODLIB)/$(TARGETMODDIR); \
+		 install -o root -g root -m 0644 $(TARGET) $(MODLIB)/$(TARGETMODDIR)/; \
 		 echo "depmod -a $(KERNELRELEASE)"; depmod -a $(KERNELRELEASE); \
 		 if test ! -e /dev/osst0; then ./Makedevs.sh 4 $(DESTDIR)/dev; fi'; \
 	fi
 
 load_module: install_mod
 	@if test $(shell id -u) = 0; then \
-		if test ! -z "$(shell lsmod | grep osst)"; then echo "Remove osst"; \
-		rmmod osst; fi; \
-		echo "Load osst"; modprobe osst; \
+		if test ! -z "$(shell lsmod | grep $(TARGET_BASE))"; then echo "Remove $(TARGET)"; \
+		rmmod $(TARGET_BASE); fi; \
+		echo "Load $(TARGET)"; modprobe $(TARGET_BASE); \
 	else \
 		echo "Give root password for loading of kernel module"; \
 		su -c \
-		'if test ! -z "$(shell lsmod | grep osst)"; then echo "Remove osst"; \
-		 rmmod osst; fi; \
-		 echo "Load osst"; modprobe osst'; \
+		'if test ! -z "$(shell lsmod | grep $(TARGET_BASE))"; then echo "Remove osst"; \
+		 rmmod $(TARGET_BASE); fi; \
+		 echo "Load $(TARGET)"; modprobe $(TARGET_BASE)'; \
 	fi	

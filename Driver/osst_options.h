@@ -60,7 +60,9 @@
 
 /* Maximum number of scatter/gather segments */
 /* Fit one buffer in pages and add one for the AUX header */
-#define OSST_MAX_SG      (((OSST_BUFFER_BLOCKS*1024) / PAGE_SIZE) + 1)
+//#define OSST_MAX_SG      (((OSST_BUFFER_BLOCKS*1024) / PAGE_SIZE) + 1)
+/* Currently, some code assumes contigous memory */
+#define OSST_MAX_SG	2
 
 /* The number of scatter/gather segments to allocate at first try (must be
    smaller or equal to the maximum). */

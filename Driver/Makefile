@@ -3,7 +3,8 @@
 
 KDIR := /usr/src/linux
 
-TARGETS := Rules.make arch osst.o
+TARGET := osst.o
+TARGETS := Rules.make arch $(TARGET)
 .PHONY: osst.o
 
 default: $(TARGETS)
@@ -17,14 +18,14 @@ arch: $(KDIR)/arch
 	ln -s $(KDIR)/arch .
 	
 clean:
-	rm -f $(TARGETS)
+	rm -f $(TARGETS) .$(TARGET).flags
 	
-osst.o: 
+$(TARGET): 
 	$(MAKE) -f Makefile.osst KDIR=$(KDIR)
 
-install: 
+install: $(TARGETS)
 	$(MAKE) -f Makefile.osst KDIR=$(KDIR) install_mod
 	
-load:
+load: $(TARGETS)
 	$(MAKE) -f Makefile.osst KDIR=$(KDIR) load_module
 	
