@@ -1660,7 +1660,7 @@ static int osst_write_header(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int locate_eo
 			return (-ENOMEM);
 		}
 		memset(STp->header_cache, 0, sizeof(os_header_t));
-printf(ST_DEB_MSG "osst%d: Allocated and cleared memory for header cache\n", dev);
+		printk(ST_DEB_MSG "osst%d: Allocated and cleared memory for header cache\n", dev);
 	}
 	if (STp->header_ok) STp->update_frame_cntr++;
 	else                STp->update_frame_cntr = 0;
@@ -1822,7 +1822,7 @@ static int __osst_analyze_headers(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int bloc
 			printk(KERN_ERR "osst%i: failed to allocate header cache\n", dev);
 			return 0;
 		}
-printf(ST_DEB_MSG "osst%d: Allocated memory for header cache\n", dev);
+		printk(ST_DEB_MSG "osst%d: Allocated memory for header cache\n", dev);
 	}
 	memcpy(STp->header_cache, header, sizeof(os_header_t));
 
