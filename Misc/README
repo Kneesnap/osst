@@ -1,0 +1,7 @@
+Contents
+--------
+ide-tape: Gadi Osman's IDE tape driver for OnStream DI-30
+onstreamsg: Terry Hardie's userspace driver for OnStream SC-x0
+sg_utils: sg_utils by Doug Gilbert plus useful programs (also
+          for OnStream access) by Kurt Garloff.
+	  
