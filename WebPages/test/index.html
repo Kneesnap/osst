@@ -128,9 +128,12 @@ applied during write error recovery - corrected. Some log output has been ration
 Note that recent official kernel trees do now include osst and to upgrade them to these
 versions all you need to do is copy the new osst.c and osst.h into /usr/src/linux/drivers/scsi
 and re-run 'make modules modules_install'.</DD>
+<DT>2001-02-08: (osst 0.8.11 / 0.9.6)</DT>
+<DD>Fixed a hang of 0.9.6 when using tar's default 10K transfer size.
+Fixed a buglet in close of the rewinding device in both versions.</DD>
 </DL></P>
 
-<H3>Known problems as of <B>0.8.10 / 0.9.5</B></H3>
+<H3>Known problems as of <B>0.8.11 / 0.9.6</B></H3>
 <UL>
 <LI>Currently none.</LI>
 </UL>
@@ -171,7 +174,7 @@ There are several possibilities to get the <TT>osst</TT>-driver. For your
 convenience, the archives also contain Terry's userspace driver <TT>osg</TT> 
 and some tools.
 <OL>
-<LI>(recommended) Get the very latest <A HRef="onstream-20010125.tar.gz">sources</A>, unpack
+<LI>(recommended) Get the very latest <A HRef="onstream-20010208.tar.gz">sources</A>, unpack
 them (<TT>tar xvzf onstream-200*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux source
 tree (apply patch osst-22.diff resp. osst-24.diff first) installed in
