@@ -2,16 +2,20 @@
 <HTML>
 <Head>
 <Title>OnStream tapes &amp; Linux support overview</Title>
-        <Link HRef="mailto:osst@www.linux1onstream.nl">
+        <Link HRef="mailto:osst-users@lists.sourceforge.net">
         <Meta HTTP-Equiv="Content-Type" Content="text/html; charset=iso-8859-1"$
-        <Meta Name="Author" Content="garloff@suse.de">
-        <Meta Name="Generator" Content="Text Editor (xemacs/jed, Linux)">
+        <Meta Name="Author" Content="osst@riede.org">
+        <Meta Name="Generator" Content="Text Editor (vi, Linux)">
         <Meta Name="Keywords" Content="OnStream SCSI IDE USB ADR Tapes Linux Firmware Driver Updater">
         <Meta Name="Description" Content="Linux Firmware updaters and Drivers for various OnStream tape devices">
 </Head>
 <Body Background="gif/bg_pingu.gif" BGColor=#f0f0e0>
+<A HRef="/"><Img Src="gif/left.gif" Align=middle Alt="Home" Width=16 Height=16>Home</A>
+<BR>
+<a href="http://sourceforge.net"><img src="http://sourceforge.net/sflogo.php?group_id=84433&amp;type=2" width="125" height="37" border="0" alt="SourceForge.net Logo" /></a>
+
 <Table Border=1 CellSpacing=1 Summary="OnStream Tape drives, drivers, firmwares">
-<Caption><EM>OnStream tape devices overview</EM></Caption>
+<Caption><H1>OnStream tape devices overview</H1></Caption>
 <THead>
 <TR>
 <TH>Product name</TH>
@@ -24,64 +28,56 @@
 <TBody>
 <TR><TD colspan="6"><Em>1<sup>st</sup> generation Echo drives (ADR tapes, QIC-172)</Em>
 <TR>
-<TH><A HRef="http://www.onstream.com/products/di30.shtml">DI30</A><Br>
- DI30 FAST
+<TH>DI30<Br>DI30 FAST
 <TD>IDE
 <TD>DI-30
-<TD><A HRef="test/ide-tape.html">ide-scsi + osst</A><Br>
- or ide-tape
+<TD>ide-scsi + osst<Br>or ide-tape
 <TD><A HRef="Firmware/di30fix">di30fix</A>(2.07)<Br>
  (<A HRef="Firmware/di30fix_static">static variant</A>)
 <TD><A HRef="Firmware/IDE109.bin">IDE 1.09</A>
 <TR>
-<TH>DI30+<Br>
- <A HRef="http://www.onstream.com/products/di30fast.shtml">DI30+ FAST</A>
+<TH>DI30+<Br>DI30+ FAST
 <TD>IDE
 <TD>DI-30
-<TD><A HRef="test/ide-tape.html">ide-scsi + osst</A><Br>
- or ide-tape
+<TD>ide-scsi + osst<Br>or ide-tape
 <TD><A HRef="Firmware/di30-2fix">di30-2fix</A>(2.07)<Br>
  (<A HRef="Firmware/di30-2fix_static">static variant</A>)
 <TD><A HRef="Firmware/V412.bin" Type="application/octet-stream">IDE 4.12</A></TD>
 <TR>
-<TH><A HRef="http://www.onstream.com/products/dp30.shtml">DP30</A>
+<TH>DP30
 <TD>EPP
 <TD>DP-30
-<TD><A HRef="test/index.html#dp-30">None yet</A>
+<TD>None yet
 <TD><A HRef="Firmware/di30fix">di30fix</A>(2.07)<Br>
  (<A HRef="Firmware/di30fix_static">static variant</A>)
 <TD><A HRef="Firmware/IDE109.bin">IDE 1.09</A>
 <TR>
-<TH><A HRef="http://www.onstream.com/products/usb30.shtml">USB30</A>
+<TH>USB30
 <TD>USB1.1
 <TD>USB30
-<TD><A HRef="test/index.html#usb30">usb-storage + osst</A>
+<TD>usb-storage + osst
 <TD><A HRef="Firmware/di30fix">di30fix</A>(2.07)<Br>
  (<A HRef="Firmware/di30fix_static">static variant</A>)
 <TD><A HRef="Firmware/IDE109.bin">IDE 1.09</A>
 <TR>
-<TH><A HRef="http://www.onstream.com/products/fw30.shtml">FW30</A>
+<TH>FW30
 <TD>IEEE1394
 <TD>FW-30
-<TD><A HRef="test/index.html#fw-30">sbp2 + osst</A><Br>(WIP)
+<TD>sbp2 + osst<Br>(WIP)
 <TD><A HRef="Firmware/di30fix">di30fix</A>(2.07)<Br>
  (<A HRef="Firmware/di30fix_static">static variant</A>)
 <TD><A HRef="Firmware/IDE109.bin">IDE 1.09</A>
 <TR>
-<TH><A HRef="http://www.onstream.com/products/sc30.shtml">SC30</A>/
-<A HRef="http://www.onstream.com/products/sc30e.shtml">30e</A>/
-<A HRef="http://www.onstream.com/products/sc50.shtml">50</A>
+<TH>SC30/30e/50
 <TD>SCSI2
 <TD>SC-50
-<TD><A HRef="test/">osst</A>
+<TD>osst
 <TD><A HRef="Firmware/sc30fix">sc30fix</A>(2.07)<Br>
  (<A HRef="Firmware/sc30fix_static">static variant</A>)
 <TD><A HRef="Firmware/SCSI109.bin">SCSI 1.09</A>
 <TR><TD colspan="6"><Em>1<sup>st</sup> generation ADR drives (ADR tapes, QIC-157)</Em>
 <TR>
-<TH><A HRef="http://www.onstream.com/products/adr30.shtml">ADR30/</A>
-<A HRef="http://www.onstream.com/products/adr50.shtml">50</A>/
-<A HRef="http://www.onstream.com/products/adr50e.shtml">50e</A>
+<TH>ADR30/50/50e
 <TD>SCSI3(LVD)
 <TD>ADR50 Drive
 <TD>st
@@ -98,7 +94,7 @@
 <TD><A HRef="Firmware/Bus301G.bin">IDE 301G</A>
 <TR><TD colspan="6"><Em>2<sup>nd</sup> generation ADR<sup>2</sup> drives (ADR+ADR<sup>2</sup> tapes, QIC-157)</Em>
 <TR>
-<TH><A HRef="http://www.onstream.com/products/adr2_60ide.shtml">ADR<sup>2</sup>60ide</A>
+<TH>ADR<sup>2</sup>60ide</A>
 <TD>IDE
 <TD>ADR Series
 <TD>ide-scsi + st<Br>or ide-tape
@@ -116,8 +112,9 @@ The old DI-30 (Fast) and the new DI-30+ (Fast) may be recognized by the
 previous firmware revision or by a sticker on the inside of the drive door.
 Don't try to flash a 4.xx firmware into a 1.0x drive or vice versa!<Br>
 <B>
-Look at the <A HRef="Firmware/">Firmware updater page</A> and read the
+Look at the <A HRef="firmware.html">Firmware updater page</A> and read the
 instructions and the disclaimer before you actually try to do any firmware
-updates. Updating firmwares is not without risk.</B>
+updates. Updating firmwares is not without risk. With OnStream gone, you'll
+have a boat anchor if it fails.</B>
 </Body>
 </HTML>

@@ -1,0 +1,207 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<Head>
+<Title>OnStream SCSI Tape driver for Linux history page</Title>
+	<Link HRef="mailto:osst-users@lists.sourceforge.net">
+	<Meta HTTP-Equiv="Content-Type" Content="text/html; charset=iso-8859-1">
+	<Meta Name="Author" Content="osst@riede.org">
+	<Meta Name="Generator" Content="Text Editor (vi, Linux)">
+	<Meta Name="Keywords" Content="OnStream SCSI Tape SC-30 SC-50 DI-30 FW-30 USB-30 ADR">
+	<Meta Name="Description" Content="osst history page">
+</Head>
+<Body Background="gif/bg_pingu.gif" BGColor=#f0f0f0>
+<A HRef="/"><Img Src="gif/left.gif" Align=middle Alt="Home" Width=16 Height=16>Home</A>
+<BR>
+<a href="http://sourceforge.net"><img src="http://sourceforge.net/sflogo.php?group_id=84433&amp;type=2" width="125" height="37" border="0" alt="SourceForge.net Logo" /></a>
+
+<Center><H1>OSST history page</H1></Center>
+<H3>Driver</H3>
+The kernelspace solution to drive the SC-x0 has been created by copying the
+original scsi tape driver <TT>st</TT> of Kai Mikasara to <TT>osst</TT> and
+changing it in order to support the OnStream device. When being loaded, it
+allows to access the OnStream tape via <TT>/dev/osst?</TT> just like normal
+tapes using <TT>mt</TT>, <TT>tar</TT>, <TT>amanda</TT>, ... <Br>
+The driver currently supports 2.4.x kernels. A 2.2 version is also
+available, but has not been updated with some of the latest fixes.
+Likewise, a 2.6 version is available. Osst comes standard with all recent 
+kernels from <A HRef="http://kernel.org/">kernel.org</A> or your favorite distribution.
+
+<H3>Status</H3>
+<P>Here comes a full history of status updates:
+<DL>
+ <DT>2000-02-22</DT>
+ <DD>CVS is up and running, and almost completely filled with the base data.
+     For the mailing list, the DNS entry needs to be there, first.</DD>
+ <DT>2000-03-03</DT>
+ <DD>While the userspace osg gets better and better, the kernelspace
+     OnStream SCSI tape driver osst starts to become useable. Reading
+     and writing basically works, but the error recovery needs to be
+     implemented before an alpha release can be published.</DD>
+ <DT>2000-03-30</DT>
+ <DD>Mailing list is up and running without any problems since some time
+     now. Subscribe by sending a mail with <TT>help</TT> in the body to
+     osst-request@www.linux1onstream.nl
+     and follow the instructions.</DD>
+<DT>2000-04-05: (osst 0.6.3)</DT>
+<DD>The first public ALPHA release for the adventureous testers.</DD>
+ <DT>2000-04-06</DT>
+ <DD>A tester's page has been set up, where you can find 
+     a tarball with the driver (ALPHA state at the moment) to download and
+     some instructions on how to use it and how to report success or failure
+     back to the developers.</DD>
+<DT>2000-04-17: (osst 0.6.4)</DT>
+<DD>Should fix the blocking problem.</DD>
+<DT>2000-05-02: (osst 0.7.0)</DT>
+<DD>Added the "fast open" feature: The headers are cached and if the tape
+has not been changed, they don't need to be reread. A list of filesmarks is
+now kept in the headers: LIN4 signature. Automatic conversion on write.
+Better error recovery.</DD>
+ <DT>2000-05-05</DT>
+ <DD>The <TT>Firmware</TT> dir has been added to CVS</DD>
+<DT>2000-05-14: (osst 0.7.1)</DT>
+<DD>Bugfixes. Maintains soft error count.
+Successfully tested with firmware 1.05 and 1.08.</DD>
+<DT>2000-05-15: (osst 0.7.2)</DT>
+<DD>Fix error handling skipping over second header group.</DD>
+<DT>2000-05-21: (osst 0.7.3)</DT>
+<DD>Fix I/O error on read after seek.</DD>
+<DT>2000-05-24: (osst 0.7.9)</DT>
+<DD>On own character device (major 206) has been registered. The driver has
+been adapted to use it and is now able to coexist with st. (Mostly untested,
+sorry!) A <A HRef="README.osst">README.osst</A> file has been added. Some
+test's and we'll be ready for BETA!</DD>
+<DT>2000-05-27: (osst 0.7.91)</DT>
+<DD>Osst coexistance with st in the 2.2.15 kernel tree has now been tested.
+After applying the osst-22.diff patch you will find in the sources (see
+Download below) st will no longer detect OnStream tape drives other than
+the ADR series (which do not need osst). Copy in osst.[ch] as explained in
+the README, compile and install a new kernel as usual, create the osst devices
+and try it out!</DD>
+<DT>2000-06-11: (osst 0.7.99)</DT>
+<DD>Adopted ADR 1.4 Tape Format, which standardizes the location of file mark
+lists in the Header and disambiguates terminology.</DD>
+<DT>2000-06-21: (osst 0.7.99a)</DT>
+<DD>Slight changes to the way it is integrated into the kernel. Both osst
+and st now use the OSST_SUPPORTS(SDp) macro provided by osst_detect.h in
+both detect() and attach(). Kernel patch is against 2.2.16 now.</DD>
+<DT>2000-06-25: (osst 0.8.0)</DT>
+<DD>BETA Test candidate!
+Options can now independently be set in osst_options.h (non-applicable options
+from st are dropped). Osst.c now identifies the tape drive with a unique code
+rather than as a generic SCSI2 drive.</DD>
+<DT>2000-07-16: (osst 0.8.1)</DT>
+<DD>Improved handling of opening the device after a 'mt offline'.
+Driver now returns error ENOSPC 164 blocks before reaching tape capacity.
+This should make volume spanning work now. The 164 blocks allows for two
+write errors to be recovered at the end of tape.</DD>
+<DT>2000-07-24: (osst 0.8.1 / 0.9.0p1)</DT>
+<DD>The 2.4 test version is out there (0.9.0p1)!</DD>
+<DT>2000-08-12: (osst 0.8.2 / 0.9.0p2)</DT>
+<DD>osst_int_ioctl now uses the Scsi_Cmnd structure allocated by the
+caller, as allocating a new one hangs the driver on resource
+challenged installations.</DD>
+<DT>2000-08-12: (osst 0.8.2 / 0.9.0)</DT>
+<DD>Beta test version 0.9.0 for linux-2.4.0-test6.</DD>
+<DT>2000-09-24: (osst 0.8.4 / 0.9.2)</DT>
+<DD>The drive now ejects the tape with 'mt offline'. Fixed polling algorithm 
+in preparation of supporting IDE and USB drives. Osst 0.9.2 needs the version 
+of st found in kernel versions 2.4.0-test9-pre6 and later.</DD>
+<DT>2000-10-04: (osst 0.8.5 / 0.9.3)</DT>
+<DD>Some bugfixes. 0.9.3 now verified to support USB Onstream drives and
+big endian platforms such as the Power PC.</DD>
+<DT>2000-10-29: (osst 0.8.6 / 0.9.4)</DT>
+<DD>Deal with the complications of read errors occurring near but not at the location where
+a recovered write error occurred. Better handling of rewriting part of a tape (not recommended).
+Made sure tape is left in a suitable position and state when reposition commands fail.</DD>
+<DT>2000-12-09: (osst 0.8.7)</DT>
+<DD>This version implements blocksizes less than 32k. The default at startup is 512 bytes.
+You can change it like this: 'mt defblksize 1024' 
+or another size (that divides into 32k) of your choice.
+The blocksize for files written is determined by the
+default at the time of open. I don't allow changes
+during a write.
+The blocksize for reading is set to the size used to
+write it when you start reading.</DD>
+<DT>2000-12-11: (osst 0.8.8)</DT>
+<DD>Fixed bug when write error is detected during polling.</DD>
+ <DT>2000-12-15</DT>
+ <DD>Alan Cox merged the osst driver 0.8.6 into Linux-2.2.19pre1.<Br>
+     Hopefully Linus will accept to merge the osst - 0.9.4 (which is 
+     functionally equivalent) into 2.4.0.</DD>
+<DT>2000-12-20: (osst 0.8.6.1 / 0.9.4.2)</DT>
+<DD>Ported the bugfix which went into 0.8.8 to the versions with a fixed
+block size of 32k.</DD>
+ <DT>2000-12-20</DT>
+ <DD>Added notice that the is the one being interesting ...<Br>
+     The osst driver by now is very stable -- thanks to the beta testers --
+     and should be prefered over osg. It even works with the IDE device
+     (DI-30) over ide-scsi and for the USB (USB30) one via usb-storage.
+     For the latter, you need at least a 2.4.0-test12 kernel and you need
+     to activate freecom support.</DD>
+<DT>2000-12-22: (osst 0.8.6.1 / 0.9.4.3)</DT>
+<DD>0.9.4.2 could not be compiled statically into the kernel. Fixed.</DD>
+<DT>2001-01-03: (osst 0.8.9)</DT>
+<DD>Preceed locate(3000) with locate(0) because some drives go AWOL when they mistakenly
+detect BOT during such a locate.</DD>
+<DT>2001-01-25: (osst 0.8.10 / 0.9.5)</DT>
+<DD>Osst 0.9.5 is for the released kernel 2.4.0. It has now caught up with the version for the
+2.2.x kernels and implements blocksizes less than 32k. The locate(0) above should not have been
+applied during write error recovery - corrected. Some log output has been rationalized.
+Note that recent official kernel trees do now include osst and to upgrade them to these
+versions all you need to do is copy the new osst.c and osst.h into /usr/src/linux/drivers/scsi
+and re-run 'make modules modules_install'.</DD>
+<DT>2001-02-08: (osst 0.8.11 / 0.9.6)</DT>
+<DD>Fixed a hang of 0.9.6 when using tar's default 10K transfer size.
+Fixed a buglet in close of the rewinding device in both versions.</DD>
+<DT>2001-03-31: (osst 0.8.12 / 0.9.7)</DT>
+<DD>Junfeng Yang (Stanford) reported potential invalid pointer dereferences in two functions within
+osst, identified by their CHECKER tool. There was a theoretical possibility that an invalid pointer
+would be used, though I doubt that anyone would ever be hit by this. Corrected all the same.</DD>
+<DT>2001-06-03: (osst 0.8.13 / 0.9.8)</DT>
+<DD>Fixed data corruption problem with error recovery on firmware versions 1.05 and older when 
+the error is detected when waiting to skip the config partition (2990-3000).
+Fixed off by one in block numbering after [bf]sr and seek.
+Rationalized printk log statement severities (see READMEs).
+Reflected the ability to use multiple blocksizes in READMEs.</DD>
+ <DT>2001-09-14</DT>
+ <DD>The list and the web pages are not reachable some time now. This
+     has been caused by OnStream switching Provider, but not getting 
+     DNS registered for all hosts :-(. The machine has always been 
+     reachable und the IP 194.151.64.40. DNS will come up again with
+     a changed name <TT>www.linux1onstream.nl</TT>.</DD>
+ <DT>2001-09-27</DT>
+ <DD>DNS in finally up again.<Br>
+     Added <A HRef="Firmware.html">firmware update</A> tools</DD>
+<DT>2001-10-10: (osst 0.8.14 / 0.9.9)</DT>
+<DD>Made changes required to have Arkeia work with osst.
+Have 'mt load' open door and wait for medium to be inserted when there is no tape in the drive.
+A few minor bug fixes. Tested with kernels 2.2.20pre10 and 2.4.9ac18 respectively.</DD>
+<DT>2001-11-01: (osst 0.8.15)</DT>
+<DD>Applied missing backport bug fix from 0.9.9.</DD>
+<DT>2001-11-11: (osst 0.9.10)</DT>
+<DD>Accomodate 64 bit PCI API in linux-2.4.13 that broke osst.
+Make recoverable read/write log messages less intimidating.</DD>
+<DT>2002-05-18: (osst 0.9.11)</DT>
+<DD>This is an experimental version for FW-30 support. crashes for me on write error recovery.
+Brave souls with FW-30 drives can try it out at their own risk. Reports welcome. 
+Be sure to first update your ieee1394 drivers from <A HRef="http://vore.debian.org/linux1394/" >debian</A>.
+Fixes old Buslogic bug. Files shorter than one 32K frame now get written out.
+Osst now supports a proc file for each drive (/proc/scsi/osst/osstX) which provides
+'ADRversion_major.minor linux_media_version first_data_ppos eod_frame_ppos filemrk_cnt'.</DD>
+<DT>2002-12-12: (osst 0.9.12)</DT>
+<DD>Fix a memory alloc/free mismatch that could have made your kernel unstable after rmmod osst.
+Fix a number of tape (re)positioning bugs around filemarks that affected Amanda, Arkeia and Storix
+backup software. Rationalize module parameters.</DD>
+<DT>2002-12-31: (osst 0.8.16 / 0.99.0)</DT>
+<DD>Backported 0.9.12 changes to Linux 2.2: osst-0.8.16. Forward ported them to Linux 2.5 kernel: 
+osst-0.99.0. You need at least 2.5.53 if you use a DI-x0 on 2.5.xx system (even it still lacks
+a couple of fixes that hopefully will make it in 2.5.54).</DD>
+<DT>2003-6-27: (osst 0.9.13)</DT>
+<DD>Fixed a time out that occured with DI-x0 drives when skipping to EOD when there are several GB
+recorded on the tape. To make osst work for the Bacula backup application, made the driver write
+the EOD marker and update the Header when writing a file is terminated by moving the tape using ioctl.</DD>
+</DL></P>
+<HR>
+<I>(w) by <A HRef="mailto:osst@riede.org">WR</A>, $Id$</I>
+</Body>
+</HTML>

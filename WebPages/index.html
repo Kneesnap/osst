@@ -2,177 +2,131 @@
 <HTML>
 <Head>
 <Title>OnStream Linux SCSI tape driver development</Title>
-	<Link HRef="mailto:osst@www.linux1onstream.nl">
+	<Link HRef="mailto:osst-users@lists.sourceforge.net">
 	<Meta HTTP-Equiv="Content-Type" Content="text/html; charset=iso-8859-1">
-	<Meta Name="Author" Content="garloff@suse.de">
-	<Meta Name="Generator" Content="Text Editor (xemacs/jed, Linux)">
-	<Meta Name="Keywords" Content="OnStream SCSI Tape SC-30 SC-50 ADR">
+	<Meta Name="Author" Content="osst@riede.org">
+	<Meta Name="Generator" Content="Text Editor (vi, Linux)">
+	<Meta Name="Keywords" Content="OnStream SCSI Tape SC-30 SC-50 DI-30 FW-30 USB-30 ADR">
 	<Meta Name="Description" Content="The developer's page for the OnStream SC-30/50 SCSI tape driver for Linux">
 </Head>
-<Body Background="/gif/bg_pingu.gif" BGColor=#f0f0f0>
-<A HRef="http://www.onstreamdata.com/">
-<Img Src="/gif/left.gif" Align=middle Alt="back to OnStream" WIDTH=16 HEIGHT=16>
- OnStream main pages</A>
+<Body Background="gif/bg_pingu.gif" BGColor=#f0f0f0>
+<A HRef="https://sourceforge.net/projects/osst/"><Img Src="gif/left.gif" Align=middle Alt="back to Project" WIDTH=16 HEIGHT=16>
+ Ostt Project Page</A>
 <Br>
-<A HRef="http://www.onstreamdata.com/">
-<Img Src="/gif/onstream.gif" Alt="OnStream Logo" WIDTH=570 HEIGHT=125></A>
-<Center><H1>OnStream Linux SCSI tape driver development</H1></Center>
-<A Name="intro"></A>
-<P>This page coordinates the development of a Linux tape driver for the
- OnStream SC-30/SC-50 and (via the SCSI layer adapters ide-scsi, usb-storage
- and sbp2) the IDE-30, USB-30 and FW-30 tape devices. A kernel driver has
- been created to provide an st-like interface to the userspace. The driver
- is put under GPL and has been accepted into the mainstream Linux kernel
- as of 2.4.0 / 2.2.20pre.</P>
-<P>This project is a joint effort of indiviuals that try to get their
- OnStream SC-x0 ADR SCSI tape drive to run with Linux. They are supported by
- <A HRef="http://www.onstreamdata.com/">OnStream</A> and <A HRef="http://www.suse.com/">SuSE</A>.
- This machine is dedicated for the support of this and is located in
- Eindhoven, NL. It should be reachable via the IP address
- <TT>194.151.64.40</TT> and 
- <TT>www.linux1onstream.nl</TT></A>.
-</P>
-<P>This web page is for coordination of this effort. Besides from pointers
- to relevant information or software, it should also give a short
- summary of the tools for the developers which are used. It does not provide
- software for the end user! As soon as an alpha version is out there, it will
- be put at some location in order to allow people who want to take the risk
- to play with it. As soon as there is a beta, it will be announced here and
- some download page will be installed.</P>
+<a href="http://sourceforge.net"><img src="http://sourceforge.net/sflogo.php?group_id=84433&amp;type=2" width="125" height="37" border="0" alt="SourceForge.net Logo" /></a>
 
-<A Name="cvs">
-<H3>CVS</H3></A>
-<P>For the joint development, a <A HRef="http://www.cyclic.com/">CVS</A>
- repository is installed on this machine. It handles the driver sources and
- also the web pages.</P>
-<P>The repository contains the modules (=directories) <TT>WebPages</TT>,
- <TT>Driver</TT>,  <TT>Docu</TT>, <TT>Firmware</TT> and <TT>Misc</TT>.</P>
-<P>In <TT>Driver</TT> you find the stock 2.2.14 kernel <TT>st</TT> driver and
- some support files like include headers. A branch with the tag <TT>L23</TT>
- is created for the Linux-2.3 versions of the <TT>st</TT>driver. That way,
- changes to the 2.2 version should be easily transferable to the 2.3 branch
- and vice versa. Here lives the kernel tape driver for OnStream tapes osst.
- Of course, there can be added new files like scripts to test
- or <TT>TODO</TT> lists ...</P>
-<P>The <TT>Docu</TT> directory contains the docu from OnStream, namely the
- ADR spec as a PDF. More documentation will go here. The <TT>Misc</TT>
- directory contains the IDE driver for the OnStream of Gadi Oxman, and the
- userspace OnStream SCSI driver from Terry Hardie. Other sourcecode related
- to the OnStream should also go here.</P>
-<P>The <TT>Firmware</TT> directory contains DOS and Wind*ws programs to
- update the firmware of your OnStream tape device.</P>
-<P>CVS read access is granted upon request. If you have some small
- contributions, the diffs (use <TT>diff -u</TT>) should be send to the 
- <A HRef="#mailinglist"> mailing list</A> and someone will have a look and
- check it into the CVS. 
- If you are contributing a lot, it will be easier to give you read-write
- access to the repository, so this will happen.</P>
+<Center><H1>OnStream Linux SCSI tape driver development</H1></Center>
+<A Name="intro">
+<H3>Introduction.</H3>
+</A>
+<P>This page coordinates the development of a Linux tape driver for the
+ OnStream SC-30/SC-50/DI-30/FW-30/USB-30 devices.
+ The target, osst, is a kernel driver that
+ provides an st-compatible interface to the userspace. The driver is put under
+ GPL and submitted to the kernel folks for inclusion into the mainstream
+ kernel.</P>
+<P>There is an IDE tape driver in the kernel with support for the OnStream DI-30,
+ which uses the same basic format for the tapes defined by the ADR spec.
+ It was written by Gadi Oxman. The OnStream functionality in
+ ide-tape has not been maintained though, so its use is not recommended.</P>
+<P>This project is a joint effort of indiviuals that want to get their
+ OnStream ADR SCSI / IDE / IEEE1394 / USB tape drive to run with Linux
+ and any Backup Software available on Linux.
+ The primary author and maintainer is <A HRef="mailto:osst@riede.org">Willem Riede</A>.
+ We were supported by
+ OnStream and <A HRef="http://www.suse.com/">SuSE</A>.
+ Unfortunately OnStream has gone bankrupt and the development has now
+ moved to <A HRef="http://sf.net/">SourceForge</A>.
+</P>
+
+<A Name="status">
+<H3>Status.</H3>
+</A><P>
+The driver currently supports 2.4.x kernels. A 2.2 version is also
+available, but has not been updated with some of the latest fixes.
+Likewise, a 2.6 version is available. Osst comes standard with all recent
+kernels from <A HRef="http://kernel.org/">kernel.org</A> or your favorite distribution.
+</P>
+<P>
+Download the latest version (which may not yet be merged at kernel.org)
+<A HRef="https://sourceforge.net/project/showfiles.php?group_id=84433">here</A>.
+</P>
+<P>
+DISCLAIMER: If you test it, you do it on your own risk. If the driver
+crashes your kernel (unlikely, but possible) and you loose important data,
+you are on your own. If you use the driver to backup your data and need to
+restore it later, but fail, you are on your own again. If something bad
+happens to you because of this driver, don't even try to make somebody
+responsible for this. There is no warranty of whatever kind. In short:
+<EM>The <A HRef="http://www.fsf.org/copyleft/gpl.html">GNU GPL</A>
+applies.</EM></P>
+<DL>
+ <DT>2003-12-01</DT>
+ <DD>Migration of the osst repository to SourceForge complete.</DD>
+ <DT>2003-06-28</DT>
+ <DD>osst 0.9.13 released</DD>
+ <DT>2003-04-28</DT>
+ <DD>OnStream enters Bankruptcy procedings.</DD>
+</DL>
+<P>
+ A more comprehensive history of the osst drivers can be found <A HRef="history.html">here</A>.
+</P>
 
 <A Name="mailinglist">
 <H3>Mailing list</H3></A>
-<P>A mailing list is there to provide an easy way for the developers to
+<P>A mailing list is there to provide an easy way for the users and developers to
  communicate. The name is 
- <TT><A HRef="mailto:osst@www.linux1onstream.nl">osst@www.linux1onstream.nl</A></TT>,
- and it's a majordomo list. So subscribe requests etc. go to
- <TT><A HRef="mailto:osst-request@www.linux1onstream.nl">osst-request</A></TT>.
+ <TT><A HRef="mailto:osst-users@lists.sourceforge.net">osst-users@lists.sourceforge.net</A></TT>,
+ and it's a mailman list. To subscribe visit the list's web page at
+ <TT><A HRef="https://lists.sourceforge.net/lists/listinfo/osst-users">osst-users-request</A></TT>.
  </P>
 
-<!--
-<P>At the time of writing, the mailing list is unfortunately not yet
- functional. As a sort of replacement, you can get 
- <A HRef=".mailaliases.onstream">this list</A> (in mutt
- <TT>.mailaliases</TT> format) in order to facilitate mailing to all.</P>
--->
+<A Name="info">
+<H3>Useful Information.</H3>
+</A>
+<UL>
+ <LI> There are <A HRef="product_table.html">firmware updates</A> available for various
+      OnStream drives.
+ <LI> This <A HRef="backupsw.html">page</A> contains important information for using
+      osst with various backup software packages.
+ <LI> On the <A HRef="http://www.t10.org/">T10 committee web site</A> you can find
+      the draft versions on the SCSI specs that underly OnStreams's ADR spec.
+</UL>
 
-<A Name="related">
-<H3>Related efforts and resources</H3></A>
-<P>Terry Hardie has created a userspace driver, which uses the scsi generic 
- (<TT>sg</TT>) of Linux to access the device. It can be 
- <A HRef="ftp://ftp.orcas.net/pub/linux/onstream/">downloaded</A>.</P>
-<P>There is a IDE driver for the OnStream DI-30, which uses the same
- format for the tapes defined by the ADR soec. It was written by Gadi Oxman
- and has been integrated in the mainstream kernels. However, look at the
- <A HRef="test/ide-tape.html">DI-x0 Linux support page</A> before using it.</P>
-<P>SCSI specs are unfortunately not freely available. Some copies of the
- draft version of the SCSI-II spec are floating around. Drafts for the
- upcoming SCSI-III have also been seen ...<Br> 
- Actually, you can find the draft versions on the 
- <A HRef="http://www.t10.org/">pages of the T10 committee</A>.
- I don't know, why the ANSI does not allow the final approved versions to be
- freely available.
- Shouldn't the bad VESA example tell them, they are wrong? 
- Free software is in trouble if standards are hidden.<Br>
- <!--Some things can be found <A HRef="ftp://playground.sun.com/pub/>here</A>.--> 
-</P>
- 
-<A Name="status">
-<H3>Status</H3></A>
-<DL>
- <DT>2000-02-22</DT>
- <DD>CVS is up and running, and almost completely filled with the base data.
-     For the mailing list, the DNS entry needs to be there, first.</DD>
- <DT>2000-03-03</DT>
- <DD>While the userspace osg gets better and better, the kernelspace
-     OnStream SCSI tape driver osst starts to become useable. Reading
-     and writing basically works, but the error recovery needs to be
-     implemented before an alpha release can be published.</DD>
- <DT>2000-03-30</DT>
- <DD>Mailing list is up and running without any problems since some time
-     now. Subscribe by sending a mail with <TT>help</TT> in the body to
-     <A HRef="mailto:osst-request@www.linux1onstream.nl">osst-request@www.linux1onstream.nl</A>
-     and follow the instructions.</DD>
- <DT>2000-04-06</DT>
- <DD>A <A HRef="test/">tester's page</A> has been set up, where you can find 
-     a tarball with the driver (ALPHA state at the moment) to download and
-     some instructions on how to use it and how to report success or failure
-     back to the developers.</DD>
- <DT>2000-05-05</DT>
- <DD>The <TT>Firmware</TT> dir has been added to CVS</DD>
- <DT>2000-12-15</DT>
- <DD>Alan Cox merged the osst driver 0.8.6 into Linux-2.2.19pre1.<Br>
-     Hopefully Linus will accept to merge the osst - 0.9.4 (which is 
-     functionally equivalent) into 2.4.0.</DD>
- <DT>2000-12-20</DT>
- <DD>Added notice that the <A HRef="test/">Tester's page</A> is the one
-     being interesting ...<Br>
-     The osst driver by now is very stable -- thanks to the beta testers --
-     and should be prefered over osg. It even works with the IDE device
-     (DI-30) over ide-scsi and for the USB (USB30) one via usb-storage.
-     For the latter, you need at least a 2.4.0-test12 kernel and you need
-     to activate freecom support.</DD>
- <DT>2001-09-14</DT>
- <DD>The list and the web pages are not reachable some time now. This
-     has been caused by OnStream switching Provider, but not getting 
-     DNS registered for all hosts :-(. The machine has always been 
-     reachable und the IP 194.151.64.40. DNS will come up again with
-     a changed name <TT>www.linux1onstream.nl</TT>.</DD>
- <DT>2001-09-27</DT>
- <DD>DNS in finally up again.<Br>
-     Added <A HRef="Firmware/">firmware update</A> tools</DD>
-</DL>
+<A Name="cvs">
+<H3>Development.</H3>
+</A>
+<P>For the joint development, a <A HRef="http://www.cyclic.com/">CVS</A>
+ repository is available on <A HRef="http://cvs.sourceforge.net/">SourceForge</A>.
+
+ It handles the driver sources and also the web pages.</P>
+<P>The repository contains the modules (=directories) <TT>WebPages</TT>,
+ <TT>Driver</TT>,  <TT>Docu</TT>, <TT>Firmware</TT> and <TT>Misc</TT>.</P>
+
+<P>In <TT>Driver</TT> you find osst itself and a bunch of files used in its
+ original creation, which are now obsolete. Three branches exist, for the
+ 2.2 (OSST22), 2.4 (LINUX-2-4) and 2.6 kernel (HEAD).</P>
+
+<P>The <TT>Docu</TT> directory contains the docu from OnStream, namely the
+ ADR spec as a PDF. More documentation will go here.</P>
+
+<P>The <TT>Firmware</TT> directory contains DOS and Wind*ws programs to
+ update the firmware of your OnStream tape device.</P>
+
+<P>CVS read access is available through
+ <A HRef="https://sourceforge.net/cvs/?group_id=84433">browsing</A>.
+ If you have some contributions, the diffs (use <TT>diff -u</TT>) should be sent to the 
+ <A HRef="#mailinglist"> mailing list</A> and someone will have a look and
+ check it into the CVS. 
+ If you are contributing a lot, it will be easier to give you read-write
+ access to the repository, so ask to join as a developer.</P>
 
 <A Name="credits">
 <H3>Credits</H3></A>
-The <A HRef="developers.html">developers</A> involved to make make this
-project work. 
-
-<H3>Notice</H3>
-Since the start of the beta tests in April 2000, most of the recent
-development is documented on the <A HRef="test/">tester's page</A>.
-Thanks to the testers and the work of Willem, the driver has quickly become
-very stable. The 
-<A HRef="http://www.tuxedo.org/~esr/writings/cathedral-bazaar/">bazaar</A>
-rules!
-
-<H3>Firmware</H3>
-There are <A HRef="Firmware/">firmware updaters for Linux</A> available now.
+ The author would like to thank Kurt Garloff, Kai Makisara, and Jack Bombeeck for their
+ help to make this project work. 
 
 <HR>
-<A HRef="http://www.suse.com/">
-<Img Src="/gif/suse_button.gif" Alt="Powered SuSE Linux" Width=100 Height=40></A>
-<A HRef="http://www.apache.org/">
-<Img Src="/gif/apache_pb.gif" Alt="Powered by Apache" Width=259 Height=32></A>
-<HR>
-<I>(w) by <A HRef="mailto:garloff@suse.de">KG</A>, $Id$</I>
+<I>(w) by <A HRef="mailto:osst@riede.org">WR</A>, $Id$</I>
 </Body>
 </HTML>
