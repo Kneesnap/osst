@@ -1160,7 +1160,7 @@ static int osst_seek_sector(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, int sect
 	} else {
 		STps->drv_block = ntohl(STp->buffer->aux->last_mark_lbn)?
 				    STp->logical_blk_num -
-					(STps->drv_file ? ntohl(STp->buffer->aux->last_mark_lbn) : 0):
+					(STps->drv_file ? ntohl(STp->buffer->aux->last_mark_lbn) + 1 : 0):
 				  -1;
 	}
 	STps->eof       = (STp->first_frame_position >= STp->eod_frame_ppos)?ST_EOD:ST_NOEOF;
