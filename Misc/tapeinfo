@@ -18,18 +18,27 @@ test -z "$5" || stats=$5
 test -z "$6" || reset=$6
 tp=`basename $tape`
 tm=`date +%s`
+if test -z "`type -p mtst`"; then
+  MT=mt
+else
+  MT=mtst
+fi
 echo "Info for tape $tape (bs=$bs):"
-resp=`mt -f $tape status`
+resp=`$MT -f $tape status`
 type=`echo $resp | sed 's/.*rive type = \([0-9-]*\).*/\1/'`
-file=`echo $resp | sed 's/.*ile number = \([0-9]*\).*/\1/'`
-sblk=`mt -f $tape tell | sed 's/.*t block \([0-9]*\).*/\1/'`
-echo "Tape type $type. Current file $file (block $sblk). Scanning ..."
-mt -f $tape rewind >/dev/null
+if test -z "`echo $resp | grep 'rive type'`"; then
+  type=`echo $resp | sed 's/\([^:]*:\).*/\1/'`
+  type=${type% tape drive:}
+fi
+file=`echo $resp | sed 's/.*ile number *= *\([0-9]*\).*/\1/'`
+sblk=`$MT -f $tape tell | sed 's/.*t block \([0-9]*\).*/\1/'`
+echo -e "Tape type $type.\nCurrent file $file (block $sblk). Scanning ..."
+$MT -f $tape rewind >/dev/null
 err=$?
 declare -i no
 no=0
 while test "$err" = "0"; do
-  resp=`mt -f $tape tell`
+  resp=`$MT -f $tape tell`
   blocks=`echo $resp | sed 's/.*t block \([0-9]*\).*/\1/'`
   myno=`printf %02i $no`
   echo -n "File $myno (block`printf %7i $blocks`): "
@@ -47,15 +56,15 @@ while test "$err" = "0"; do
       tar tvf /tmp/tape_$tp.$myno 2>/dev/null | head -n$inspect
     fi
   fi
-  mt -f $tape fsf >/dev/null
+  $MT -f $tape fsf >/dev/null
   err=$?
   let no+=1
 done
 myno=`printf %02i $[no-1]`
 echo -n "/tmp/tape_$tp.00 -- tape_$tp.$myno left for inspection; tape at "
 if test ! -z "$reset" -a "$reset" != "0"; then
-  mt -f $tape seek $sblk >/dev/null
-  echo "block `mt -f $tape tell | sed 's/.*t block //'`"
+  $MT -f $tape seek $sblk >/dev/null
+  echo "block `$MT -f $tape tell | sed 's/.*t block //'`"
 else
   echo "<EOD>."
 fi
