@@ -214,13 +214,13 @@ to your kernel source tree (osst-22.diff resp. osst-24.diff).
 <Br>
 To install the driver, do a <TT>make install</TT>, and the driver will be
 copied to <TT>/lib/modules/2.2.??/scsi/</TT> resp.
-<TT>/lib/modules/2.4.1?/scsi/</TT>. You need root permissions for
-this. You can now load the driver (module) by using <TT>modprobe</TT> and
+<TT>/lib/modules/2.4.??/kernel/drivers/scsi/</TT>. You need root permissions
+for this. You can now load the driver (module) by using <TT>modprobe</TT> and
 unload it with <TT>rmmod</TT>.<Br>
-If this all looks new and scary to you: Sorry! You may be able to help us
-later, when the driver is getting better and better, but right now, you
-should better first get familiar with your Linux Operating System, the
-kernel, the modules, etc.</LI>
+<Font Size=-1>If this all looks new and scary to you: Sorry! You may be able
+to help us later, when the driver is getting better and better, but right
+now, you should better first get familiar with your Linux Operating System,
+the kernel, the modules, etc.</Font></LI>
 </OL>
 If you download and use this driver, you agree to do so under the terms of
 the <A HREf="http://www.fsf.org/copyleft/">GNU GPL</A>.
@@ -244,6 +244,17 @@ The recommended way to use the DI-x0 is to go via ide-scsi and osst.
 Here's a <A HRef="ide-tape.html">page</A> that explains how this
 can be done. It also contains patches for the ide-tape to fix the onstream
 support in there.
+
+<H3>USB30</H3>
+The USB drive USB30 can be used via the usb-storage driver. Compile it with
+support for the <A HRef="http://www.freecom.com/">FreeCom</A> USB-Atapi
+converter <TT>CONFIG_USB_STORAGE_FREECOM</TT>, load it and load your osst
+driver. 
+Syslog (<TT>dmesg</TT>) should tell you it has been identified.<Br>
+Note: Stability and speed veries between different versions of the kernel's
+low-level USB drivers, of the usb-storage driver and the Freecom dongle.
+Recently, problems with older versions (9.21 and older) of the dongle have
+been reported. (Check <TT>/proc/bus/usb/devices</TT>.)
 
 <H3>Links</H3>
 JP Vossen has a <A HRef="http://www.jpsdomain.org/linux/#backups">nice
