@@ -836,6 +836,10 @@ static int osst_get_logical_blk(Scsi_Tape * STp, int logical_blk_num, int quiet)
                         if (x > logical_blk_num) {
                                 printk(KERN_ERR "osst%d: couldn't find logical block %d, aborting (block %d found)\n",
 						dev, logical_blk_num, x);
+								printk(KERN_ERR "osst%d: rewinding up %d blocks\n",
+						dev, x - logical_blk_num + 1);
+								position = osst_get_frame_position(STp);
+								osst_set_frame_position(STp, position - (x - logical_blk_num + 1), 0);
 			        if (SCpnt)
 					scsi_release_command(SCpnt);
                                 return (-EIO);
