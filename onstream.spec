@@ -1,16 +1,16 @@
 #
-# spec file for package onstream (Version 0.9.13_0.7.99)
+# spec file for package onstream (Version 0.9.13_0.7.99a)
 # 
 # Copyright  (c)  2000  SuSE GmbH  Nuernberg, Germany.
 #
 # please send bugfixes or comments to feedback@suse.de.
 #
 
-# neededforbuild  gpp k_deflt lx_sus22 -lx_suse
-# usedforbuild    -lx_suse aaa_base aaa_dir base bash bindutil binutils bison bzip compress cpio cracklib devs diff ext2fs file fileutil find flex gawk gcc gdbm gettext gpm gpp gppshare groff gzip k_deflt kbd less libc libz lx_sus22 lx_suse make mktemp modules ncurses net_tool netcfg nkita nkitb nssv1 pam patch perl pgp ps rcs rpm sendmail sh_utils shadow shlibs strace syslogd sysvinit texinfo textutil timezone unzip util vim xdevel xf86 xshared
+# neededforbuild  gpp k_deflt lx_suse
+# usedforbuild    aaa_base aaa_dir autoconf automake base bash bindutil binutils bison bzip compress cpio cracklib devs diff ext2fs file fileutil find flex gawk gcc gdbm gettext gpm gpp gppshare groff gzip k_deflt kbd less libc libtool libz lx_suse make mktemp modules ncurses net_tool netcfg nkita nkitb nssv1 pam patch perl pgp ps rcs rpm sendmail sh_utils shadow shlibs strace syslogd sysvinit texinfo textutil timezone unzip util vim xdevel xf86 xshared
 
 Vendor:       SuSE GmbH, Nuernberg, Germany
-Distribution: SuSE Linux 6.4 (i386)
+Distribution: SuSE Linux 7.0a (i386)
 Name:         onstream
 Release:      0
 Packager:     feedback@suse.de
@@ -18,9 +18,9 @@ Packager:     feedback@suse.de
 Copyright:	GPL
 Group:        Base/Kernel
 Autoreqprov:  on
-Version:      0.9.13_0.7.99
+Version:      0.9.13_0.7.99a
 Summary:      OnStream SC-x0 tape support tools
-Source:	      onstream-20000611.tar.gz
+Source:	      onstream-20000621.tar.gz
 #Patch:		onstream.dif
 BuildRoot:	/var/tmp/%{name}-buildroot
 
@@ -36,8 +36,8 @@ standard SuSE kernel.
 
 Authors:
 --------
-    Terry Hardie <terryh@orcas.net>
     Willem Riede <wriede@monmouth.com>
+    Terry Hardie <terryh@orcas.net>
     Kurt Garloff <garloff@suse.de>
 
 SuSE series: ap
@@ -61,7 +61,6 @@ install -d -o root -g root -m 755 $RPM_BUILD_ROOT/usr/bin
 install -s -o root -g root -m 755 onstreamsg/osg $RPM_BUILD_ROOT/usr/bin/
 install -s -o root -g root -m 755 tools/os_dump tools/os_write tools/stream $RPM_BUILD_ROOT/usr/bin/
 install -d $RPM_BUILD_ROOT/dev/
-driver/Makedevs.sh 4 $RPM_BUILD_ROOT/dev
 cd driver
 make install DESTDIR=$RPM_BUILD_ROOT 
 %{?suse_check}
@@ -81,6 +80,12 @@ rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_DIR/%{name}
 
 %changelog -n onstream
+* Wed Jun 21 2000 - garloff@suse.de
+- 20000621 (0.7.99a): Use same OSST_SUPPORTS (SDp) from
+  osst_detect.h in st and osst for both detect() and attach()
+  Recreated patch against 2.2.16-SuSE.
+* Mon May 29 2000 - garloff@suse.de
+- 20000529 (0.7.91): Fix integration into kernel.
 * Wed May 24 2000 - garloff@suse.de
 - Version 20000524 (0.7.9):
 - Now independent high-level driver
