@@ -135,6 +135,7 @@ typedef struct {
   int      filemark_cnt;
   int      first_mark_addr;
   int      last_mark_addr;
+  int      first_data_addr;
   int      eod_frame_addr;
   unsigned long cmd_start_time;
   unsigned long max_cmd_time;
