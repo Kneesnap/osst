@@ -23,7 +23,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.7.1";
+const char * osst_version = "0.7.2";
 
 /* The "failure to reconnect" firmware bug */
 #define OS_NEED_POLL_MIN 10602 /*(107A)*/
@@ -2638,8 +2638,13 @@ if (SCpnt) printk(KERN_ERR "osst%d: Not supposed to have SCpnt at line %d\n", de
 #if DEBUG
 	printk(ST_DEB_MSG "osst%d: Skipping over config partition.\n", dev);
 #endif
-	osst_flush_drive_buffer(STp, &SCpnt);
-	osst_position_tape_and_confirm(STp, &SCpnt, 0xbb8);
+	if (osst_flush_drive_buffer(STp, &SCpnt) < 0) {
+	    if (SCpnt) scsi_release_command(SCpnt);
+	    return (-EIO);
+	}
+	/* error recovery may have bumped us past the header partition */
+	if (osst_get_frame_position(STp, &SCpnt) < 0xbb8)
+	    osst_position_tape_and_confirm(STp, &SCpnt, 0xbb8);
     }
 	
     if (OS_NEED_POLL(STp->os_fw_rev))
