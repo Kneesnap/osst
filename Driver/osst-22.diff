@@ -1,0 +1,131 @@
+diff -uNr linux-2.2.15.swsusp/Documentation/Configure.help linux-2.2.15.osst/Documentation/Configure.help
+--- linux-2.2.15.swsusp/Documentation/Configure.help	Wed May 24 20:18:40 2000
++++ linux-2.2.15.osst/Documentation/Configure.help	Wed May 24 20:19:29 2000
+@@ -3945,6 +3945,24 @@
+   module, say M here and read Documentation/modules.txt and
+   Documentation/scsi.txt .
+ 
++OnStream SC-x0 SCSI tape support
++CONFIG_CHR_DEV_OSST
++  The OnStream SC-x0 SCSI tape drives can not be driven by the 
++  standard st driver, but instead need this special osst driver and 
++  use the  /dev/osstX char device nodes (major 206).
++  For more information, you may have a look at the SCSI-HOWTO
++  ftp://metalab.unc.edu/pub/Linux/docs/HOWTO  and
++  drivers/scsi/README.osst  in the kernel source. 
++  Most info may be found on http://linux1.onstream.nl/test/
++  Please also have a look at the standard st docu, as most of it
++  applies to osst as well.
++
++  This driver is also available as a module ( = code which can be
++  inserted in and removed from the running kernel whenever you want).
++  The module will be called osst.o. If you want to compile it as a
++  module, say M here and read Documentation/modules.txt and
++  Documentation/scsi.txt .
++
+ SCSI CDROM support
+ CONFIG_BLK_DEV_SR
+   If you want to use a SCSI CDROM under Linux, say Y and read the
+diff -uNr linux-2.2.15.swsusp/MAINTAINERS linux-2.2.15.osst/MAINTAINERS
+--- linux-2.2.15.swsusp/MAINTAINERS	Wed May 24 20:18:40 2000
++++ linux-2.2.15.osst/MAINTAINERS	Wed May 24 20:19:29 2000
+@@ -697,6 +697,13 @@
+ W:	http://www.linuxtr.net
+ S:	Maintained
+ 
++ONSTREAM SCSI TAPE DRIVER
++P:	Willem Riede
++M:	wriede@monmouth.com
++L:	osst@linux1.onstream.nl
++L:	linux-scsi@vger.rutgers.edu
++S:	Maintained
++
+ OPL3-SA2, SA3, and SAx DRIVER
+ P:	Scott Murray
+ M:	scott@spiteful.org
+diff -uNr linux-2.2.15.swsusp/drivers/scsi/Config.in linux-2.2.15.osst/drivers/scsi/Config.in
+--- linux-2.2.15.swsusp/drivers/scsi/Config.in	Wed May 24 20:18:40 2000
++++ linux-2.2.15.osst/drivers/scsi/Config.in	Wed May 24 20:19:29 2000
+@@ -2,6 +2,7 @@
+ 
+ dep_tristate 'SCSI disk support' CONFIG_BLK_DEV_SD $CONFIG_SCSI
+ dep_tristate 'SCSI tape support' CONFIG_CHR_DEV_ST $CONFIG_SCSI
++dep_tristate 'OnStream SC-x0 SCSI tape support' CONFIG_CHR_DEV_OSST $CONFIG_SCSI
+ dep_tristate 'SCSI CD-ROM support' CONFIG_BLK_DEV_SR $CONFIG_SCSI
+ if [ "$CONFIG_BLK_DEV_SR" != "n" ]; then
+   bool '  Enable vendor-specific extensions (for SCSI CDROM)' CONFIG_BLK_DEV_SR_VENDOR
+diff -uNr linux-2.2.15.swsusp/drivers/scsi/Makefile linux-2.2.15.osst/drivers/scsi/Makefile
+--- linux-2.2.15.swsusp/drivers/scsi/Makefile	Wed May 24 20:18:40 2000
++++ linux-2.2.15.osst/drivers/scsi/Makefile	Wed May 24 20:19:29 2000
+@@ -57,6 +57,14 @@
+   endif
+ endif
+ 
++ifeq ($(CONFIG_CHR_DEV_OSST),y)
++L_OBJS += osst.o
++else
++  ifeq ($(CONFIG_CHR_DEV_OSST),m)
++  M_OBJS += osst.o
++  endif
++endif
++
+ ifeq ($(CONFIG_BLK_DEV_SD),y)
+ L_OBJS += sd.o sd_ioctl.o
+ else
+diff -uNr linux-2.2.15.swsusp/drivers/scsi/hosts.c linux-2.2.15.osst/drivers/scsi/hosts.c
+--- linux-2.2.15.swsusp/drivers/scsi/hosts.c	Wed May 24 20:18:40 2000
++++ linux-2.2.15.osst/drivers/scsi/hosts.c	Wed May 24 20:19:29 2000
+@@ -935,6 +935,9 @@
+ #ifdef CONFIG_CHR_DEV_ST
+     scsi_register_device(&st_template);
+ #endif
++#ifdef CONFIG_CHR_DEV_OSST
++    scsi_register_device(&osst_template);
++#endif
+ #ifdef CONFIG_CHR_DEV_SG
+     scsi_register_device(&sg_template);
+ #endif
+diff -uNr linux-2.2.15.swsusp/drivers/scsi/hosts.h linux-2.2.15.osst/drivers/scsi/hosts.h
+--- linux-2.2.15.swsusp/drivers/scsi/hosts.h	Wed May 24 20:18:40 2000
++++ linux-2.2.15.osst/drivers/scsi/hosts.h	Wed May 24 20:19:29 2000
+@@ -466,6 +466,7 @@
+ 
+ extern struct Scsi_Device_Template sd_template;
+ extern struct Scsi_Device_Template st_template;
++extern struct Scsi_Device_Template osst_template;
+ extern struct Scsi_Device_Template sr_template;
+ extern struct Scsi_Device_Template sg_template;
+ 
+diff -uNr linux-2.2.15.swsusp/include/linux/major.h linux-2.2.15.osst/include/linux/major.h
+--- linux-2.2.15.swsusp/include/linux/major.h	Wed May 24 20:18:40 2000
++++ linux-2.2.15.osst/include/linux/major.h	Wed May 24 20:19:29 2000
+@@ -126,6 +126,8 @@
+ #define UNIX98_PTY_MAJOR_COUNT	8
+ #define UNIX98_PTY_SLAVE_MAJOR	(UNIX98_PTY_MASTER_MAJOR+UNIX98_PTY_MAJOR_COUNT)
+ 
++#define OSST_MAJOR	206	/* OnStream-SCx0 SCSI tape */
++
+ /*
+  * Tests for SCSI devices.
+  */
+diff -uNr linux-2.2.15.swsusp/init/main.c linux-2.2.15.osst/init/main.c
+--- linux-2.2.15.swsusp/init/main.c	Fri May 12 22:27:08 2000
++++ linux-2.2.15.osst/init/main.c	Wed May 24 20:57:08 2000
+@@ -210,6 +210,7 @@
+ #endif
+ extern void floppy_setup(char *str, int *ints);
+ extern void st_setup(char *str, int *ints);
++extern void osst_setup(char *str, int *ints);
+ extern void st0x_setup(char *str, int *ints);
+ extern void advansys_setup(char *str, int *ints);
+ extern void tmc8xx_setup(char *str, int *ints);
+@@ -798,6 +799,9 @@
+ #endif
+ #ifdef CONFIG_CHR_DEV_ST
+ 	{ "st=", st_setup },
++#endif
++#ifdef CONFIG_CHR_DEV_OSST
++	{ "osst=", osst_setup },
+ #endif
+ #ifdef CONFIG_BUSMOUSE
+ 	{ "bmouse=", bmouse_setup },
