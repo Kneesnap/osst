@@ -168,14 +168,17 @@ Osst now supports a proc file for each drive (/proc/scsi/osst/osstX) which provi
 <DT>2002-12-12: (osst 0.9.12)</DT>
 <DD>Fix a memory alloc/free mismatch that could have made your kernel unstable after rmmod osst.
 Fix a number of tape (re)positioning bugs around filemarks that affected Amanda, Arkeia and Storix
-backup software. Rationalize module parameters.
+backup software. Rationalize module parameters.</DD>
+<DT>2002-12-31: (osst 0.8.16 / 0.99.0)</DT>
+<DD>Backported 0.9.12 changes to Linux 2.2: osst-0.8.16. Forward ported them to Linux 2.5 kernel: 
+osst-0.99.0. You need at least 2.5.53 if you use a DI-x0 on 2.5.xx system (even it still lacks
+a couple of fixes that hopefully will make it in 2.5.54).</DD>
 </DL></P>
 
 <A Name="problems">
-<H3>Known problems as of <B>0.8.15 / 0.9.9</B></H3>
+<H3>Known problems as of <B>0.8.16 / 0.9.12 / 0.99.0</B></H3>
 <UL>
-<LI>If you do not have a very recent kernel (2.4.7 or newer) you cannot use osst 0.9.9 or above;
-in that case extract 0.9.8 from <A HRef="onstream-20010603.tar.gz">this archive</A>.
+<LI>None.
 </LI>
 </UL>
 
@@ -219,7 +222,7 @@ and some tools.
 <OL>
 <LI>If you're lucky, your distributor has a kernel with a recent version of
 the osst driver. Just use it ;-)
-<LI>(recommended) Get the very latest <A HRef="onstream-20021212.tar.gz">sources</A>, unpack
+<LI>(recommended) Get the very latest <A HRef="onstream-20021231.tar.gz">sources</A>, unpack
 them (<TT>tar xvzf onstream-200*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux
 source tree installed in <TT>/usr/src/linux/</TT>. 
