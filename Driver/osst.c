@@ -27,8 +27,8 @@ static const char * cvsid = "$Id$";
 const char * osst_version = "0.9.7";
 
 /* The "failure to reconnect" firmware bug */
-#define OSST_FW_NEED_POLL_MIN 10602 /*(107A)*/
-#define OSST_FW_NEED_POLL_MAX 10708 /*(108D)*/
+#define OSST_FW_NEED_POLL_MIN 10601 /*(107A)*/
+#define OSST_FW_NEED_POLL_MAX 10704 /*(108D)*/
 #define OSST_FW_NEED_POLL(x,d) ((x) >= OSST_FW_NEED_POLL_MIN && (x) <= OSST_FW_NEED_POLL_MAX && d->host->this_id != 7)
 
 #include <linux/module.h>
@@ -2296,24 +2296,21 @@ static int osst_verify_position(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt)
 /* Acc. to OnStream, the vers. numbering is the following:
  * X.XX for released versions (X=digit), 
  * XXXY for unreleased versions (Y=letter)
- * Ordering 1.05 < 106A < 106a < 106B < ... < 1.06
+ * Ordering 1.05 < 106A < 106B < ...  < 106a < ... < 1.06
  * This fn makes monoton numbers out of this scheme ...
  */
 static unsigned int osst_parse_firmware_rev (const char * str)
 {
-	unsigned int rev;
 	if (str[1] == '.') {
-		rev = (str[0]-0x30)*10000
-			+(str[2]-0x30)*1000
-			+(str[3]-0x30)*100;
+		return (str[0]-'0')*10000
+			+(str[2]-'0')*1000
+			+(str[3]-'0')*100;
 	} else {
-		rev = (str[0]-0x30)*10000
-			+(str[1]-0x30)*1000
-			+(str[2]-0x30)*100 - 100;
-		rev += 2*(str[3] & 0x1f)
-			+(str[3] >= 0x60? 1: 0);
+		return (str[0]-'0')*10000
+			+(str[1]-'0')*1000
+			+(str[2]-'0')*100 - 100
+			+(str[3]-'@');
 	}
-	return rev;
 }
 
 /*
