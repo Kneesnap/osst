@@ -29,7 +29,7 @@ and enable the Freecom support in the usb-storage driver.
 
 <H3>Status</H3>
 <P>The driver has been used by lots of people and should be considered
-stable. The version with a fxied blocksize of 32k has been integrated into
+stable. The version with a fixed blocksize of 32k has been integrated into
 the mainstream kernel (2.4.0) and will soon be upgraded to the version that
 supports variable blocksize.
 <Br>
@@ -141,9 +141,15 @@ Fixed a buglet in close of the rewinding device in both versions.</DD>
 <DD>Junfeng Yang (Stanford) reported potential invalid pointer dereferences in two functions within
 osst, identified by their CHECKER tool. There was a theoretical possibility that an invalid pointer
 would be used, though I doubt that anyone would ever be hit by this. Corrected all the same.</DD>
+<DT>2001-06-03: (osst 0.8.13 / 0.9.8)</DT>
+<DD>Fixed data corruption problem with error recovery on firmware versions 1.05 and older when 
+the error is detected when waiting to skip the config partition (2990-3000).
+Fixed off by one in block numbering after [bf]sr and seek.
+Rationalized printk log statement severities (see READMEs).
+Reflected the ability to use multiple blocksizes in READMEs.</DD>
 </DL></P>
 
-<H3>Known problems as of <B>0.8.11 / 0.9.6</B></H3>
+<H3>Known problems as of <B>0.8.13 / 0.9.8</B></H3>
 <UL>
 <LI>Currently none.</LI>
 </UL>
@@ -184,7 +190,7 @@ There are several possibilities to get the <TT>osst</TT>-driver. For your
 convenience, the archives also contain Terry's userspace driver <TT>osg</TT> 
 and some tools.
 <OL>
-<LI>(recommended) Get the very latest <A HRef="onstream-20010331.tar.gz">sources</A>, unpack
+<LI>(recommended) Get the very latest <A HRef="onstream-20010603.tar.gz">sources</A>, unpack
 them (<TT>tar xvzf onstream-200*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux source
 tree (recent 2.4.x kernel trees are fine, otherwise apply patch osst-22.diff 
