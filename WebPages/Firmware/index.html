@@ -51,27 +51,30 @@ usb-storage), otherwise you can't update with Linux anyway.
 <H3>Download</H3>
 <DL>
 <DT>SCSI drives SC-30/SC-50:</DT>
-<DD><A HRef="sc30fix">Update tool</A> 
-(<A HRef="sc30fix_static">statically linked version</A>)
+<DD><A HRef="sc30fix">Update tool</A> (v2.07), 
+<A HRef="sc30fix_static">statically linked variant</A>,
 <A HRef="SCSI109.bin">Firmware 1.09</A></DD>
-<DT>IDE drives DI-30/DI-50 and USB driver USB30:</DT>
-<DD><A HRef="di30fix">Update tool</A>
-(<A HRef="di30fix_static">statically linked version</A>)
+<DT>IDE drives DI-30/DI-50 and USB drive USB30:</DT>
+<DD><A HRef="di30fix">Update tool</A> (v2.07),
+<A HRef="di30fix_static">statically linked variant</A>,
 <A HRef="IDE109.bin">Firmware 1.09</A></DD>
 <DT>SCSI drives ADR30/ADR50/ADR66:</DT>
-<DD><A HRef="adrfix">Update tool</A>
-(<A HRef="adrfix_static">statically linked version</A>)
+<DD><A HRef="adrfix">Update tool</A> (v2.02),
+<A HRef="adrfix_static">statically linked version</A>,
 <A HRef="ADR239.osi">Firmware 2.39</A></DD>
 <DT>IDE drives ADR30ide/ADR50ide/ADR Series:</DT>
-<DD><A HRef="adridefix">Update tool</A>
-(<A HRef="adridefix_static">statically linked variant</A>)
+<DD><A HRef="adridefix">Update tool</A> (v2.03),
+<A HRef="adridefix_static">statically linked variant</A>,
 <A HRef="Bus301G.bff">Firware 301G</A></DD>
-<DT>IDE driver ADR60ide/ADR series:</DT>
-<DD>No updater or firmware available here yet.</DD>
-</DL>
+<DT>IDE drive ADR<sup>2</sup>60ide/ADR series:</DT>
+<DD><A HRef="adr2idefix">Update tool</A> (v2.07),
+<A HRef="adr2idefix_static">statically linked variant</A>,
+<A HRef="Bus504Jbin">Firmware 504J</A></DD>
+</DL><P>
 Watch out: Newer drivers will identify themselves all as &quot;ADR Series&quot;.
-While the 30/50 (15/25 GB raw capacity) drives are handled, the 60 (30GB raw
-capacity) is not yet.<Br>
+While the 30/50 (15/25 GB raw capacity) drives are handled by
+<TT>adridefix</TT>, the 60 (30GB raw capacity) variant is handled by
+<TT>adr2idefix</TT>.<Br>
 Note: <Em>Firmware</Em> versions with a dot are release versions, the ones
 in between are to be considered betas. Ordering:
 3.00 &lt; 301G &lt; 301g &lt; 3.01.
