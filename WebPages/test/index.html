@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<Head>
+<Title>Page Title</Title>
+	<Link HRef="mailto:osst@linux1.onstream.nl">
+	<Meta HTTP-Equiv="Content-Type" Content="text/html; charset=iso-8859-1">
+	<Meta Name="Author" Content="garloff@suse.de">
+	<Meta Name="Generator" Content="Text Editor (xemacs/jed, Linux)">
+	<Meta Name="Keywords" Content="OnStream SCSI Tape SC-30 SC-50 ADR">
+	<Meta Name="Description" Content="osst tester page"> 
+</Head>
+<Body Background="" BGColor=#e0c0f0>
+<A HRef=".."><Img Src="/gif/left.gif" Align=middle Alt="Back" Width=16 Height=16>
+Back</A>
+<Center><H1>OSST tester page</H1></Center>
+This page should give some info to potential testers of the kernelspace
+driver for the OnStream SC-30/50 tape devices.
+<H3>Driver</H3>
+The kernelspace solution to drive the SC-x0 has been created by copying the
+original scsi tape driver <TT>st</TT> of Kai Mikasara to <TT>osst</TT> and
+changing it in order to support the OnStream device. When being loaded, it
+allows to access the tape via <TT>/dev/st?</TT> just like normal tapes.
+
+<H3>Known problems</H3>
+<UL>
+<LI>The driver does currently prevent from accessing non OnStream tapes on
+the same machine, as it is not able to drive normal tape devices. It can
+not coexist with the standard <TT>st</TT> driver, either, as it uses the
+same device nodes. This will be fixed in a later version. 
+The module can be unloaded after use though.</LI>
+<LI>There is a potential to infinitely block the waiting process. In this
+case, you are in trouble: The process can not really be killed. This does
+not consume CPU power or otherwise blocks your system, but it keeps the
+<TT>osst</TT> module busy, such that it can't be unloaded, so the only way
+to use the <TT>osst</TT> driver again is to reboot :-( However, the rest of
+your system should be unaffected.</LI>
+</UL>
+
+<H3>Status</H3>
+<P>The driver does not have production quality yet and a few problems are known
+or to be expected. If you test it, you do it on your own risk. If the driver
+crashes your kernel (unlikely, but possible) and you loose important data,
+you are on your own. If you use the driver to backup your data and need to
+restore it later, but fail, you are on your own again. In short:
+The GNU GPL applies.</P>
+
+<P>Here comes a list with status updates:
+<DL>
+<DT>2000-04-05: (osst 0.6.3)</DT>
+<DD>The first public ALPHA release for the adventureous testers.</DD>
+</DL></P>
+
+<H3>Feedback</H3>
+<P>Please report any problems to the 
+<A HRef="mailto:osst@linux1.onstream.nl">osst mailing list</A>. The
+developers (and soon hopefully other testers) will be reading your report
+and potentially ask for more details and try to solve the problem.</P>
+<P>Useful bug reports include some info:
+<UL>
+<LI>What is the problem? (e.g. wrong data is being read) What conditions?
+(e.g. tape has been written by userspace onstreamsg-0.9.13) What symptoms?
+What related effects? (e.g. kernel crashes afterwards)</LI>
+<LI>What driver has been used? What version? What is the firmware revision
+of the tape device?</LI>
+<LI>Is the bug reproducible?</LI>
+<LI>Is the same bug present in the <A HRef="ftp://ftp.orcas.net/pub/linux/onstream/">
+userspace driver <TT>osg</TT></A>?</LI>
+</UL></P>
+<P>Note that the mailing list is open for subscription. Please send your
+subscribe request to 
+<A HRef="mailto:osst-request@linux1.onstream.nl"><TT>osst-request@linux1.onstream.nl</TT></A>.
+It's a majordomo list. If you're not yet experienced with this kind of
+lists, start with sending a mail with just <TT>help</TT> in the
+<em>body</em> of the mail to <TT>osst-request</TT>.
+</P>
+
+<H3>Download</H3>
+There are several possibilities to get the <TT>osst</TT>-driver.
+
+<H3>Credits</H3>
+<A<HRef="../developers.html">Credits</A> go to Willem Riede for developing
+this driver. Some contributions come from me, Terry, Kai and some code was 
+designed after Gadi's DI-30 (IDE) driver.
+
+<!--<P>
+<Img Src="/gif/construction.gif" Alt="under construction" Width=40 Height=32>
+</P>-->
+<HR>
+<I>(w) by <A HRef="mailto:garloff@suse.de">KG</A>, $Id$</I>
+</Body>
+</HTML>
