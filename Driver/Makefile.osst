@@ -13,7 +13,7 @@ include $(KDIR)/.config
 include $(KDIR)/Makefile
 TOPDIR := $(KDIR)
 
-CFLAGS := -I. -I $(KDIR)/drivers/scsi $(CFLAGS) -DMODULE -DOSST_MAJOR=206 -D"DEVICE_OFF(dev)=" -DOSST_EXTRA_DEVS=2 -DMT_ISONSTREAM_SC=0x61
+CFLAGS := -I. -I$(KDIR)/drivers/scsi -I$(KDIR)/include $(CFLAGS) -DMODULE -DOSST_MAJOR=206 -D"DEVICE_OFF(dev)=" -DOSST_EXTRA_DEVS=2 -DMT_ISONSTREAM_SC=0x61
 
 osst.o: osst.c osst.h osst_detect.h osst_options.h arch Rules.make
 

@@ -4912,18 +4912,34 @@ static int osst_attach(Scsi_Device * SDp){
 
 		 /*  Rewind entry  */
 		 sprintf (name, "mt%s", formats[mode]);
+# if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0)
+		 tpnt->de_r[mode] =
+			devfs_register (SDp->de, name, DEVFS_FL_DEFAULT,
+			   MAJOR_NR, i + (mode << 5),
+			   S_IFCHR | S_IRUGO | S_IWUGO,
+			   &osst_fops, NULL);
+# else
 		 tpnt->de_r[mode] =
 			devfs_register (SDp->de, name, 0, DEVFS_FL_DEFAULT,
 			   MAJOR_NR, i + (mode << 5),
 			   S_IFCHR | S_IRUGO | S_IWUGO,
 			   0, 0, &osst_fops, NULL);
+# endif		
 		 /*  No-rewind entry  */
 		 sprintf (name, "mt%sn", formats[mode]);
+# if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,0)
+		 tpnt->de_n[mode] =
+			devfs_register (SDp->de, name, DEVFS_FL_DEFAULT,
+			   MAJOR_NR, i + (mode << 5) + 128,
+			   S_IFCHR | S_IRUGO | S_IWUGO,
+			   &osst_fops, NULL);
+# else		
 		 tpnt->de_n[mode] =
 			devfs_register (SDp->de, name, 0, DEVFS_FL_DEFAULT,
 			   MAJOR_NR, i + (mode << 5) + 128,
 			   S_IFCHR | S_IRUGO | S_IWUGO,
 			   0, 0, &osst_fops, NULL);
+# endif
 	}
 	devfs_register_tape (tpnt->de_r[0]);
 #endif

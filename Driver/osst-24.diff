@@ -1,7 +1,7 @@
-diff -ur linux-2.4.0-orig/MAINTAINERS linux-2.4.0-test3-pre2/MAINTAINERS
---- linux-2.4.0-orig/MAINTAINERS	Sat Jul  1 20:53:49 2000
-+++ linux-2.4.0-test3-pre2/MAINTAINERS	Sat Jul  1 22:04:13 2000
-@@ -799,6 +799,13 @@
+diff -uNr linux-2.4.0-test3.fixed/MAINTAINERS linux-2.4.0-test3.osst/MAINTAINERS
+--- linux-2.4.0-test3.fixed/MAINTAINERS	Sun Jul  9 19:10:44 2000
++++ linux-2.4.0-test3.osst/MAINTAINERS	Sat Jul 15 16:07:14 2000
+@@ -798,6 +798,13 @@
  W:	http://www.linuxtr.net
  S:	Maintained
  
@@ -15,9 +15,9 @@ diff -ur linux-2.4.0-orig/MAINTAINERS linux-2.4.0-test3-pre2/MAINTAINERS
  OPL3-SA2, SA3, and SAx DRIVER
  P:	Scott Murray
  M:	scott@spiteful.org
-diff -ur linux-2.4.0-orig/drivers/scsi/Config.in linux-2.4.0-test3-pre2/drivers/scsi/Config.in
---- linux-2.4.0-orig/drivers/scsi/Config.in	Mon Mar 27 12:45:33 2000
-+++ linux-2.4.0-test3-pre2/drivers/scsi/Config.in	Sat Jul  1 22:04:13 2000
+diff -uNr linux-2.4.0-test3.fixed/drivers/scsi/Config.in linux-2.4.0-test3.osst/drivers/scsi/Config.in
+--- linux-2.4.0-test3.fixed/drivers/scsi/Config.in	Mon Mar 27 19:45:33 2000
++++ linux-2.4.0-test3.osst/drivers/scsi/Config.in	Sat Jul 15 16:07:14 2000
 @@ -8,6 +8,8 @@
  
  dep_tristate '  SCSI tape support' CONFIG_CHR_DEV_ST $CONFIG_SCSI
@@ -27,9 +27,9 @@ diff -ur linux-2.4.0-orig/drivers/scsi/Config.in linux-2.4.0-test3-pre2/drivers/
  dep_tristate '  SCSI CD-ROM support' CONFIG_BLK_DEV_SR $CONFIG_SCSI
  
  if [ "$CONFIG_BLK_DEV_SR" != "n" ]; then
-diff -ur linux-2.4.0-orig/drivers/scsi/Makefile linux-2.4.0-test3-pre2/drivers/scsi/Makefile
---- linux-2.4.0-orig/drivers/scsi/Makefile	Tue Jun 20 17:14:51 2000
-+++ linux-2.4.0-test3-pre2/drivers/scsi/Makefile	Sat Jul  1 22:04:13 2000
+diff -uNr linux-2.4.0-test3.fixed/drivers/scsi/Makefile linux-2.4.0-test3.osst/drivers/scsi/Makefile
+--- linux-2.4.0-test3.fixed/drivers/scsi/Makefile	Tue Jun 20 23:14:51 2000
++++ linux-2.4.0-test3.osst/drivers/scsi/Makefile	Sat Jul 15 16:07:14 2000
 @@ -31,6 +31,7 @@
  
  obj-$(CONFIG_SCSI)		+= scsi_mod.o
@@ -38,9 +38,9 @@ diff -ur linux-2.4.0-orig/drivers/scsi/Makefile linux-2.4.0-test3-pre2/drivers/s
  obj-$(CONFIG_BLK_DEV_SD)	+= sd.o
  obj-$(CONFIG_BLK_DEV_SR)	+= sr_mod.o
  obj-$(CONFIG_CHR_DEV_SG)	+= sg.o
-diff -ur linux-2.4.0-orig/drivers/scsi/hosts.c linux-2.4.0-test3-pre2/drivers/scsi/hosts.c
---- linux-2.4.0-orig/drivers/scsi/hosts.c	Sat Jul  1 20:53:49 2000
-+++ linux-2.4.0-test3-pre2/drivers/scsi/hosts.c	Sat Jul  1 22:04:13 2000
+diff -uNr linux-2.4.0-test3.fixed/drivers/scsi/hosts.c linux-2.4.0-test3.osst/drivers/scsi/hosts.c
+--- linux-2.4.0-test3.fixed/drivers/scsi/hosts.c	Mon Jun 26 20:40:38 2000
++++ linux-2.4.0-test3.osst/drivers/scsi/hosts.c	Sat Jul 15 16:07:14 2000
 @@ -998,6 +998,9 @@
  #ifdef CONFIG_CHR_DEV_ST
      scsi_register_device(&st_template);
@@ -51,9 +51,9 @@ diff -ur linux-2.4.0-orig/drivers/scsi/hosts.c linux-2.4.0-test3-pre2/drivers/sc
  #ifdef CONFIG_CHR_DEV_SG
      scsi_register_device(&sg_template);
  #endif
-diff -ur linux-2.4.0-orig/drivers/scsi/hosts.h linux-2.4.0-test3-pre2/drivers/scsi/hosts.h
---- linux-2.4.0-orig/drivers/scsi/hosts.h	Sat Jun 24 00:31:56 2000
-+++ linux-2.4.0-test3-pre2/drivers/scsi/hosts.h	Sat Jul  1 22:36:00 2000
+diff -uNr linux-2.4.0-test3.fixed/drivers/scsi/hosts.h linux-2.4.0-test3.osst/drivers/scsi/hosts.h
+--- linux-2.4.0-test3.fixed/drivers/scsi/hosts.h	Wed Jul 12 13:10:54 2000
++++ linux-2.4.0-test3.osst/drivers/scsi/hosts.h	Sat Jul 15 16:07:14 2000
 @@ -508,6 +508,7 @@
  
  extern struct Scsi_Device_Template sd_template;
@@ -62,18 +62,18 @@ diff -ur linux-2.4.0-orig/drivers/scsi/hosts.h linux-2.4.0-test3-pre2/drivers/sc
  extern struct Scsi_Device_Template sr_template;
  extern struct Scsi_Device_Template sg_template;
  
-diff -ur linux-2.4.0-orig/drivers/scsi/osst_detect.h linux-2.4.0-test3-pre2/drivers/scsi/osst_detect.h
---- linux-2.4.0-orig/drivers/scsi/osst_detect.h	Sat Jul  1 22:04:13 2000
-+++ linux-2.4.0-test3-pre2/drivers/scsi/osst_detect.h	Sat Jul  1 22:04:13 2000
+diff -uNr linux-2.4.0-test3.fixed/drivers/scsi/osst_detect.h linux-2.4.0-test3.osst/drivers/scsi/osst_detect.h
+--- linux-2.4.0-test3.fixed/drivers/scsi/osst_detect.h	Thu Jan  1 01:00:00 1970
++++ linux-2.4.0-test3.osst/drivers/scsi/osst_detect.h	Sat Jul 15 16:07:14 2000
 @@ -0,0 +1,5 @@
 +#define OSST_SUPPORTS(SDp) (! ( memcmp (SDp->vendor, "OnStream", 8) || \
 +			     ( memcmp (SDp->model, "SC-", 3) && \
 +			       memcmp (SDp->model, "DI-", 3) && \
 +			       memcmp (SDp->model, "DP-", 3) && \
 +			       memcmp (SDp->model, "USB", 3) ) ) )
-diff -ur linux-2.4.0-orig/drivers/scsi/st.c linux-2.4.0-test3-pre2/drivers/scsi/st.c
---- linux-2.4.0-orig/drivers/scsi/st.c	Sat Jul  1 20:53:49 2000
-+++ linux-2.4.0-test3-pre2/drivers/scsi/st.c	Sat Jul  1 22:04:13 2000
+diff -uNr linux-2.4.0-test3.fixed/drivers/scsi/st.c linux-2.4.0-test3.osst/drivers/scsi/st.c
+--- linux-2.4.0-test3.fixed/drivers/scsi/st.c	Mon Jun 26 21:33:03 2000
++++ linux-2.4.0-test3.osst/drivers/scsi/st.c	Sat Jul 15 16:07:14 2000
 @@ -65,6 +65,8 @@
  
  #include "constants.h"
@@ -120,10 +120,10 @@ diff -ur linux-2.4.0-orig/drivers/scsi/st.c linux-2.4.0-test3-pre2/drivers/scsi/
  		return 0;
  
  	printk(KERN_WARNING
-diff -ur linux-2.4.0-orig/include/linux/blk.h linux-2.4.0-test3-pre2/include/linux/blk.h
---- linux-2.4.0-orig/include/linux/blk.h	Sat Jun 24 00:30:34 2000
-+++ linux-2.4.0-test3-pre2/include/linux/blk.h	Sat Jul  1 22:35:26 2000
-@@ -177,6 +177,14 @@
+diff -uNr linux-2.4.0-test3.fixed/include/linux/blk.h linux-2.4.0-test3.osst/include/linux/blk.h
+--- linux-2.4.0-test3.fixed/include/linux/blk.h	Wed Jul 12 12:53:48 2000
++++ linux-2.4.0-test3.osst/include/linux/blk.h	Sat Jul 15 16:07:14 2000
+@@ -176,6 +176,14 @@
  #define DEVICE_ON(device)
  #define DEVICE_OFF(device)
  
@@ -138,7 +138,7 @@ diff -ur linux-2.4.0-orig/include/linux/blk.h linux-2.4.0-test3-pre2/include/lin
  #elif (MAJOR_NR == SCSI_CDROM_MAJOR)
  
  #define DEVICE_NAME "CD-ROM"
-@@ -384,7 +392,7 @@
+@@ -383,7 +391,7 @@
  
  #endif /* MAJOR_NR == whatever */
  
@@ -147,9 +147,9 @@ diff -ur linux-2.4.0-orig/include/linux/blk.h linux-2.4.0-test3-pre2/include/lin
  #if !defined(IDE_DRIVER)
  
  #ifndef CURRENT
-diff -ur linux-2.4.0-orig/include/linux/major.h linux-2.4.0-test3-pre2/include/linux/major.h
---- linux-2.4.0-orig/include/linux/major.h	Mon Jun 19 16:42:43 2000
-+++ linux-2.4.0-test3-pre2/include/linux/major.h	Sat Jul  1 22:04:13 2000
+diff -uNr linux-2.4.0-test3.fixed/include/linux/major.h linux-2.4.0-test3.osst/include/linux/major.h
+--- linux-2.4.0-test3.fixed/include/linux/major.h	Mon Jun 19 22:42:43 2000
++++ linux-2.4.0-test3.osst/include/linux/major.h	Sat Jul 15 16:07:14 2000
 @@ -141,6 +141,8 @@
  #define MSR_MAJOR		202
  #define CPUID_MAJOR		203
@@ -159,9 +159,9 @@ diff -ur linux-2.4.0-orig/include/linux/major.h linux-2.4.0-test3-pre2/include/l
  /*
   * Tests for SCSI devices.
   */
-diff -ur linux-2.4.0-orig/include/linux/mtio.h linux-2.4.0-test3-pre2/include/linux/mtio.h
---- linux-2.4.0-orig/include/linux/mtio.h	Sat Jun 24 00:31:27 2000
-+++ linux-2.4.0-test3-pre2/include/linux/mtio.h	Sat Jul  1 22:35:44 2000
+diff -uNr linux-2.4.0-test3.fixed/include/linux/mtio.h linux-2.4.0-test3.osst/include/linux/mtio.h
+--- linux-2.4.0-test3.fixed/include/linux/mtio.h	Wed Jul 12 12:54:44 2000
++++ linux-2.4.0-test3.osst/include/linux/mtio.h	Sat Jul 15 16:07:14 2000
 @@ -105,6 +105,8 @@
  #define MT_ISEVEREX_FT40A	0x32	/* Everex FT40A (QIC-40) */
  #define MT_ISDDS1		0x51	/* DDS device without partitions */
@@ -179,14 +179,3 @@ diff -ur linux-2.4.0-orig/include/linux/mtio.h linux-2.4.0-test3-pre2/include/li
  	{MT_ISSCSI1,		"Generic SCSI-1 tape"}, \
  	{MT_ISSCSI2,		"Generic SCSI-2 tape"}, \
  	{0, NULL} \
-diff -ur linux-2.4.0-orig/kernel/ksyms.c linux-2.4.0-test3-pre2/kernel/ksyms.c
---- linux-2.4.0-orig/kernel/ksyms.c	Sat Jul  1 20:53:50 2000
-+++ linux-2.4.0-test3-pre2/kernel/ksyms.c	Mon Jul  3 08:41:39 2000
-@@ -362,6 +362,7 @@
- EXPORT_SYMBOL(tq_scheduler);
- EXPORT_SYMBOL(timer_active);
- EXPORT_SYMBOL(timer_table);
-+EXPORT_SYMBOL(timer_sequence);
- 
- #ifdef CONFIG_SMP
- /* Various random spinlocks we want to export */
