@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
 <HTML>
 <Head>
-<Title>Page Title</Title>
+<Title>OnStream SCSI Tape driver for Linux tester's page</Title>
 	<Link HRef="mailto:osst@linux1.onstream.nl">
 	<Meta HTTP-Equiv="Content-Type" Content="text/html; charset=iso-8859-1">
 	<Meta Name="Author" Content="garloff@suse.de">
@@ -12,7 +12,7 @@
 <Body Background="" BGColor=#e0c0f0>
 <A HRef=".."><Img Src="/gif/left.gif" Align=middle Alt="Back" Width=16 Height=16>
 Back</A>
-<Center><H1>OSST tester page</H1></Center>
+<Center><H1>OSST tester's page</H1></Center>
 This page should give some info to potential testers of the kernelspace
 driver for the OnStream SC-30/50 tape devices.
 <H3>Driver</H3>
@@ -65,7 +65,10 @@ of the tape device?</LI>
 <LI>Is the bug reproducible?</LI>
 <LI>Is the same bug present in the <A HRef="ftp://ftp.orcas.net/pub/linux/onstream/">
 userspace driver <TT>osg</TT></A>?</LI>
-</UL></P>
+</UL>
+Of course, you are also welcome to report successful operation of the
+driver.<Br> Please don't send general Linux SCSI questions to the list.
+</P>
 <P>Note that the mailing list is open for subscription. Please send your
 subscribe request to 
 <A HRef="mailto:osst-request@linux1.onstream.nl"><TT>osst-request@linux1.onstream.nl</TT></A>.
@@ -73,9 +76,29 @@ It's a majordomo list. If you're not yet experienced with this kind of
 lists, start with sending a mail with just <TT>help</TT> in the
 <em>body</em> of the mail to <TT>osst-request</TT>.
 </P>
+<P>The list currently is both open for subscription and postings by
+non-subscribers. We do hope that we don't need to impose restrictions in
+order to prevent spam.</P>
 
 <H3>Download</H3>
 There are several possibilities to get the <TT>osst</TT>-driver.
+<OL>
+<LI>(recommended) Get the <A HRef="onstream.tar.gz">sources</A>, unpack
+them (<TT>tar xvzf osst-0.6.3.tar.gz</TT>) and compile the driver (<TT>cd
+Driver; make</TT>). This only works, if you have a configured Linux source
+tree installed in <TT>/usr/src/linux</TT>. 
+To install the driver, do a <TT>make install</TT>, and the driver will be
+copied to <TT>/lib/modules/2.2.1?/scsi/</TT>. You need root permissions for
+this. You can now load the driver (module) by using <TT>modprobe</TT> and
+unload it with <TT>rmmod</TT>.<Br>
+If this all looks new and scary to you: Sorry! You may be able to help us
+later, when the driver is getting better and better, but right now, you
+should better first get familiar with your Linux Operating System, the
+kernel, the modules, etc.</LI>
+<LI>If you happen to use a 2.2.14 kernel (e.g. in SuSE 6.4) and a glibc-2.1
+based distribution, you should be able to install and use the onstream RPM
+from SuSE.
+</OL>
 
 <H3>Credits</H3>
 <A<HRef="../developers.html">Credits</A> go to Willem Riede for developing
