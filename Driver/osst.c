@@ -28,7 +28,7 @@ const char * osst_version = "0.6.1";
 /* The "failure to reconnect" firmware bug */
 #define OS_NEED_POLL_MIN 10602 /*(107A)*/
 #define OS_NEED_POLL_MAX 10708 /*(108D)*/
-#define OS_NEED_POLL(x) ((x) >= OS_NEED_POLL_MIN && (x) <= OS_NEED_POLL_MAX)
+#define OS_NEED_POLL(x) ((x) <= OS_NEED_POLL_MAX && STp->device->host->this_id <= 5)
 
 #include <linux/module.h>
 
@@ -1382,6 +1382,7 @@ static int __osst_analyze_headers(Scsi_Tape * STp, int block, Scsi_Cmnd ** aSCpn
 #if DEBUG
 	printk(KERN_INFO "osst%i: reading header\n", dev);
 #endif
+	/* KG: Doesn't the locate clear the buffer? */
 	if (osst_set_frame_position(STp, block, 0))
 		printk(KERN_WARNING "osst%i: Couldn't position tape\n", dev);
 	if (osst_initiate_read (STp, aSCpnt)) return 0;
@@ -1398,7 +1399,7 @@ static int __osst_analyze_headers(Scsi_Tape * STp, int block, Scsi_Cmnd ** aSCpn
 		printk(KERN_INFO "osst%i: invalid header identification string %s\n", dev, id_string);
 		return 0;
 	}
-	if (header->major_rev != 1 || (header->minor_rev != 2 && header->minor_rev != 1))
+	if (header->major_rev != 1 || (header->minor_rev > 3 && header->minor_rev < 1))
 		printk(KERN_INFO "osst%i: warning: revision %d.%d detected (1.2 supported)\n", 
 				 dev, header->major_rev, header->minor_rev);
 	if (header->par_num != 1)
@@ -1450,9 +1451,21 @@ static int osst_analyze_headers(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt)
 	}
 	STp->header_ok = STp->linux_media = 0;
 
+#if 0
+	if (osst_set_frame_position(STp, 5, 0))
+		printk(KERN_WARNING "osst%i: Couldn't position tape\n", dev);
+	if (osst_initiate_read (STp, aSCpnt)) return 0;
+#endif
+	
 	for (block = 5; block < 10; block++)
 		if (__osst_analyze_headers(STp, block, aSCpnt))
 			goto ok;
+#if 0
+	if (osst_set_frame_position(STp, 0xbae, 0))
+		printk(KERN_WARNING "osst%i: Couldn't position tape\n", dev);
+	if (osst_initiate_read (STp, aSCpnt)) return 0;
+#endif
+	
 	/* let's try both the ADR 1.1 and the ADR 1.2 locations... */
 	for (block = 0xbae; block < 0xbb8; block++)
 		if (__osst_analyze_headers(STp, block, aSCpnt))
