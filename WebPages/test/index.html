@@ -51,7 +51,9 @@ Better error recovery.</DD>
 <DD>Bugfixes. Maintains soft error count.
 Successfully tested with firmware 1.05 and 1.08.</DD>
 <DT>2000-05-15: (osst 0.7.2)</DT>
-<DD>Fix error handling skipping over second header group.
+<DD>Fix error handling skipping over second header group.</DD>
+<DT>2000-05-21: (osst 0.7.3)</DT>
+<DD>Fix I/O error on read after seek.
 </DL></P>
 
 <H3>Known problems as of <B>0.7.2</B></H3>
@@ -99,7 +101,7 @@ There are several possibilities to get the <TT>osst</TT>-driver. For your
 convenience, the archives also contain Terry's userspace driver <TT>osg</TT> 
 and some tools.
 <OL>
-<LI>(recommended) Get the <A HRef="onstream-20000515.tar.gz">sources</A>, unpack
+<LI>(recommended) Get the <A HRef="onstream-20000521.tar.gz">sources</A>, unpack
 them (<TT>tar xvzf onstream-2000*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux source
 tree installed in <TT>/usr/src/linux/</TT>. 
