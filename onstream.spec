@@ -1,5 +1,5 @@
 #
-# spec file for package onstream (Version 0.9.13_0.7.3)
+# spec file for package onstream (Version 0.9.13_0.7.9)
 # 
 # Copyright  (c)  2000  SuSE GmbH  Nuernberg, Germany.
 #
@@ -16,7 +16,7 @@ Release:      0
 Packager:     feedback@suse.de
 
 Copyright:	GPL
-Group:        Kernel
+Group:        Base/Kernel
 Autoreqprov:  on
 Version:      0.9.13_0.7.9
 Summary:      OnStream SC-x0 tape support tools
@@ -60,6 +60,7 @@ make
 install -d -o root -g root -m 755 $RPM_BUILD_ROOT/usr/bin
 install -s -o root -g root -m 755 onstreamsg/osg $RPM_BUILD_ROOT/usr/bin/
 install -s -o root -g root -m 755 tools/os_dump tools/os_write tools/stream $RPM_BUILD_ROOT/usr/bin/
+install -d $RPM_BUILD_ROOT/dev/
 cd driver
 make install DESTDIR=$RPM_BUILD_ROOT 
 %{?suse_check}
@@ -79,6 +80,12 @@ rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_DIR/%{name}
 
 %changelog -n onstream
+* Wed May 24 2000 - garloff@suse.de
+- Version 20000524 (0.7.9):
+- Now independent high-level driver
+- Kernel patch
+- Own device nodes (major 206)
+- README.osst
 * Mon May 22 2000 - garloff@suse.de
 - Update to 20000521 (0.7.3): Fixed read after seek error.
 * Wed May 17 2000 - garloff@suse.de
