@@ -323,7 +323,7 @@ ITEM    {
 
 ITEM    {
 	"NAME"  "ADR50"
-	"CAPACITY"      "24300"
+	"CAPACITY"      "23895"
 	"THROUGHPUT"    "2000"
 	"MAXUSE"        "100000"
 	"SIZESEG"       "96000"
@@ -333,7 +333,7 @@ ITEM    {
 
 ITEM    {
 	"NAME"  "ADR60"
-	"CAPACITY"      "29200"
+	"CAPACITY"      "28710"
 	"THROUGHPUT"	"2400"
 	"MAXUSE"        "100000"
         "SIZESEG"       "96000"
@@ -354,7 +354,12 @@ ITEM    {
 </PRE><P>
 You may want to lower the <TT>THROUGHPUT</TT> for the <TT>ADR_30</TT> to
 <TT>700</TT> in case you  have a USB30 device and you may want to increase
-it to <TT>2000</TT> for a DI-30+(Fast) or SC-30/50 drive.
+it to <TT>2000</TT> for a DI-30+(Fast) or SC-30/50 drive.<Br>
+Note: There is some controversary whether the <TT>BLOCK_SIZE</TT> statement
+should be there or not.<Br>
+Another note: You may introduce another drivetype <TT>ADR2</TT> to reflect
+that compatibility between ADR and ADR2 is only one-way. (ADR2 drives can
+handle ADR media but not the other way round.)
 <HR>
 <I>(w) by <A HRef="mailto:garloff@suse.de">KG</A>, $Id$</I>
 </Body>
