@@ -31,21 +31,50 @@ glibc-2.1.3 systems as well (SuSE Linux-6.3, 6.4, 7.0; RH Linux 6.x).
 Otherwise you may use the statically linked binaries.
 You also need to get the appropriate firmware.
 </P><P>
-<B>Before you go any further please note: These tools are provided as is
+<B>Before you go any further, please note: These tools are provided as is
 without any warranty neither explicit nor implicit. It is probably possible
 to render your OnStream tape devices inoperational by using the tools
 inappropriately or by hitting a bug in them. <Em>Use at your own
 risk!</Em></B>
+</P><P>
+Please start by checking what drive you have. Using <TT>cat
+/proc/scsi/scsi</T>> should give you the most important piece on information.
+If you can't see your drive there, you chould take care to make it visible
+by loading the appropriate drivers (SCSI low-level driver, ide-scsi or
+usb-storage), otherwise you can't update with Linux anyway.
 </P>
 <H3>Download</H3>
 <DL>
-<DT>SCSI drive SC-30, SC-50</DT>
+<DT>SCSI drives SC-30/SC-50</DT>
 <DD><A HRef="sc30fix">Update tool</A> 
-(<A HRef="sc30fix_static">statically linked</A>)
+(<A HRef="sc30fix_static">statically linked version</A>)
 <A HRef="SCSI109.bin">Firmware 1.09</A></DD>
-
+<DT>IDE drives DI-30/DI-50 and USB driver USB30</DT>
+<DD><A HRef="di30fix">Update tool</A>
+(<A HRef="di30fix_static">statically linked version</A>)
+<A HRef="IDE109.bin">Firmware 1.09</A></DD>
+<DT>SCSI drives ADR30/ADR50/ADR66</DT>
+<DD><A HRef="adrfix">Update tool</A>
+(<A HRef="adrfix_static">statically linked version</A>)
+<A HRef="ADR239.osi">Firmware 2.39</A></DD>
+<DT>IDE drives ADR30ide/ADR50ide/ADR Series</DT>
+<DD><A HRef="adridefix">Update tool</A>
+(<A HRef="adridefix_static">statically linked variant</A>)
+<A HRef="Bus301G.bff">Firware 301G</A></DD>
+<DT>IDE driver ADR60ide/ADR series</DT>
+<DD>No updater or firmware available here yet.</DD>
 </DL>
+Watch out: Newer drivers will identify themselves all as &dq;ADR Series&dq;.
+While the 30/50 (15/25 GB raw capacity) drives are handles, the 60 (30GB raw
+capacity) is not yet.<Br>
+Note: Firmware versions with a dot are release versions, the ones in between
+are to be considered betas. Ordering:
+3.00 &lt; 301G &lt; 301g &lt; 3.01.
 <!--<Img Src="/gif/construction.gif" Alt="under construction" Width=40 Height=32>-->
+<P>Usage:<Br>
+Updatetool firmware<Br>
+e.g.<Br>
+<TT>sc30fix_static SCSI109.bin</TT>
 <HR>
 <I>(w) by <A HRef="mailto:garloff@suse.de">KG</A>, $Id$</I>
 </Body>
