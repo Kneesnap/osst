@@ -23,7 +23,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.9.4p2";
+const char * osst_version = "0.9.4";
 
 /* The "failure to reconnect" firmware bug */
 #define OSST_FW_NEED_POLL_MIN 10602 /*(107A)*/
@@ -532,14 +532,16 @@ static int osst_verify_frame(OS_Scsi_Tape * STp, int logical_blk_num, int quiet)
 		STps->eof = ST_FM_HIT;
 
 		i = ntohl(aux->filemark_cnt);
-		if (STp->header_cache != NULL && i < OS_FM_TAB_MAX &&
-		    STp->first_frame_position - 1 != ntohl(STp->header_cache->dat_fm_tab.fm_tab_ent[i])) {
+		if (STp->header_cache != NULL && i < OS_FM_TAB_MAX && (i > STp->filemark_cnt ||
+		    STp->first_frame_position - 1 != ntohl(STp->header_cache->dat_fm_tab.fm_tab_ent[i]))) {
 #if 1 //DEBUG
 			printk(OSST_DEB_MSG "osst%i: %s filemark %d at frame %d\n", dev,
 				  STp->header_cache->dat_fm_tab.fm_tab_ent[i] == 0?"Learned":"Corrected",
 				  i, STp->first_frame_position - 1);
 #endif
 			STp->header_cache->dat_fm_tab.fm_tab_ent[i] = htonl(STp->first_frame_position - 1);
+			if (i >= STp->filemark_cnt)
+				 STp->filemark_cnt = i+1;
 		}
 	}
 	if (aux->frame_type == OS_FRAME_TYPE_EOD) {
@@ -1162,7 +1164,7 @@ static int osst_read_back_buffer_and_rewrite(OS_Scsi_Tape * STp, Scsi_Request **
 			     (SRpnt->sr_sense_buffer[5] <<  8) |
 			      SRpnt->sr_sense_buffer[6]        ) - new_block;
 			p = &buffer[i * OS_DATA_SIZE];
-#if 1 //DEBUG
+#if DEBUG
 			printk(OSST_DEB_MSG "osst%d: Additional write error at %d\n", dev, new_block+i);
 #endif
 			osst_get_frame_position(STp, aSRpnt);
@@ -1197,7 +1199,7 @@ static int osst_reposition_and_retry(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt,
 #endif
 			if (block < 2990 && block+skip+STp->cur_frames+pending >= 2990)
 				block = 3000-skip;
-#if 1 //DEBUG
+#if DEBUG
 			printk(OSST_DEB_MSG "osst%d: Position to frame %d, re-write from lblk %d\n",
 					  dev, block+skip, STp->logical_blk_num-STp->cur_frames-pending);
 #endif
@@ -1206,7 +1208,7 @@ static int osst_reposition_and_retry(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt,
 			attempts--;
 		}
 		if (osst_get_frame_position(STp, aSRpnt) < 0) {		/* additional write error */
-#if 1 //DEBUG
+#if DEBUG
 			printk(OSST_DEB_MSG "osst%d: Addl error, host %d, tape %d, buffer %d\n",
 					  dev, STp->first_frame_position,
 					  STp->last_frame_position, STp->cur_frames);
@@ -1221,7 +1223,7 @@ static int osst_reposition_and_retry(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt,
 			cmd[0] = WRITE_6;
 			cmd[1] = 1;
 			cmd[4] = 1;
-#if 1 //DEBUG
+#if DEBUG
 			printk(OSST_DEB_MSG "osst%d: About to write pending lblk %d at frame %d\n",
 					  dev, STp->logical_blk_num-1, STp->first_frame_position);
 #endif
@@ -1286,7 +1288,7 @@ static int osst_write_error_recovery(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt,
 	if ((SRpnt->sr_sense_buffer[ 2] & 0x0f) != 3
 	  || SRpnt->sr_sense_buffer[12]         != 12
 	  || SRpnt->sr_sense_buffer[13]         != 0) {
-#if 1 //DEBUG
+#if DEBUG
 		printk(OSST_DEB_MSG "osst%d: Write error recovery cannot handle %02x:%02x:%02x\n",
 			dev, SRpnt->sr_sense_buffer[2], SRpnt->sr_sense_buffer[12], SRpnt->sr_sense_buffer[13]);
 #endif
@@ -1298,11 +1300,11 @@ static int osst_write_error_recovery(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt,
 		 SRpnt->sr_sense_buffer[6];
 	skip  =  SRpnt->sr_sense_buffer[9];
  
-#if 1 //DEBUG
+#if DEBUG
 	printk(OSST_DEB_MSG "osst%d: Detected physical bad block at %u, advised to skip %d\n", dev, block, skip);
 #endif
 	osst_get_frame_position(STp, aSRpnt);
-#if 1 //DEBUG
+#if DEBUG
 	printk(OSST_DEB_MSG "osst%d: reported frame positions: host = %d, tape = %d\n",
 			dev, STp->first_frame_position, STp->last_frame_position);
 #endif
@@ -1331,7 +1333,7 @@ static int osst_write_error_recovery(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt,
 		osst_set_frame_position(STp, aSRpnt, block + STp->cur_frames + pending, 0);
 	}
 	osst_get_frame_position(STp, aSRpnt);
-#if 1 //DEBUG
+#if DEBUG
 	printk(KERN_ERR "osst%d: Positioning complete, cur_frames %d, pos %d, tape pos %d\n", 
 			dev, STp->cur_frames, STp->first_frame_position, STp->last_frame_position);
 	printk(OSST_DEB_MSG "osst%d: next logical block to write: %d\n", dev, STp->logical_blk_num);
@@ -1457,6 +1459,13 @@ static int osst_space_over_filemarks_forward_slow(OS_Scsi_Tape * STp, Scsi_Reque
 #if DEBUG
 			printk(OSST_DEB_MSG "osst%i: space_fwd: EOD reached\n", dev);
 #endif
+			if (STp->first_frame_position > STp->eod_frame_ppos+1) {
+#if DEBUG
+				printk(OSST_DEB_MSG "osst%i: EOD position corrected (%d=>%d)\n",
+					       	dev, STp->eod_frame_ppos, STp->first_frame_position-1);
+#endif
+				STp->eod_frame_ppos = STp->first_frame_position-1;
+			}
 			return (-EIO);
 		}
 		if (cnt == mt_count)
@@ -1525,6 +1534,12 @@ static int osst_space_over_filemarks_forward_fast(OS_Scsi_Tape * STp, Scsi_Reque
 				printk(KERN_INFO "osst%i: Expected to find marker at block %d, not found\n",
 						 dev, next_mark_ppos);
 				return (-EIO);
+			}
+			if (ntohl(STp->buffer->aux->filemark_cnt) != cnt + mt_count) {
+				printk(KERN_INFO "osst%i: Expected to find marker %d at block %d, not %d\n",
+						 dev, cnt+mt_count, next_mark_ppos,
+						 ntohl(STp->buffer->aux->filemark_cnt));
+       				return (-EIO);
 			}
 		}
 	} else {
@@ -2103,7 +2118,7 @@ static int osst_verify_position(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt)
 #endif
 	osst_set_frame_position(STp, aSRpnt, frame_position - 1, 0);
 	if (osst_get_logical_blk(STp, aSRpnt, -1, 0) < 0) {
-#if 1 //DEBUG
+#if DEBUG
 		printk(OSST_DEB_MSG "osst%i: Couldn't get logical blk num in verify_position\n", dev);
 #endif
 		return (-EIO);
@@ -2784,7 +2799,7 @@ static ssize_t osst_write(struct file * filp, const char * buf, size_t count, lo
 				}
 				else {
 					/* We have no idea where the tape is positioned - give up */
-#if 1 //DEBUG
+#if DEBUG
 					printk(OSST_DEB_MSG "osst%d: Cannot write at indeterminate position.\n", dev);
 #endif
 					retval = (-EIO);
@@ -2800,8 +2815,11 @@ static ssize_t osst_write(struct file * filp, const char * buf, size_t count, lo
 				printk(KERN_WARNING
 					"osst%d: may lead to stale data being accepted on reading back!\n",
 						dev);
-printk(OSST_DEB_MSG "osst%d: resetting filemark count to %d and last mark ppos to %d\n",
-      		dev, STp->filemark_cnt, STp->last_mark_ppos);
+#if DEBUG
+				printk(OSST_DEB_MSG
+					"osst%d: resetting filemark count to %d and last mark ppos to %d\n",
+						dev, STp->filemark_cnt, STp->last_mark_ppos);
+#endif
 			}
 		}
 		STp->fast_open = FALSE;
@@ -3595,10 +3613,17 @@ static int osst_int_ioctl(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, unsigned i
 		   printk(OSST_DEB_MSG "osst%d: Spacing to end of recorded medium.\n", dev);
 #endif
 		osst_set_frame_position(STp, &SRpnt, STp->eod_frame_ppos, 0);
-		if (osst_get_logical_blk(STp, &SRpnt, -1, 0) < 0)
-		   return (-EIO);
-		if (STp->buffer->aux->frame_type != OS_FRAME_TYPE_EOD)
-		   return (-EIO);
+		if (osst_get_logical_blk(STp, &SRpnt, -1, 0) < 0) {
+		   ioctl_result = -EIO;
+		   goto os_bypass;
+		}
+		if (STp->buffer->aux->frame_type != OS_FRAME_TYPE_EOD) {
+#if DEBUG
+		   printk(OSST_DEB_MSG "osst%d: No EOD frame found where expected.\n", dev);
+#endif
+		   ioctl_result = -EIO;
+		   goto os_bypass;
+		}
 		ioctl_result = osst_set_frame_position(STp, &SRpnt, STp->eod_frame_ppos, 0);
 		logical_blk_num = STp->logical_blk_num;
 		fileno          = STp->filemark_cnt;
@@ -3728,10 +3753,24 @@ os_bypass:
 				ioctl_result = 0;
 		}
 
-	} else if (cmd_in == MTBSF || cmd_in == MTBSFM || cmd_in == MTFSF || cmd_in == MTFSFM ||
-		   cmd_in == MTBSR || cmd_in == MTFSR || cmd_in == MTWEOF || cmd_in == MTEOM) {
+	} else if (cmd_in == MTBSF || cmd_in == MTBSFM ) {
+		if (osst_position_tape_and_confirm(STp, &SRpnt, STp->first_data_ppos) < 0)
+			STps->drv_file = STps->drv_block = -1;
+		else
+			STps->drv_file = STps->drv_block = 0;
+		STps->eof = ST_NOEOF;
+	} else if (cmd_in == MTFSF || cmd_in == MTFSFM) {
+		if (osst_position_tape_and_confirm(STp, &SRpnt, STp->eod_frame_ppos) < 0)
+			STps->drv_file = STps->drv_block = -1;
+		else {
+			STps->drv_file  = STp->filemark_cnt;
+			STps->drv_block = 0;
+		}
+		STps->eof = ST_EOD;
+	} else if (cmd_in == MTBSR || cmd_in == MTFSR || cmd_in == MTWEOF || cmd_in == MTEOM) {
 		STps->drv_file = STps->drv_block = (-1);
 		STps->eof = ST_NOEOF;
+		STp->header_ok = 0;
 	} else if (cmd_in == MTERASE) {
 		STp->header_ok = 0;
 	} else if (SRpnt) {  /* SCSI command was not completely successful. */
