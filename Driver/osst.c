@@ -2697,7 +2697,7 @@ static ssize_t osst_write(struct file * filp, const char * buf, size_t count, lo
 	/* Write must be integral number of blocks */
 	if (STp->block_size != 0 && (count % STp->block_size) != 0) {
 		printk(KERN_WARNING "osst%d: Write (%ld bytes) not multiple of tape block size (32k).\n",
-				       dev, count);
+				       dev, (unsigned long)count);
 		retval = (-EINVAL);
 		goto out;
 	}
@@ -3040,7 +3040,7 @@ static ssize_t osst_read(struct file * filp, char * buf, size_t count, loff_t *p
 
 	if ((count % STp->block_size) != 0) {
 		printk(KERN_WARNING "osst%d: Use multiple of %d bytes as block size (%ld requested)\n",
-			  dev, STp->block_size, count);
+			  dev, STp->block_size, (unsigned long) count);
 		retval = (-EINVAL);	/* Read must be integral number of blocks */
 		goto out;
 	}
@@ -5246,5 +5246,5 @@ static void __exit exit_osst (void)
   printk(KERN_INFO "osst: Unloaded.\n");
 }
 
-module_init(osst_init);
+module_init(init_osst);
 module_exit(exit_osst);
