@@ -9,6 +9,7 @@ for name in osst.c osst.h osst_detect.h osst_options.h Makefile Makefile.osst Ma
 done
 cp -p Misc/onstreamsg/Makefile Misc/onstreamsg/onstreamsg.cpp onstream/onstreamsg/
 cp -p Misc/onstreamsg/COPYING onstream/
+cp -p Misc/tapeinfo onstream/
 for name in Makefile README os_dump.c os_write.c sg_err.c sg_err.h stream.c;
  do cp -p Misc/sg_utils/$name onstream/tools/;
 done

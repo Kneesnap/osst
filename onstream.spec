@@ -75,7 +75,7 @@ make install DESTDIR=$RPM_BUILD_ROOT
 /lib/modules/%kversion/scsi/osst.o
 /dev/osst*
 /dev/nosst*
-%doc README COPYING driver/README.osst driver/dev-reg.txt driver/osst-22.diff
+%doc README COPYING tapeinfo driver/README.osst driver/dev-reg.txt driver/osst-22.diff
 
 %clean
 rm -rf $RPM_BUILD_ROOT

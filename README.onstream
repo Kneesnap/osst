@@ -10,7 +10,7 @@ They are mainly provided to get you started, if you already have such
 a device. If you want to help development, you are welcome: Testing,
 coding, writing docu, ... is all appreciated. Check
 http://linux1.onstream.nl/
-There is a mailing list, which you should use to sned your message to.
+There is a mailing list, which you should use to send your message to.
 The same holds, if you meet a bug. But please be prepared to work on it 
 together with the developers ...
 
@@ -22,8 +22,8 @@ The following programs are included in this package:
 * os_dump, os_write: Access to the raw data on the tape.
 * stream: Userspace buffering tool (like buffer)
 * osst: Kernel module which can be loaded instead of st in order to access
-   the OnStream tapes by the /dev/stX device nodes. Note: This module does
-   not support standard tapes. It has some error handling now, and can be
-   considered pre-beta.
+   the OnStream tapes by the /dev/stX device nodes. Note: This module can
+   coexist with the existing standard SCSI tape driver "st". It can be
+   considered beta.
 
-Credits go to Terry Hardie, Willem Riede and Kurt Garloff for these tools.
+Credits go to Willem Riede, Terry Hardie and Kurt Garloff for these tools.
