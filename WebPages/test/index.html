@@ -38,11 +38,12 @@ your system should be unaffected.</LI>
 
 <H3>Status</H3>
 <P>The driver does not have production quality yet and a few problems are known
-or to be expected. If you test it, you do it on your own risk. If the driver
+or to be expected.<Br>
+DISCLAIMER: If you test it, you do it on your own risk. If the driver
 crashes your kernel (unlikely, but possible) and you loose important data,
 you are on your own. If you use the driver to backup your data and need to
 restore it later, but fail, you are on your own again. In short:
-The GNU GPL applies.</P>
+<EM>The <A HRef="http://www.fsf.org/">GNU GPL</A> applies.</EM></P>
 
 <P>Here comes a list with status updates:
 <DL>
@@ -95,13 +96,17 @@ If this all looks new and scary to you: Sorry! You may be able to help us
 later, when the driver is getting better and better, but right now, you
 should better first get familiar with your Linux Operating System, the
 kernel, the modules, etc.</LI>
-<LI>If you happen to use a 2.2.14 kernel (e.g. in SuSE 6.4) and a glibc-2.1
-based distribution, you should be able to install and use the onstream RPM
-from SuSE.
+<LI>If you happen to use a ix86 machine with a 2.2.14 Linux kernel 
+(e.g. in SuSE 6.4) and a glibc-2.1 based distribution, you should be able to
+install and use the <A HRef="onstream-0.6.3-0.i386.rpm">onstream RPM</A>
+from SuSE. Install with <TT>rpm -i</TT> or update with <TT>rpm -U</TT>.
+If you have a different arch, kernel or libc, you might be able to get the
+thing to work by grabbing the <A HRef="onstream-0.6.3-0.src.rpm">source RPM</A>
+and recompile it with <TT>rpm --recompile</A>. The RPM contains 
 </OL>
 
 <H3>Credits</H3>
-<A<HRef="../developers.html">Credits</A> go to Willem Riede for developing
+<A HRef="../developers.html">Credits</A> go to Willem Riede for developing
 this driver. Some contributions come from me, Terry, Kai and some code was 
 designed after Gadi's DI-30 (IDE) driver.
 
