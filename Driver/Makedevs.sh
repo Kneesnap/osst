@@ -9,6 +9,7 @@ test -z "$1" || nrs=$1
 test -z "$2" || dir=$2
 declare -i nr
 nr=0
+test -d $dir || mkdir -p $dir
 while test $nr -lt $nrs; do
   mknod $dir/osst$nr c $major $nr
   chown 0.disk $dir/osst$nr; chmod 660 $dir/osst$nr;

@@ -13,7 +13,7 @@ include $(KDIR)/.config
 include $(KDIR)/Makefile
 TOPDIR := $(KDIR)
 
-CFLAGS := -I. -I $(KDIR)/drivers/scsi $(CFLAGS) -DMODULE -DOSST_MAJOR=206 -D"DEVICE_OFF(dev)=" -DOSST_EXTRA_DEVS=2
+CFLAGS := -I. -I $(KDIR)/drivers/scsi $(CFLAGS) -DMODULE -DOSST_MAJOR=206 -D"DEVICE_OFF(dev)=" -DOSST_EXTRA_DEVS=2 -DMT_ISONSTREAM_SC=0x61
 
 osst.o: osst.c osst.h osst_detect.h osst_options.h arch Rules.make
 
@@ -26,14 +26,14 @@ $(MODLIB)/$(TARGETMODDIR)/$(TARGET): $(TARGET)
 		echo "Install $(TARGET)"; install -o root -g root -d $(MODLIB)/$(TARGETMODDIR); \
 		install -o root -g root -m 0644 $(TARGET) $(MODLIB)/$(TARGETMODDIR)/; \
 		echo "depmod -a $(KERNELRELEASE)"; depmod -a $(KERNELRELEASE); \
-		if test ! -e /dev/osst0; then ./Makedevs.sh 4 $(DESTDIR)/dev; fi; \
+		if test ! -e $(DESTDIR)/dev/osst0; then ./Makedevs.sh 4 $(DESTDIR)/dev; fi; \
 	else \
 		echo "Give root password for installation of kernel module"; \
 		su -c \
 		'echo "Install $(TARGET)"; install -o root -g root -d $(MODLIB)/$(TARGETMODDIR); \
 		 install -o root -g root -m 0644 $(TARGET) $(MODLIB)/$(TARGETMODDIR)/; \
 		 echo "depmod -a $(KERNELRELEASE)"; depmod -a $(KERNELRELEASE); \
-		 if test ! -e /dev/osst0; then ./Makedevs.sh 4 $(DESTDIR)/dev; fi'; \
+		 if test ! -e $(DESTDIR)/dev/osst0; then ./Makedevs.sh 4 $(DESTDIR)/dev; fi'; \
 	fi
 
 load_module: install_mod
