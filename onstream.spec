@@ -1,5 +1,5 @@
 #
-# spec file for package onstream (Version 0.9.13_0.7.0)
+# spec file for package onstream (Version 0.9.13_0.7.2)
 # 
 # Copyright  (c)  2000  SuSE GmbH  Nuernberg, Germany.
 #
@@ -7,27 +7,27 @@
 #
 
 # neededforbuild  gpp k_deflt lx_sus22 -lx_suse
-# usedforbuild    -lx_suse aaa_base aaa_dir autoconf automake base bash bindutil binutils bison bzip compress cpio cracklib devs diff ext2fs file fileutil find flex gawk gcc gdbm gettext gpm gpp gppshare groff gzip k_deflt kbd less libc libtool libz lx_sus22 lx_suse make mktemp modules ncurses net_tool netcfg nkita nkitb nssv1 pam patch perl pgp ps rcs rpm sendmail sh_utils shadow shlibs strace syslogd sysvinit texinfo textutil timezone unzip util vim xdevel xf86 xshared
+# usedforbuild    -lx_suse aaa_base aaa_dir base bash bindutil binutils bison bzip compress cpio cracklib devs diff ext2fs file fileutil find flex gawk gcc gdbm gettext gpm gpp gppshare groff gzip k_deflt kbd less libc libz lx_sus22 lx_suse make mktemp modules ncurses net_tool netcfg nkita nkitb nssv1 pam patch perl pgp ps rcs rpm sendmail sh_utils shadow shlibs strace syslogd sysvinit texinfo textutil timezone unzip util vim xdevel xf86 xshared
 
 Vendor:       SuSE GmbH, Nuernberg, Germany
-Distribution: SuSE Linux 6.4
+Distribution: SuSE Linux 6.4 (i386)
 Name:         onstream
 Release:      0
 Packager:     feedback@suse.de
 
 Copyright:	GPL
-Group:        unsorted
+Group:        Kernel
 Autoreqprov:  on
-Version:      0.9.13_0.7.1
+Version:      0.9.13_0.7.2
 Summary:      OnStream SC-x0 tape support tools
-Source:	      onstream-20000514.tar.gz
-#Patch:	onstream.dif
+Source:	      onstream-20000515.tar.gz
+#Patch:		onstream.dif
 BuildRoot:	/var/lib/%{name}-buildroot
 
 %description
 OnStream's SC-x0 tapes are not compliant with the SCSI2 spec for Serial
 Access Storage Devices and can therefore not be operated by the Kernel's
-SCSI Tape driver st. This package contains some tools to allow to
+SCSI Tape st driver st. This package contains some tools to allow to
 test and access the device. The onstreamsg (osg) program allows reading
 and writing of data to tapes. The osst driver is a kernel module
 providing an st like interface. Some helpers are also included.
@@ -77,6 +77,10 @@ rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_DIR/%{name}
 
 %changelog -n onstream
+* Wed May 17 2000 - garloff@suse.de
+- Update to 20000515 (0.7.2)
+* Mon May 15 2000 - garloff@suse.de
+- Update to 20000514 (0.7.1)
 * Tue May 02 2000 - garloff@suse.de
 - Update to 20000502 (0.7.0)
 - Incorporated PPC patch into sources
