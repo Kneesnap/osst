@@ -57,10 +57,10 @@ const char * osst_version = "0.7.91";
 #define ST_DEB_MSG  KERN_NOTICE
 
 /* Allow OSST to be compiled w/o kernel patch for now */
-#ifndef OSST_MAJOR
-# define OSST_MAJOR 206
-# define DEVICE_OFF(device) 
-#endif
+//#ifndef OSST_MAJOR
+//# define OSST_MAJOR 206
+//# define DEVICE_OFF(device) 
+//#endif
 
 #define MAJOR_NR OSST_MAJOR
 #include <linux/blk.h>

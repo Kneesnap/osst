@@ -12,7 +12,7 @@ include $(KDIR)/.config
 include $(KDIR)/Makefile
 TOPDIR := $(KDIR)
 
-CFLAGS := -I. -I $(KDIR)/drivers/scsi $(CFLAGS) -DMODULE
+CFLAGS := -I. -I $(KDIR)/drivers/scsi $(CFLAGS) -DMODULE -DOSST_MAJOR=206 -D"DEVICE_OFF(dev)="
 
 osst.o: osst.c osst.h st_options.h arch Rules.make
 
