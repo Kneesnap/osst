@@ -72,10 +72,15 @@ lists in the Header and disambiguates terminology.</DD>
 <DT>2000-06-21: (osst 0.7.99a)</DT>
 <DD>Slight changes to the way it is integrated into the kernel. Both osst
 and st now use the OSST_SUPPORTS(SDp) macro provided by osst_detect.h in
-both detect() and attach(). Kernel patch is against 2.2.16 now.
+both detect() and attach(). Kernel patch is against 2.2.16 now.</DD>
+<DT>2000-06-25: (osst 0.8.0)</DT>
+<DD>BETA Test candidate!
+Options can now independently be set in osst_options.h (non-applicable options
+from st are dropped). Osst.c now identifies the tape drive with a unique code
+rather than as a generic SCSI2 drive.
 </DL></P>
 
-<H3>Known problems as of <B>0.7.99</B></H3>
+<H3>Known problems as of <B>0.8.0</B></H3>
 <UL>
 <LI>Currently none.</LI>
 </UL>
@@ -116,10 +121,10 @@ There are several possibilities to get the <TT>osst</TT>-driver. For your
 convenience, the archives also contain Terry's userspace driver <TT>osg</TT> 
 and some tools.
 <OL>
-<LI>(recommended) Get the <A HRef="onstream-20000621.tar.gz">sources</A>, unpack
+<LI>(recommended) Get the <A HRef="onstream-20000625.tar.gz">sources</A>, unpack
 them (<TT>tar xvzf onstream-2000*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux source
-tree installed in <TT>/usr/src/linux/</TT>. 
+tree (apply patch osst-22.diff first) installed in <TT>/usr/src/linux/</TT>. 
 To install the driver, do a <TT>make install</TT>, and the driver will be
 copied to <TT>/lib/modules/2.2.1?/scsi/</TT>. You need root permissions for
 this. You can now load the driver (module) by using <TT>modprobe</TT> and
@@ -130,10 +135,10 @@ should better first get familiar with your Linux Operating System, the
 kernel, the modules, etc.</LI>
 <LI>If you happen to use a ix86 machine with a 2.2.16 Linux kernel 
 <!--(e.g. in SuSE Linux 6.4)--> and a glibc-2.1 based distribution, you should be
-able to install and use the <A HRef="onstream-0.9.13_0.7.99a-0.i386.rpm">onstream RPM</A>
+able to install and use the <A HRef="onstream-0.9.13_0.8.0-0.i386.rpm">onstream RPM</A>
 from SuSE. Install with <TT>rpm -i</TT> or update with <TT>rpm -U</TT>.
 If you have a different arch, kernel or libc, you might be able to get the
-thing to work by grabbing the <A HRef="onstream-0.9.13_0.7.99a-0.src.rpm">source RPM</A>
+thing to work by grabbing the <A HRef="onstream-0.9.13_0.8.0-0.src.rpm">source RPM</A>
 and recompile it with <TT>rpm --recompile</TT>. This package actually is an
 (updated) RPM provided by <A HRef="http://www.suse.com/">SuSE</A>
 <A HRef="http://www.suse.com/PressReleases/64pr.html">Linux 7.0 (beta)</A>.
