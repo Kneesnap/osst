@@ -1,0 +1,18 @@
+Here is a small collection of sg utils which are useful for the 
+OnStream SCSI tape drives. The stream util has been written from 
+scratch. Programs:
+* (DG)   sg_map:  sg<->st,sd,sr device map 
+* (DG)   sg_scan: an alternative way of getting a list of SCSI devs
+* (DG)   sg_simple1: sg example doing an INQUIRY
+* (KG,DG)sg_test_rwbuf: Test for SCSI adapters: Writes data to the buffer and
+                     read it back for testing. Danger!
+* (DG,KG)sginfo: SCSI mode pages access
+* (KG,DG)os_dump: dumps OnStream tapes (raw)
+* (KG,DG)os_write: writes to OnStream tapes (raw)
+* (KG)   stream: userspace buffering
+
+Some apps have been written by me, but most is derived from Doug
+Gilbert's collection of sg-utils. 
+Check his collection at http://www.torque.net/sg/
+
+Copyright: Doug Gilbert, Kurt Garloff: GNU GPL.
