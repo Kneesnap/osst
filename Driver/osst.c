@@ -23,7 +23,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.7.3";
+const char * osst_version = "0.7.4";
 
 /* The "failure to reconnect" firmware bug */
 #define OS_NEED_POLL_MIN 10602 /*(107A)*/
@@ -56,7 +56,8 @@ const char * osst_version = "0.7.3";
    in the drivers are more widely classified, this may be changed to KERN_DEBUG. */
 #define ST_DEB_MSG  KERN_NOTICE
 
-#define MAJOR_NR SCSI_TAPE_MAJOR
+#define OSST_MAJOR SCSI_TAPE_MAJOR
+#define MAJOR_NR OSST_MAJOR
 #include <linux/blk.h>
 
 #include "scsi.h"
@@ -134,8 +135,8 @@ static int st_attach(Scsi_Device *);
 static int st_detect(Scsi_Device *);
 static void st_detach(Scsi_Device *);
 
-struct Scsi_Device_Template st_template = {NULL, "OnStream tape", "osst", NULL, TYPE_TAPE,
-					     SCSI_TAPE_MAJOR, 0, 0, 0, 0,
+struct Scsi_Device_Template osst_template = {NULL, "OnStream tape", "osst", NULL, TYPE_TAPE,
+					     OSST_MAJOR, 0, 0, 0, 0,
 					     st_detect, st_init,
 					     NULL, st_attach, st_detach};
 
@@ -185,7 +186,7 @@ st_chk_result(Scsi_Cmnd * SCpnt)
 	   SCpnt->data_cmnd[3], SCpnt->data_cmnd[4], SCpnt->data_cmnd[5],
 	   SCpnt->request_bufflen);
     if (driver_byte(result) & DRIVER_SENSE)
-      print_sense("st", SCpnt);
+      print_sense("osst", SCpnt);
   }
   else
 #endif
@@ -200,7 +201,7 @@ st_chk_result(Scsi_Cmnd * SCpnt)
        SCpnt->data_cmnd[0] != TEST_UNIT_READY)) { /* Abnormal conditions for tape */
     if (driver_byte(result) & DRIVER_SENSE) {
       printk(KERN_WARNING "osst%d: Error with sense data: ", dev);
-      print_sense("st", SCpnt);
+      print_sense("osst", SCpnt);
     }
     else
       printk(KERN_WARNING
@@ -245,7 +246,7 @@ st_sleep_done (Scsi_Cmnd * SCpnt)
   int remainder;
   Scsi_Tape * STp;
 
-  if ((st_nbr = TAPE_NR(SCpnt->request.rq_dev)) < st_template.nr_dev) {
+  if ((st_nbr = TAPE_NR(SCpnt->request.rq_dev)) < osst_template.nr_dev) {
     STp = &(scsi_tapes[st_nbr]);
     if ((STp->buffer)->writing &&
 	(SCpnt->sense_buffer[0] & 0x70) == 0x70 &&
@@ -275,7 +276,7 @@ st_sleep_done (Scsi_Cmnd * SCpnt)
   }
 #if DEBUG
   else if (debugging)
-    printk(KERN_ERR "st?: Illegal interrupt device %x\n", st_nbr);
+    printk(KERN_ERR "osst?: Illegal interrupt device %x\n", st_nbr);
 #endif
 }
 
@@ -362,7 +363,7 @@ osst_write_behind_check(Scsi_Tape *STp)
 	   STbuffer->b_data + STbuffer->writing,
 	   STbuffer->buffer_bytes - STbuffer->writing);
 #else
-  printk(KERN_WARNING "st: write_behind_check: something left in buffer!\n");
+  printk(KERN_WARNING "osst: write_behind_check: something left in buffer!\n");
 #endif
   STbuffer->buffer_bytes -= STbuffer->writing;
   STps = &(STp->ps[STp->partition]);
@@ -2046,7 +2047,7 @@ static int osst_configure_onstream(Scsi_Tape *STp, Scsi_Cmnd ** aSCpnt)
 	SCpnt = st_do_scsi(SCpnt, STp, cmd, cmd[4], STp->timeout, 0, TRUE);
 	if (SCpnt == NULL) {
 #if DEBUG
- 	    printk(ST_DEB_MSG "st: Busy\n");
+ 	    printk(ST_DEB_MSG "osst: Busy\n");
 #endif
 	    return (-EBUSY);
 	}
@@ -3635,7 +3636,7 @@ scsi_tape_open(struct inode * inode, struct file * filp)
     int dev = TAPE_NR(inode->i_rdev);
     int mode = TAPE_MODE(inode->i_rdev);
 
-    if (dev >= st_template.dev_max || !scsi_tapes[dev].device)
+    if (dev >= osst_template.dev_max || !scsi_tapes[dev].device)
       return (-ENXIO);
 
     if( !scsi_block_when_processing_errors(scsi_tapes[dev].device) ) {
@@ -3654,8 +3655,8 @@ scsi_tape_open(struct inode * inode, struct file * filp)
 
     if (scsi_tapes[dev].device->host->hostt->module)
        __MOD_INC_USE_COUNT(scsi_tapes[dev].device->host->hostt->module);
-    if (st_template.module)
-       __MOD_INC_USE_COUNT(st_template.module);
+    if (osst_template.module)
+       __MOD_INC_USE_COUNT(osst_template.module);
 
     if (mode != STp->current_mode) {
 #if DEBUG
@@ -3690,8 +3691,8 @@ scsi_tape_open(struct inode * inode, struct file * filp)
 	STp->in_use = 0;
 	if (scsi_tapes[dev].device->host->hostt->module)
 	    __MOD_DEC_USE_COUNT(scsi_tapes[dev].device->host->hostt->module);
-	if(st_template.module)
-	    __MOD_DEC_USE_COUNT(st_template.module);
+	if(osst_template.module)
+	    __MOD_DEC_USE_COUNT(osst_template.module);
 	return (-EBUSY);
       }
     }
@@ -3733,8 +3734,8 @@ scsi_tape_open(struct inode * inode, struct file * filp)
 
 	if (scsi_tapes[dev].device->host->hostt->module)
 	    __MOD_DEC_USE_COUNT(scsi_tapes[dev].device->host->hostt->module);
-	if (st_template.module)
-	    __MOD_DEC_USE_COUNT(st_template.module);
+	if (osst_template.module)
+	    __MOD_DEC_USE_COUNT(osst_template.module);
 	return (-EBUSY);
     }
     if ((SCpnt->sense_buffer[0] & 0x70) == 0x70 &&
@@ -3882,8 +3883,8 @@ scsi_tape_open(struct inode * inode, struct file * filp)
       STp->buffer = NULL;
       if (scsi_tapes[dev].device->host->hostt->module)
 	 __MOD_DEC_USE_COUNT(scsi_tapes[dev].device->host->hostt->module);
-      if (st_template.module)
-	 __MOD_DEC_USE_COUNT(st_template.module);
+      if (osst_template.module)
+	 __MOD_DEC_USE_COUNT(osst_template.module);
       return (-EIO);
     }
 
@@ -3927,8 +3928,8 @@ scsi_tape_open(struct inode * inode, struct file * filp)
 	STp->in_use = 0;
 	if (scsi_tapes[dev].device->host->hostt->module)
 	    __MOD_DEC_USE_COUNT(scsi_tapes[dev].device->host->hostt->module);
-	if(st_template.module)
-	    __MOD_DEC_USE_COUNT(st_template.module);
+	if(osst_template.module)
+	    __MOD_DEC_USE_COUNT(osst_template.module);
         scsi_release_command(SCpnt);
         SCpnt = NULL;
 	return (-EROFS);
@@ -4093,8 +4094,8 @@ scsi_tape_close(struct inode * inode, struct file * filp)
     STp->in_use = 0;
     if (scsi_tapes[dev].device->host->hostt->module)
 	__MOD_DEC_USE_COUNT(scsi_tapes[dev].device->host->hostt->module);
-    if(st_template.module)
-	__MOD_DEC_USE_COUNT(st_template.module);
+    if(osst_template.module)
+	__MOD_DEC_USE_COUNT(osst_template.module);
 
     return result;
 }
@@ -4365,7 +4366,7 @@ new_tape_buffer( int from_initialization, int need_dma )
   int i, priority, b_size, got = 0, segs = 0;
   ST_buffer *tb;
 
-  if (st_nbr_buffers >= st_template.dev_max)
+  if (st_nbr_buffers >= osst_template.dev_max)
     return NULL;  /* Should never happen */
 
   if (from_initialization)
@@ -4428,7 +4429,7 @@ new_tape_buffer( int from_initialization, int need_dma )
     }
   }
   if (!tb) {
-    printk(KERN_NOTICE "st: Can't allocate new tape buffer (nbr %d).\n",
+    printk(KERN_NOTICE "osst: Can't allocate new tape buffer (nbr %d).\n",
 	   st_nbr_buffers);
     return NULL;
   }
@@ -4438,10 +4439,10 @@ new_tape_buffer( int from_initialization, int need_dma )
 #if DEBUG
   if (debugging) {
     printk(ST_DEB_MSG
-    "st: Allocated tape buffer %d (%d bytes, %d segments, dma: %d, a: %p).\n",
+    "osst: Allocated tape buffer %d (%d bytes, %d segments, dma: %d, a: %p).\n",
 	   st_nbr_buffers, got, tb->sg_segs, need_dma, tb->b_data);
     printk(ST_DEB_MSG
-	   "st: segment sizes: first %d, last %d bytes.\n",
+	   "osst: segment sizes: first %d, last %d bytes.\n",
 	   tb->sg[0].length, tb->sg[segs-1].length);
   }
 #endif
@@ -4485,7 +4486,7 @@ enlarge_buffer(ST_buffer *STbuffer, int new_size, int need_dma)
 	      b_size /= 2;  /* Large enough for the rest of the buffers */
 	      continue;
 	  }
-	  printk(KERN_NOTICE "st: failed to enlarge buffer to %d bytes.\n",
+	  printk(KERN_NOTICE "osst: failed to enlarge buffer to %d bytes.\n",
 		 new_size);
 	  normalize_buffer(STbuffer);
 	  return FALSE;
@@ -4500,17 +4501,17 @@ enlarge_buffer(ST_buffer *STbuffer, int new_size, int need_dma)
 #if DEBUG
   if (debugging)
       printk(ST_DEB_MSG
-	     "st: Succeeded to enlarge buffer to %d bytes (segs %d->%d, %d).\n",
+	     "osst: Succeeded to enlarge buffer to %d bytes (segs %d->%d, %d).\n",
 	     got, STbuffer->orig_sg_segs, STbuffer->sg_segs, b_size);
 #endif
 #if DEBUG
   if (debugging) {
     for (nbr=0; st_buffers[nbr] == STbuffer && nbr < st_nbr_buffers; nbr++);
     printk(ST_DEB_MSG
-    "st: Expanded tape buffer %d (%d bytes, %d segments, dma: %d, a: %p).\n",
+    "osst: Expanded tape buffer %d (%d bytes, %d segments, dma: %d, a: %p).\n",
 	   nbr, got, STbuffer->sg_segs, need_dma, STbuffer->b_data);
     printk(ST_DEB_MSG
-	   "st: segment sizes: first %d, last %d bytes.\n",
+	   "osst: segment sizes: first %d, last %d bytes.\n",
 	   STbuffer->sg[0].length, STbuffer->sg[segs-1].length);
   }
 #endif
@@ -4531,7 +4532,7 @@ normalize_buffer(ST_buffer *STbuffer)
   }
 #if DEBUG
   if (debugging && STbuffer->orig_sg_segs < STbuffer->sg_segs)
-      printk(ST_DEB_MSG "st: Buffer at %p normalized to %d bytes (segs %d).\n",
+      printk(ST_DEB_MSG "osst: Buffer at %p normalized to %d bytes (segs %d).\n",
 	     STbuffer->b_data, STbuffer->buffer_size, STbuffer->sg_segs);
 #endif
   STbuffer->sg_segs = STbuffer->orig_sg_segs;
@@ -4549,7 +4550,7 @@ append_to_buffer(const char *ubp, ST_buffer *st_bp, int do_count)
 	 i < st_bp->sg_segs && offset >= st_bp->sg[i].length; i++)
 	offset -= st_bp->sg[i].length;
     if (i == st_bp->sg_segs) {  /* Should never happen */
-	printk(KERN_WARNING "st: append_to_buffer offset overflow.\n");
+	printk(KERN_WARNING "osst: append_to_buffer offset overflow.\n");
 	return (-EIO);
     }
     for ( ; i < st_bp->sg_segs && do_count > 0; i++) {
@@ -4564,7 +4565,7 @@ append_to_buffer(const char *ubp, ST_buffer *st_bp, int do_count)
 	offset = 0;
     }
     if (do_count) {  /* Should never happen */
-	printk(KERN_WARNING "st: append_to_buffer overflow (left %d).\n",
+	printk(KERN_WARNING "osst: append_to_buffer overflow (left %d).\n",
 	       do_count);
 	return (-EIO);
     }
@@ -4583,7 +4584,7 @@ from_buffer(ST_buffer *st_bp, char *ubp, int do_count)
 	 i < st_bp->sg_segs && offset >= st_bp->sg[i].length; i++)
 	offset -= st_bp->sg[i].length;
     if (i == st_bp->sg_segs) {  /* Should never happen */
-	printk(KERN_WARNING "st: from_buffer offset overflow.\n");
+	printk(KERN_WARNING "osst: from_buffer offset overflow.\n");
 	return (-EIO);
     }
     for ( ; i < st_bp->sg_segs && do_count > 0; i++) {
@@ -4599,7 +4600,7 @@ from_buffer(ST_buffer *st_bp, char *ubp, int do_count)
 	offset = 0;
     }
     if (do_count) {  /* Should never happen */
-	printk(KERN_WARNING "st: from_buffer overflow (left %d).\n",
+	printk(KERN_WARNING "osst: from_buffer overflow (left %d).\n",
 	       do_count);
 	return (-EIO);
     }
@@ -4647,28 +4648,49 @@ static int st_attach(Scsi_Device * SDp){
    Scsi_Tape * tpnt;
    ST_mode * STm;
    ST_partstat * STps;
-   int i;
+   int i, mode;
 
    if (SDp->type != TYPE_TAPE)
        return 1;
 
-   if (st_template.nr_dev >= st_template.dev_max) {
+   if (osst_template.nr_dev >= osst_template.dev_max) {
        SDp->attached--;
        return 1;
    }
 
-   for(tpnt = scsi_tapes, i=0; i<st_template.dev_max; i++, tpnt++)
+   for(tpnt = scsi_tapes, i=0; i<osst_template.dev_max; i++, tpnt++)
      if(!tpnt->device) break;
 
-   if(i >= st_template.dev_max) panic ("scsi_devices corrupt (st)");
+   if(i >= osst_template.dev_max) panic ("scsi_devices corrupt (st)");
+#ifdef CONFIG_DEVFS_FS
+   for (mode = 0; mode < ST_NBR_MODES; ++mode) {
+       char name[8];
+       static char *formats[ST_NBR_MODES] ={"", "l", "m", "a"};
 
+       /*  Rewind entry  */
+       sprintf (name, "mt%s", formats[mode]);
+       tpnt->de_r[mode] =
+	   devfs_register (SDp->de, name, 0, DEVFS_FL_DEFAULT,
+			   MAJOR_NR, i + (mode << 5),
+			   S_IFCHR | S_IRUGO | S_IWUGO,
+			   0, 0, &st_fops, NULL);
+       /*  No-rewind entry  */
+       sprintf (name, "mt%sn", formats[mode]);
+       tpnt->de_n[mode] =
+	   devfs_register (SDp->de, name, 0, DEVFS_FL_DEFAULT,
+			   MAJOR_NR, i + (mode << 5) + 128,
+			   S_IFCHR | S_IRUGO | S_IWUGO,
+			   0, 0, &st_fops, NULL);
+   }
+   devfs_register_tape (tpnt->de_r[0]);
+#endif
    scsi_tapes[i].device = SDp;
    if (SDp->scsi_level <= 2)
      scsi_tapes[i].mt_status->mt_type = MT_ISSCSI1;
    else
      scsi_tapes[i].mt_status->mt_type = MT_ISSCSI2;
    
-   tpnt->devt = MKDEV(SCSI_TAPE_MAJOR, i);
+   tpnt->devt = MKDEV(MAJOR_NR, i);
    tpnt->onstream = 0;
    tpnt->dirty = 0;
    tpnt->in_use = 0;
@@ -4699,8 +4721,8 @@ static int st_attach(Scsi_Device * SDp){
 	tpnt->onstream = 1;
 	tpnt->os_fw_rev = osst_parse_firmware_rev (SDp->rev);
 #ifdef DEBUG
-	printk("osst%i: OnStream tape drive recognized, Model %s, FW=%i\n",
-		    i, SDp->model, tpnt->os_fw_rev);
+	printk("osst%i: OnStream tape drive recognized, Model %s\n",
+		    i, SDp->model);
 #endif
      tpnt->omit_blklims = 1;
      tpnt->logical_blk_in_buffer = 0;
@@ -4740,7 +4762,7 @@ static int st_attach(Scsi_Device * SDp){
    tpnt->density_changed = tpnt->compression_changed =
      tpnt->blksize_changed = FALSE;
 
-   st_template.nr_dev++;
+   osst_template.nr_dev++;
    return 0;
 };
 
@@ -4750,7 +4772,7 @@ static int st_detect(Scsi_Device * SDp)
 
   printk(KERN_WARNING
 	 "Detected scsi tape st%d at scsi%d, channel %d, id %d, lun %d\n",
-	 st_template.dev_noticed++,
+	 osst_template.dev_noticed++,
 	 SDp->host->host_no, SDp->channel, SDp->id, SDp->lun);
 
   return 1;
@@ -4767,10 +4789,14 @@ static int st_init()
   int target_nbr;
 #endif
 
-  if (st_template.dev_noticed == 0) return 0;
+  if (osst_template.dev_noticed == 0) return 0;
 
   if(!st_registered) {
-    if (register_chrdev(SCSI_TAPE_MAJOR,"st",&st_fops)) {
+#ifdef CONFIG_DEVFS_FS
+    if (devfs_register_chrdev(MAJOR_NR,"osst",&st_fops)) {
+#else
+    if (register_chrdev(MAJOR_NR,"osst",&st_fops)) {
+#endif
       printk(KERN_ERR "Unable to get major %d for SCSI tapes\n",MAJOR_NR);
       return 1;
     }
@@ -4778,27 +4804,31 @@ static int st_init()
   }
 
   if (scsi_tapes) return 0;
-  st_template.dev_max = st_template.dev_noticed + ST_EXTRA_DEVS;
-  if (st_template.dev_max < ST_MAX_TAPES)
-    st_template.dev_max = ST_MAX_TAPES;
-  if (st_template.dev_max > 128 / ST_NBR_MODES)
-    printk(KERN_INFO "st: Only %d tapes accessible.\n", 128 / ST_NBR_MODES);
+  osst_template.dev_max = osst_template.dev_noticed + ST_EXTRA_DEVS;
+  if (osst_template.dev_max < ST_MAX_TAPES)
+    osst_template.dev_max = ST_MAX_TAPES;
+  if (osst_template.dev_max > 128 / ST_NBR_MODES)
+    printk(KERN_INFO "osst: Only %d tapes accessible.\n", 128 / ST_NBR_MODES);
   scsi_tapes =
-    (Scsi_Tape *) scsi_init_malloc(st_template.dev_max * sizeof(Scsi_Tape),
+    (Scsi_Tape *) scsi_init_malloc(osst_template.dev_max * sizeof(Scsi_Tape),
 				   GFP_ATOMIC);
   if (scsi_tapes == NULL) {
     printk(KERN_ERR "Unable to allocate descriptors for SCSI tapes.\n");
-    unregister_chrdev(SCSI_TAPE_MAJOR, "st");
+#ifdef CONFIG_DEVFS_FS
+    devfs_unregister_chrdev(MAJOR_NR, "osst");
+#else
+    unregister_chrdev(MAJOR_NR, "osst");
+#endif
     return 1;
   }
 
 #if DEBUG
-  printk(ST_DEB_MSG "st: Buffer size %d bytes, write threshold %d bytes.\n",
+  printk(ST_DEB_MSG "osst: Buffer size %d bytes, write threshold %d bytes.\n",
 	 st_buffer_size, st_write_threshold);
 #endif
 
-  memset(scsi_tapes, 0, st_template.dev_max * sizeof(Scsi_Tape));
-  for (i=0; i < st_template.dev_max; ++i) {
+  memset(scsi_tapes, 0, osst_template.dev_max * sizeof(Scsi_Tape));
+  for (i=0; i < osst_template.dev_max; ++i) {
     STp = &(scsi_tapes[i]);
     STp->capacity = 0xfffff;
     STp->mt_status = (struct mtget *) scsi_init_malloc(sizeof(struct mtget),
@@ -4809,20 +4839,24 @@ static int st_init()
 
   /* Allocate the buffers */
   st_buffers =
-    (ST_buffer **) scsi_init_malloc(st_template.dev_max * sizeof(ST_buffer *),
+    (ST_buffer **) scsi_init_malloc(osst_template.dev_max * sizeof(ST_buffer *),
 				    GFP_ATOMIC);
   if (st_buffers == NULL) {
     printk(KERN_ERR "Unable to allocate tape buffer pointers.\n");
-    unregister_chrdev(SCSI_TAPE_MAJOR, "st");
+#ifdef CONFIG_DEVFS_FS
+    devfs_unregister_chrdev(MAJOR_NR, "osst");
+#else
+    unregister_chrdev(MAJOR_NR, "osst");
+#endif
     scsi_init_free((char *) scsi_tapes,
-		   st_template.dev_max * sizeof(Scsi_Tape));
+		   osst_template.dev_max * sizeof(Scsi_Tape));
     return 1;
   }
 
 #if ST_RUNTIME_BUFFERS
   st_nbr_buffers = 0;
 #else
-  target_nbr = st_template.dev_noticed;
+  target_nbr = osst_template.dev_noticed;
   if (target_nbr < ST_EXTRA_DEVS)
     target_nbr = ST_EXTRA_DEVS;
   if (target_nbr > st_max_buffers)
@@ -4833,11 +4867,11 @@ static int st_init()
       if (i == 0) {
 #if 0
 	printk(KERN_ERR "Can't continue without at least one tape buffer.\n");
-	unregister_chrdev(SCSI_TAPE_MAJOR, "st");
+	unregister_chrdev(MAJOR_NR, "osst");
 	scsi_init_free((char *) st_buffers,
-		       st_template.dev_max * sizeof(ST_buffer *));
+		       osst_template.dev_max * sizeof(ST_buffer *));
 	scsi_init_free((char *) scsi_tapes,
-		       st_template.dev_max * sizeof(Scsi_Tape));
+		       osst_template.dev_max * sizeof(Scsi_Tape));
 	return 1;
 #else
 	printk(KERN_INFO "No tape buffers allocated at initialization.\n");
@@ -4855,14 +4889,22 @@ static int st_init()
 static void st_detach(Scsi_Device * SDp)
 {
   Scsi_Tape * tpnt;
-  int i;
+  int i, mode;
 
-  for(tpnt = scsi_tapes, i=0; i<st_template.dev_max; i++, tpnt++)
+  for(tpnt = scsi_tapes, i=0; i<osst_template.dev_max; i++, tpnt++)
     if(tpnt->device == SDp) {
       tpnt->device = NULL;
+#ifdef CONFIG_DEVFS_FS
+      for (mode = 0; mode < ST_NBR_MODES; ++mode) {
+	  devfs_unregister (tpnt->de_r[mode]);
+	  tpnt->de_r[mode] = NULL;
+	  devfs_unregister (tpnt->de_n[mode]);
+	  tpnt->de_n[mode] = NULL;
+      }
+#endif
       SDp->attached--;
-      st_template.nr_dev--;
-      st_template.dev_noticed--;
+      osst_template.nr_dev--;
+      osst_template.dev_noticed--;
       return;
     }
   return;
@@ -4884,11 +4926,11 @@ int init_module(void) {
       st_max_buffers = max_buffers;
   if (max_sg_segs >= ST_FIRST_SG)
       st_max_sg_segs = max_sg_segs;
-  printk(KERN_INFO "st: bufsize %d, wrt %d, max buffers %d, s/g segs %d.\n",
+  printk(KERN_INFO "osst: bufsize %d, wrt %d, max buffers %d, s/g segs %d.\n",
 	 st_buffer_size, st_write_threshold, st_max_buffers, st_max_sg_segs);
 
-  st_template.module = &__this_module;
-  result = scsi_register_module(MODULE_SCSI_DEV, &st_template);
+  osst_template.module = &__this_module;
+  result = scsi_register_module(MODULE_SCSI_DEV, &osst_template);
   if (result)
       return result;
 
@@ -4900,16 +4942,20 @@ void cleanup_module( void)
   int i, j;
   Scsi_Tape * STp;
 
-  scsi_unregister_module(MODULE_SCSI_DEV, &st_template);
-  unregister_chrdev(SCSI_TAPE_MAJOR, "st");
+  scsi_unregister_module(MODULE_SCSI_DEV, &osst_template);
+#ifdef CONFIG_DEVFS_FS
+  devfs_unregister_chrdev(MAJOR_NR, "osst");
+#else
+  unregister_chrdev(MAJOR_NR, "osst");
+#endif
   st_registered--;
   if(scsi_tapes != NULL) {
-    for (i=0; i < st_template.dev_max; ++i) {
+    for (i=0; i < osst_template.dev_max; ++i) {
       STp = &(scsi_tapes[i]);
       if (STp->header_cache != NULL) vfree(STp->header_cache);
     }
     scsi_init_free((char *) scsi_tapes,
-		   st_template.dev_max * sizeof(Scsi_Tape));
+		   osst_template.dev_max * sizeof(Scsi_Tape));
 
     if (st_buffers != NULL) {
       for (i=0; i < st_nbr_buffers; i++)
@@ -4921,10 +4967,10 @@ void cleanup_module( void)
 	}
 
       scsi_init_free((char *) st_buffers,
-		     st_template.dev_max * sizeof(ST_buffer *));
+		     osst_template.dev_max * sizeof(ST_buffer *));
     }
   }
-  st_template.dev_max = 0;
-  printk(KERN_INFO "st: Unloaded.\n");
+  osst_template.dev_max = 0;
+  printk(KERN_INFO "osst: Unloaded.\n");
 }
 #endif /* MODULE */
