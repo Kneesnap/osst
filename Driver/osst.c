@@ -5109,7 +5109,7 @@ static int osst_init()
 	}
 	osst_registered++;
   }
-
+  
   if (os_scsi_tapes) return 0;
   osst_template.dev_max = OSST_MAX_TAPES;
   if (osst_template.dev_max > 128 / ST_NBR_MODES)
@@ -5185,9 +5185,8 @@ static void osst_detach(Scsi_Device * SDp)
 }
 
 
-#ifdef MODULE
-
-int init_module(void) {
+static int __init init_osst(void) 
+{
   int result;
 
   if (buffer_kbs > 0)
@@ -5203,7 +5202,7 @@ int init_module(void) {
   printk(KERN_INFO "osst: bufsize %d, wrt %d, max buffers %d, s/g segs %d.\n",
 	 osst_buffer_size, osst_write_threshold, osst_max_buffers, osst_max_sg_segs);
 //printk(OSST_DEB_MSG "osst: sizeof(header) = %d (%s)\n",sizeof(os_header_t),sizeof(os_header_t)==OS_DATA_SIZE?"ok":"error");
-  osst_template.module = &__this_module;
+  osst_template.module = THIS_MODULE;
   result = scsi_register_module(MODULE_SCSI_DEV, &osst_template);
   if (result)
 		return result;
@@ -5211,7 +5210,7 @@ int init_module(void) {
   return 0;
 }
 
-void cleanup_module( void)
+static void __exit exit_osst (void)
 {
   int i;
   OS_Scsi_Tape * STp;
@@ -5246,4 +5245,6 @@ void cleanup_module( void)
   osst_template.dev_max = 0;
   printk(KERN_INFO "osst: Unloaded.\n");
 }
-#endif /* MODULE */
+
+module_init(osst_init);
+module_exit(exit_osst);
