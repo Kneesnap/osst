@@ -1,8 +1,9 @@
 README file for the osst driver
 ===============================
-(w) Kurt Garloff <garloff@suse.de> 06/2000
+(w) Kurt Garloff <garloff@suse.de> 10/2000
 
-This file describes the osst driver as of version 0.8.0, the first BETA.
+This file describes the osst driver as of version 0.8.x/0.9.x, the released
+version of the osst driver.
 It is intended to help advanced users to understand the role of osst and to
 get them started using (and maybe debugging) it.
 It won't address issues like "How do I compile a kernel?" or "How do I load
@@ -17,7 +18,7 @@ Purpose
 The osst driver was developed, because the standard SCSI tape driver in
 Linux, st, does not support the OnStream SC-x0 SCSI tape. The st is not to
 blame for that, as the OnStream tape drives do not support the standard SCSI
-command set for Serial Access Storage Devices (SASDs), which roughly
+command set for Serial Access Storage Devices (SASDs), which basically
 corresponds to the QIC-157 spec.
 Nevertheless, the OnStream tapes are nice pieces of hardware and therefore
 the osst driver has been written to make these tape devs supported by Linux.
@@ -32,7 +33,7 @@ can be compiled into the kernel or loaded as a module.
 As it represents a new device, it got assigned a new device node: /dev/osstX
 are character devices with major no 206 and minor numbers like the /dev/stX
 devices. If those are not present, you may create them by calling
-Makedevs.sh as root.
+Makedevs.sh as root (see below).
 The driver started beig a copy of st and as such, the osst devices'
 behaviour looks very much the same as st to the userspace applications.
 
@@ -52,6 +53,7 @@ Installation
 There is an easy and a correct approach to install the osst driver
 (a) Without patching your kernel
 (b) Full integration into your kernel
+(c) The mainstream kernel does already include the osst driver
 
 While it is still possible to use possibility (a), i.e. to compile the osst
 driver as a module without patching your kernel, this is not recommended, as
@@ -85,9 +87,12 @@ and the device nodes have been created.
     COMPILED KERNELS.
 
 cd /usr/src/linux
-patch -p1 < /path/to/onstream/driver/osst-22.diff	# USE REAL PATH!
+patch -p1 < /path/to/onstream/driver/osst-2X.diff	# USE REAL PATH! X = 2,3,4
 cp -p /path/to/onstream/driver/osst.? drivers/scsi/	# Install drv srcs
 cp -p /path/to/onstream/driver/osst_options.h drivers/scsi/
+
+(b) and (c)
+
 make oldconfig			# or menuconfig / xconfig if you prefer
 				# enable the OSST driver!
 make dep
@@ -99,8 +104,8 @@ depmod -a			# append kernel version if necessary
 
 Now, your osst driver is inside the kernel or available as a module,
 depending on your choice during kernel config. You may still need to create
-the device nodes by calling the Makedevs.sh script manually, unless you use
-a devfs kernel, where this won't be needed.
+the device nodes by calling the Makedevs.sh script (see below) manually,
+unless you use a devfs kernel, where this won't be needed.
 
 To load your module, you may use the command 
 modprobe osst
@@ -125,7 +130,7 @@ which may be tar, cpio, amanda, arkeia, BRU, Lone Tar, ...
 by specifying /dev/(n)osst0 as the tape device to use or using the above
 symlink trick. The IOCTLs to control tape operation are also mostly
 supported and you may try the mt (or mt_st) program to jump between
-filemarks, e.g.
+filemarks, eject the tape, ...
 There's one limitation: You need to use a blocksize of 32kB.
 
 If you just want to get started with standard software, here is an example
@@ -141,9 +146,28 @@ the tape from needing to stop and rewind. The OnStream does have an internal
 buffer and a variable speed which help this, but especially on writing, the
 buffering still proves useful in most cases. It also pads the data to
 guarantees the blocksize of 32k. (Otherwise you may pass the -b64 option to
-tar.) 
-On a very fast machine, you may profit from data compression (z flag for
-tar). 
+tar.)
+Expect something like 1.8MB/s for the SC-x0 drives and 0.9MB/s for the DI-30.
+The USB drive will give you about 0.7MB/s.
+On a fast machine, you may profit from software data compression (z flag for
+tar).
+
+
+USB and IDE
+-----------
+Via the SCSI emulation layers usb-storage and ide-scsi, you can also use the
+osst driver to drive the USB-30 and the DI-30 drives. (Unfortunately, there
+is no such layer for the parallel port, otherwise the DP-30 would work as
+well.) For the USB support, you need the latest 2.4.0-test kernels and the 
+latest usb-storage driver from 
+http://www.linux-usb.org/
+http://sourceforge.net/cvs/?group_id=3581
+
+Note that the ide-tape driver as of 1.16f uses a slightly outdated on-tape
+format and therefore is not compeletely interoperable with osst tapes.
+
+The ADR-x0 line is fully SCSI-2 compliant and is spported by st, not osst.
+The on-tape format is supposed to be compatible with the one used by osst.
 
 
 Feedback and updates
@@ -171,8 +195,10 @@ You may subscribe to the mailing list, BTW, it's a majordomo list.
 
 Status
 ------
-0.8.0 is the first widespread BETA release. Check the web pages for more
-info about the current developments.
+0.8.0 was the first widespread BETA release. Since then a lot of reports
+have been sent, but mostly reported success or only minor trouble.
+All the issues have been addressed.
+Check the web pages for more info about the current developments.
 
 
 Acknowledgements
@@ -196,3 +222,38 @@ been forgotten. Thanks to all the GNU/FSF and Linux developers who made this
 platform such an interesting, nice and stable platform.
 Thanks go to those who tested the drivers and did send useful reports. Your
 help is needed!
+
+
+Makedevs.sh
+-----------
+#!/bin/sh
+# Script to create OnStream SC-x0 device nodes (major 206)
+# Usage: Makedevs.sh [nos [path to dev]]
+# $Id$
+major=206
+nrs=4
+dir=/dev
+test -z "$1" || nrs=$1
+test -z "$2" || dir=$2
+declare -i nr
+nr=0
+test -d $dir || mkdir -p $dir
+while test $nr -lt $nrs; do
+  mknod $dir/osst$nr c $major $nr
+  chown 0.disk $dir/osst$nr; chmod 660 $dir/osst$nr;
+  mknod $dir/nosst$nr c $major $[nr+128]
+  chown 0.disk $dir/nosst$nr; chmod 660 $dir/nosst$nr;
+  mknod $dir/osst${nr}l c $major $[nr+32]
+  chown 0.disk $dir/osst${nr}l; chmod 660 $dir/osst${nr}l;
+  mknod $dir/nosst${nr}l c $major $[nr+160]
+  chown 0.disk $dir/nosst${nr}l; chmod 660 $dir/nosst${nr}l;
+  mknod $dir/osst${nr}m c $major $[nr+64]
+  chown 0.disk $dir/osst${nr}m; chmod 660 $dir/osst${nr}m;
+  mknod $dir/nosst${nr}m c $major $[nr+192]
+  chown 0.disk $dir/nosst${nr}m; chmod 660 $dir/nosst${nr}m;
+  mknod $dir/osst${nr}a c $major $[nr+96]
+  chown 0.disk $dir/osst${nr}a; chmod 660 $dir/osst${nr}a;
+  mknod $dir/nosst${nr}a c $major $[nr+224]
+  chown 0.disk $dir/nosst${nr}a; chmod 660 $dir/nosst${nr}a;
+  let nr+=1
+done
