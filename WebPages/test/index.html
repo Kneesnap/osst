@@ -12,11 +12,13 @@
 <Body Background="/gif/bg_pingu.gif" BGColor=#f0f0f0>
 <A HRef=".."><Img Src="/gif/left.gif" Align=middle Alt="Back" Width=16 Height=16>
 Back</A>
+<A Name="about">
 <Center><H1>OSST tester's page</H1></Center>
 This page should give some info to potential testers of the kernelspace
 driver for the OnStream SC-30/50 tape devices. Via ide-tape, usb-storage and
 sbp2, also the DI-30, USB30 and FW-30 can be driven. The latter two require
 a 2.4 kernel.
+<A Name="driver">
 <H3>Driver</H3>
 The kernelspace solution to drive the SC-x0 has been created by copying the
 original scsi tape driver <TT>st</TT> of Kai Mikasara to <TT>osst</TT> and
@@ -26,6 +28,7 @@ tapes using <TT>mt</TT>, <TT>tar</TT>, <TT>amanda</TT>, ... <Br>
 The driver currently supports 2.2.1x kernels. A 2.4 version is also
 available.<Br>
 
+<A Name="status">
 <H3>Status</H3>
 <P>The driver has been used by lots of people and should be considered
 stable. The version with a fixed blocksize of 32k has been integrated into
@@ -157,6 +160,7 @@ A few minor bug fixes. Tested with kernels 2.2.20pre10 and 2.4.9ac18 respectivel
 Make recoverable read/write log messages less intimidating.</DD>
 </DL></P>
 
+<A Name="problems">
 <H3>Known problems as of <B>0.8.15 / 0.9.9</B></H3>
 <UL>
 <LI>If you do not have a very recent kernel (2.4.7 or newer) you cannot use osst 0.9.9 or above;
@@ -164,6 +168,7 @@ in that case extract 0.9.8 from <A HRef="onstream-20010603.tar.gz">this archive<
 </LI>
 </UL>
 
+<A Name="feedback">
 <H3>Feedback</H3>
 <P>Please report any problems to the 
 <A HRef="mailto:osst@www.linux1onstream.nl">osst mailing list 
@@ -195,6 +200,7 @@ lists, start with sending a mail with just <TT>help</TT> in the
 non-subscribers. We do hope that there won't be spam, which would force us to 
 impose restrictions.</P>
 
+<A Name="download">
 <H3>Download</H3>
 There are several possibilities to get the <TT>osst</TT>-driver. For your
 convenience, the archives also contain Terry's userspace driver <TT>osg</TT> 
@@ -239,12 +245,14 @@ and adjust the permissions according to your needs. (Here, it's
 -->
 </P>
 
+<A Name="di-30">
 <H3>DI-30/50</H3>
 The recommended way to use the DI-x0 is to go via ide-scsi and osst.
 Here's a <A HRef="ide-tape.html">page</A> that explains how this
 can be done. It also contains patches for the ide-tape to fix the onstream
 support in there.
 
+<A Name="usb30">
 <H3>USB30</H3>
 The <A HRef="http://www.linux-usb.org/">USB</A> drive USB30 can be used via
 the 
@@ -259,18 +267,28 @@ low-level USB drivers, of the usb-storage driver and the Freecom dongle.
 Recently, problems with older versions (9.21 and older) of the dongle have
 been reported. (Check <TT>/proc/bus/usb/devices</TT>.)
 
+<A Name="fw-30">
 <H3>FW-30</H3>
 Should work, provided the low-level Firewire 
 (IEEE1394) <A HRef="http://linux1394.sourceforge.net/">Linux drivers</A> 
 (ohci1394) and the SCSI protocol interface (sbp2) do their job well.
 Currently (12/2001), there still seem to be problems hidden somewhere ...
 
+<A Name="dp-30">
+<H3>DP-30</H3>
+In theory it could be easy. If there was a parallel port transport driver
+which would just transport the SCSI commands over the parallel port and
+offered a SCSI driver interface. Then it would work just like IDE and USB.
+Unfortunately, I don't know such a driver. If anyone does, please tell me.
+
+<A Name="links">
 <H3>Links</H3>
 JP Vossen has a <A HRef="http://www.jpsdomain.org/linux/#backups">nice
 section on Backups with Linux</A> and also a 
 <A HRef="http://www.jpsdomain.org/linux/OnStream_DI-30-RedHat_Backup_mini-HOWTO.html">
 OnStream DI-30 HOWTO</A>.
 
+<A Name="credits">
 <H3>Credits</H3>
 <A HRef="../developers.html">Credits</A> go to Willem Riede for developing
 this driver. Some contributions come from me, Terry Hardie, and Kai Mikasara,
@@ -283,6 +301,7 @@ problems and suggestions for improving the driver.
 <Img Src="/gif/construction.gif" Alt="under construction" Width=40 Height=32>
 </P>-->
 
+<A Name="firmware">
 <H3>Firmware updates</H3>
 There are <A HRef="../Firmware/">firmware update tools for Linux</A>
 available now.
