@@ -118,6 +118,9 @@ write it when you start reading.</DD>
 block size of 32k.</DD>
 <DT>2000-12-22: (osst 0.8.6.1 / 0.9.4.3)</DT>
 <DD>0.9.4.2 could not be compiled statically into the kernel. Fixed.</DD>
+<DT>2001-01-03: (osst 0.8.9)</DT>
+<DD>Preceed locate(3000) with locate(0) because some drives go AWOL when they mistakenly
+detect BOT during such a locate.</DD>
 </DL></P>
 
 <H3>Known problems as of <B>0.8.6.1</B></H3>
@@ -161,13 +164,13 @@ There are several possibilities to get the <TT>osst</TT>-driver. For your
 convenience, the archives also contain Terry's userspace driver <TT>osg</TT> 
 and some tools.
 <OL>
-<LI>(recommended) Get the <A HRef="onstream-20001211.tar.gz">sources</A>, unpack
-them (<TT>tar xvzf onstream-2000*.tar.gz</TT>) and compile the driver (<TT>cd
+<LI>(recommended) Get the very latest <A HRef="onstream-20010103.tar.gz">sources</A>, unpack
+them (<TT>tar xvzf onstream-200*.tar.gz</TT>) and compile the driver (<TT>cd
 onstream/driver; make</TT>). This only works, if you have a configured Linux source
 tree (apply patch osst-22.diff resp. osst-24.diff first) installed in
-<TT>/usr/src/linux/</TT>. Here are the 
+<TT>/usr/src/linux/</TT>. Alternatively, here are the 
 <A HRef="onstream-0861-0943.tar.gz">sources for 0.8.6.1/0.9.4.3</A>, the
-latest versions with a fixed blocksize of 32k.
+latest stable versions with a fixed blocksize of 32k used in the RPMS below.
 <Br>
 To install the driver, do a <TT>make install</TT>, and the driver will be
 copied to <TT>/lib/modules/2.2.1?/scsi/</TT> resp.
