@@ -23,7 +23,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.9.0p0";
+const char * osst_version = "0.9.0p1";
 
 /* The "failure to reconnect" firmware bug */
 #define OS_NEED_POLL_MIN 10602 /*(107A)*/
@@ -49,7 +49,7 @@ const char * osst_version = "0.9.0p0";
 
 /* The driver prints some debugging information on the console if DEBUG
    is defined and non-zero. */
-#define DEBUG 1
+#define DEBUG 0
 
 /* The message level for the debug messages is currently set to KERN_NOTICE
    so that people can easily see the messages. Later when the debugging messages
@@ -1105,6 +1105,13 @@ static int osst_read_back_buffer_and_rewrite(OS_Scsi_Tape * STp, Scsi_Request **
 			}
 		}
 		if (flag) {
+			if ((SRpnt->sr_sense_buffer[ 2] & 0x0f) == 13 &&
+			     SRpnt->sr_sense_buffer[12]         ==  0 &&
+			     SRpnt->sr_sense_buffer[13]         ==  2) {
+				printk(KERN_ERR "osst%d: Volume overflow in write error recovery\n", dev);
+				vfree((void *)buffer);
+				return (-EIO);			/* hit end of tape = fail */
+			}
 			i = ((SRpnt->sr_sense_buffer[3] << 24) |
 			     (SRpnt->sr_sense_buffer[4] << 16) |
 			     (SRpnt->sr_sense_buffer[5] <<  8) |
@@ -1177,8 +1184,17 @@ static int osst_reposition_and_retry(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt,
 						    STp->timeout, MAX_WRITE_RETRIES, TRUE);
 			*aSRpnt = SRpnt;
 
-			if (STp->buffer->syscall_result)		/* additional write error */
+			if (STp->buffer->syscall_result) {		/* additional write error */
+				if ((SRpnt->sr_sense_buffer[ 2] & 0x0f) == 13 &&
+				     SRpnt->sr_sense_buffer[12]         ==  0 &&
+				     SRpnt->sr_sense_buffer[13]         ==  2) {
+					printk(OSST_DEB_MSG
+					       "osst%d: Volume overflow in write error recovery\n",
+					       dev);
+					break;				/* hit end of tape = fail */
+				}
 				flag = 1;
+			}
 			else
 				pending = 0;
 
@@ -1224,9 +1240,13 @@ static int osst_write_error_recovery(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt,
 
 	if ((SRpnt->sr_sense_buffer[ 2] & 0x0f) != 3
 	  || SRpnt->sr_sense_buffer[12]         != 12
-	  || SRpnt->sr_sense_buffer[13]         != 0)
+	  || SRpnt->sr_sense_buffer[13]         != 0) {
+#if 1 //DEBUG
+		printk(OSST_DEB_MSG "osst%d: Write error recovery cannot handle %02x:%02x:%02x\n",
+			dev, SRpnt->sr_sense_buffer[2], SRpnt->sr_sense_buffer[12], SRpnt->sr_sense_buffer[13]);
+#endif
 		return (-EIO);
-
+	}
 	block =	(SRpnt->sr_sense_buffer[3] << 24) |
 		(SRpnt->sr_sense_buffer[4] << 16) |
 		(SRpnt->sr_sense_buffer[5] <<  8) |
@@ -2672,6 +2692,13 @@ static ssize_t osst_write(struct file * filp, const char * buf, size_t count, lo
 		printk(KERN_WARNING "osst%d: Write (%d bytes) not multiple of tape block size (32k).\n",
 				       dev, count);
 		retval = (-EINVAL);
+		goto out;
+	}
+
+	if (STp->first_frame_position >= STp->capacity - 164) {
+		printk(KERN_WARNING "osst%d: Write truncated at EOM early warning (frame %d).\n",
+				       dev, STp->first_frame_position);
+		retval = (-ENOSPC);
 		goto out;
 	}
 
