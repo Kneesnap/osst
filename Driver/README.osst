@@ -180,6 +180,12 @@ blank if not applicable, and S is the severity:
 This output is sent to klogd with corresponding priority. If you don't see
 it in your system log (typically /var/log/messages), check your syslog.conf.
 
+Please note that during normal write operation, you will see some messages.
+A number of write errors per tape is normal; but all of them should be
+recovered by relocating the affected frames to a safe position behind the
+bad spot on the tape. Nothing to worry about. If you don't trust this, try
+reading back your backup and check whether this succeeds.
+
 
 USB and IDE
 -----------
