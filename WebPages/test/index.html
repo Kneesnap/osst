@@ -306,6 +306,29 @@ problems and suggestions for improving the driver.
 There are <A HRef="../Firmware/">firmware update tools for Linux</A>
 available now.
 
+<A Name="arkeia">
+<H3>Using Arkeia</H3>
+Add this to your tape definition file
+<TT>/usr/knox/arkeia/dbase/f3tape/tptypes.lst</TT>
+<PRE>
+ITEM    {
+	"NAME"          "ADR30"
+	"CAPACITY"      "14429"
+	"THROUGHPUT"    "2000"
+	"MAXUSE"        "1000000"
+	"SIZESEG"       "96000"  
+	"COMMENT"       "OnStream 15/30Gig"
+	"FORM_FACTOR"   "ADR"   
+}
+</PRE>
+and the following to your drive type definition file
+<TT>/usr/knox/arkeia/dbase/f3drv/drvtypes.lst</TT>
+<PRE>
+ITEM    {
+	"NAME"  "ONSTREAM_ADR"
+	"FORM_FACTOR"   "ADR"
+}
+</PRE>
 <HR>
 <I>(w) by <A HRef="mailto:garloff@suse.de">KG</A>, $Id$</I>
 </Body>
