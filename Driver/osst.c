@@ -54,7 +54,7 @@ const char * osst_version = "0.6.1";
 /* The message level for the debug messages is currently set to KERN_NOTICE
    so that people can easily see the messages. Later when the debugging messages
    in the drivers are more widely classified, this may be changed to KERN_DEBUG. */
-#define ST_DEB_MSG  KERN_NOTICE
+#define ST_DEB_MSG  KERN_DEBUG
 
 #define MAJOR_NR SCSI_TAPE_MAJOR
 #include <linux/blk.h>
@@ -740,7 +740,8 @@ static int osst_read_block(Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int timeout)
 	    STp->first_frame_position++;
 #if DEBUG
 	if (debugging) {
-	   printk(ST_DEB_MSG "osst%i: AUX: %s #%d %s seq#%d log#%d\n", dev, aux->application_sig,
+	   printk(ST_DEB_MSG "osst%i: AUX: %c%c%c%c #%d %s seq#%d log#%d\n", dev, aux->application_sig[0],
+			aux->application_sig[1], aux->application_sig[2], aux->application_sig[3],
 			ntohl(aux->update_frame_cntr), aux->frame_type==1?"EOD":aux->frame_type==2?"MARK":
 			aux->frame_type==8?"HEADR":aux->frame_type==0x80?"DATA":"FILL", 
 			ntohl(aux->frame_seq_num), ntohl(aux->logical_blk_num) );
@@ -1420,7 +1421,8 @@ static int __osst_analyze_headers(Scsi_Tape * STp, int block, Scsi_Cmnd ** aSCpn
 			printk(KERN_INFO "osst%i: Linux media version %d detected (current 3)\n",
 					 dev, STp->linux_media_version);
 	} else {
-		printk(KERN_INFO "osst%i: non Linux media detected (%s)\n", dev, STp->application_sig);
+		printk(KERN_INFO "osst%i: non Linux media detected (%c%c%c%c)\n", dev, STp->application_sig[0],
+			STp->application_sig[1], STp->application_sig[2], STp->application_sig[3]);
 		STp->linux_media = 0;
 	}
 #if DEBUG
