@@ -10,7 +10,7 @@
 # usedforbuild    -lx_suse aaa_base aaa_dir autoconf automake base bash bindutil binutils bison bzip compress cpio cracklib devs diff ext2fs file fileutil find flex gawk gcc gdbm gettext gpm gpp gppshare groff gzip k_deflt kbd less libc libtool libz lx_sus22 lx_suse make mktemp modules ncurses net_tool netcfg nkita nkitb nssv1 pam patch perl pgp ps rcs rpm sendmail sh_utils shadow shlibs strace syslogd sysvinit texinfo textutil timezone unzip util vim xdevel xf86 xshared
 
 Vendor:       SuSE GmbH, Nuernberg, Germany
-Distribution: SuSE Linux 7.0a (i386)
+Distribution: SuSE Linux 6.4
 Name:         onstream
 Release:      0
 Packager:     feedback@suse.de
@@ -18,16 +18,16 @@ Packager:     feedback@suse.de
 Copyright:	GPL
 Group:        unsorted
 Autoreqprov:  on
-Version:      0.9.13_0.7.0
+Version:      0.9.13_0.7.1
 Summary:      OnStream SC-x0 tape support tools
-Source:	      onstream-20000502.tar.gz
+Source:	      onstream-20000514.tar.gz
 #Patch:	onstream.dif
 BuildRoot:	/var/lib/%{name}-buildroot
 
 %description
 OnStream's SC-x0 tapes are not compliant with the SCSI2 spec for Serial
 Access Storage Devices and can therefore not be operated by the Kernel's
-SCSI Tape st driver st. This package contains some tools to allow to
+SCSI Tape driver st. This package contains some tools to allow to
 test and access the device. The onstreamsg (osg) program allows reading
 and writing of data to tapes. The osst driver is a kernel module
 providing an st like interface. Some helpers are also included.
