@@ -19,9 +19,10 @@ to update the firmware of OnStream tapes under Linux. These tools are
 unfortunately not released with source code, but just as binaries, with the
 intention to prevent people from playing with the progam and destroying their
 firmware this way. This is not optimal, but I can confirm that those tools
-do what they are designed for and did work in my tests. At this moment,
-tools are only available for Linux on ix86 platforms. Feel free to ask Jack
-or me for binaries for other platforms.
+do what they are designed for and did work in my tests. You should consider
+the update tools to have beta status. At this moment, tools are only
+available for Linux on ix86 platforms. Feel free to ask Jack or me for
+binaries for other platforms.
 </P><P>
 Those tools use the generic SCSI interface (<TT>/dev/sgX</TT>), but via SCSI
 emulation layers they can be used to update IDE (via ide-scsi) and USB (via
@@ -67,14 +68,14 @@ usb-storage), otherwise you can't update with Linux anyway.
 Watch out: Newer drivers will identify themselves all as &quot;ADR Series&quot;.
 While the 30/50 (15/25 GB raw capacity) drives are handled, the 60 (30GB raw
 capacity) is not yet.<Br>
-Note: Firmware versions with a dot are release versions, the ones in between
-are to be considered betas. Ordering:
+Note: <Em>Firmware</Em> versions with a dot are release versions, the ones
+in between are to be considered betas. Ordering:
 3.00 &lt; 301G &lt; 301g &lt; 3.01.
 <!--<Img Src="/gif/construction.gif" Alt="under construction" Width=40 Height=32>-->
 <P>Usage:<Br>
 Updatetool firmware<Br>
 e.g.<Br>
-<TT>sc30fix_static SCSI109.bin</TT>
+<TT>sc30fix_static SCSI109.bin</TT><Br>
 <HR>
 <I>(w) by <A HRef="mailto:garloff@suse.de">KG</A>, $Id$</I>
 </Body>
