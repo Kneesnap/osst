@@ -2774,6 +2774,11 @@ static ssize_t osst_write(struct file * filp, const char * buf, size_t count, lo
 		} else if (STp->fast_open && osst_verify_position(STp, &SRpnt)) {
 			retval = (-EIO);
 			goto out;
+		} else if (STps->drv_file != 0 && STps->drv_file < STp->filemark_cnt) {
+			printk (KERN_WARNING "osst%d: Overwriting data with old write pass counter %d\n",
+				dev, STp->wrt_pass_cntr);
+			printk (KERN_WARNING "osst%d: may lead to stale data being accepted on reading back!\n",
+				dev);
 		}
 		STp->fast_open = FALSE;
 	}
