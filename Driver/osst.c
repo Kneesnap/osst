@@ -24,7 +24,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.9.6";
+const char * osst_version = "0.9.7";
 
 /* The "failure to reconnect" firmware bug */
 #define OSST_FW_NEED_POLL_MIN 10602 /*(107A)*/
@@ -1320,6 +1320,7 @@ static int osst_read_back_buffer_and_rewrite(OS_Scsi_Tape * STp, Scsi_Request **
 #endif
 			}
 		}
+		*aSRpnt = SRpnt;
 		if (flag) {
 			if ((SRpnt->sr_sense_buffer[ 2] & 0x0f) == 13 &&
 			     SRpnt->sr_sense_buffer[12]         ==  0 &&
@@ -1342,7 +1343,6 @@ static int osst_read_back_buffer_and_rewrite(OS_Scsi_Tape * STp, Scsi_Request **
 					  dev, STp->first_frame_position, STp->last_frame_position);
 #endif
 		}
-		*aSRpnt = SRpnt;
 	}    
 	vfree((void *)buffer);
 	return 0;
@@ -1352,7 +1352,7 @@ static int osst_reposition_and_retry(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt,
 					unsigned int frame, unsigned int skip, int pending)
 {
 	unsigned char	cmd[MAX_COMMAND_SIZE];
-	Scsi_Request  * SRpnt     = * aSRpnt;
+	Scsi_Request  * SRpnt;
 	int		dev       = TAPE_NR(STp->devt);
 	int		expected  __attribute__ ((__unused__));
 	int		attempts  = 1000 / skip;
@@ -1398,8 +1398,8 @@ static int osst_reposition_and_retry(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt,
 			printk(OSST_DEB_MSG "osst%d: About to write pending fseq %d at fppos %d\n",
 					  dev, STp->frame_seq_number-1, STp->first_frame_position);
 #endif
-			SRpnt = osst_do_scsi(SRpnt, STp, cmd, OS_FRAME_SIZE, SCSI_DATA_WRITE,
-						    STp->timeout, MAX_WRITE_RETRIES, TRUE);
+			SRpnt = osst_do_scsi(*aSRpnt, STp, cmd, OS_FRAME_SIZE, SCSI_DATA_WRITE,
+						      STp->timeout, MAX_WRITE_RETRIES, TRUE);
 			*aSRpnt = SRpnt;
 
 			if (STp->buffer->syscall_result) {		/* additional write error */
