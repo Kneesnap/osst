@@ -7,27 +7,17 @@
    
    Changed (and renamed) for OnStream SCSI drives garloff@suse.de
    2000-06-21
+
+   $Header$
 */
 
 #ifndef _OSST_OPTIONS_H
 #define _OSST_OPTIONS_H
 
-/* The driver allocates the tape buffers when needed if OSST_RUNTIME_BUFFERS
-   is nonzero. Otherwise a number of buffers are allocated at initialization.
-   The drawback of runtime allocation is that allocation may fail. In any
-   case the driver tries to allocate a new tape buffer when none is free. */
-#define OSST_RUNTIME_BUFFERS 0
-
 /* The minimum limit for the number of SCSI tape devices is determined by
    OSST_MAX_TAPES. If the number of tape devices and the "slack" defined by
    OSST_EXTRA_DEVS exceeds OSST_MAX_TAPES, the large number is used. */
 #define OSST_MAX_TAPES 4
-
-/* The driver does not wait for some operations to finish before returning
-   to the user program if OSST_NOWAIT is non-zero. This helps if the SCSI
-   adapter does not support multiple outstanding commands. However, the user
-   should not give a new tape command before the previous one has finished. */
-#define OSST_NOWAIT 0
 
 /* If OSST_IN_FILE_POS is nonzero, the driver positions the tape after the
    record been read by the user program even if the tape has moved further
@@ -35,14 +25,6 @@
    that can't space backwards over records. NOTE: The tape will be
    spaced backwards over an "accidentally" crossed filemark in any case. */
 #define OSST_IN_FILE_POS 0
-
-/* If OSST_RECOVERED_WRITE_FATAL is non-zero, recovered errors while writing
-   are considered "hard errors". */
-#define OSST_RECOVERED_WRITE_FATAL 0
-
-/* The "guess" for the block size for devices that don't support MODE
-   SENSE. */
-#define OSST_DEFAULT_BLOCK 0
 
 /* The tape driver buffer size in kilobytes. */
 /* Don't change, as this is the HW blocksize */
@@ -56,17 +38,15 @@
 /* The maximum number of tape buffers the driver allocates. The number
    is also constrained by the number of drives detected. Determines the
    maximum number of concurrently active tape drives. */
-#define OSST_MAX_BUFFERS (2 + OSST_EXTRA_DEVS)
+#define OSST_MAX_BUFFERS OSST_MAX_TAPES 
 
 /* Maximum number of scatter/gather segments */
 /* Fit one buffer in pages and add one for the AUX header */
-//#define OSST_MAX_SG      (((OSST_BUFFER_BLOCKS*1024) / PAGE_SIZE) + 1)
-/* Currently, some code assumes contigous memory */
-#define OSST_MAX_SG	2
+#define OSST_MAX_SG      (((OSST_BUFFER_BLOCKS*1024) / PAGE_SIZE) + 1)
 
 /* The number of scatter/gather segments to allocate at first try (must be
    smaller or equal to the maximum). */
-#define OSST_FIRST_SG    2
+#define OSST_FIRST_SG    ((OSST_BUFFER_BLOCKS*1024) / PAGE_SIZE)
 
 /* The size of the first scatter/gather segments (determines the maximum block
    size for SCSI adapters not supporting scatter/gather). The default is set

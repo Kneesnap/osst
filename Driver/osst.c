@@ -23,7 +23,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.7.99b";
+const char * osst_version = "0.8.0";
 
 /* The "failure to reconnect" firmware bug */
 #define OS_NEED_POLL_MIN 10602 /*(107A)*/
@@ -83,10 +83,7 @@ static int max_buffers = 0;
 static int max_sg_segs = 0;
 #endif
 
-/* Some default definitions have been moved to st_options.h */
-#define OSST_BUFFER_BLOCKS 32
-#define OSST_WRITE_THRESHOLD_BLOCKS 30
-
+/* Some default definitions have been moved to osst_options.h */
 #define OSST_BUFFER_SIZE (OSST_BUFFER_BLOCKS * ST_KILOBYTE)
 #define OSST_WRITE_THRESHOLD (OSST_WRITE_THRESHOLD_BLOCKS * ST_KILOBYTE)
 
@@ -131,6 +128,9 @@ static int enlarge_buffer(OSST_buffer *, int, int);
 static void normalize_buffer(OSST_buffer *);
 static int append_to_buffer(const char *, OSST_buffer *, int);
 static int from_buffer(OSST_buffer *, char *, int);
+static int osst_zero_buffer_tail(OSST_buffer *);
+static int osst_copy_to_buffer(OSST_buffer *, unsigned char *);
+static int osst_copy_from_buffer(OSST_buffer *, unsigned char *);
 
 static int osst_init(void);
 static int osst_attach(Scsi_Device *);
@@ -211,10 +211,6 @@ static int osst_chk_result(Scsi_Cmnd * SCpnt)
 
   if ((sense[0] & 0x70) == 0x70 &&
       scode == RECOVERED_ERROR
-#if OSST_RECOVERED_WRITE_FATAL
-      && SCpnt->data_cmnd[0] != WRITE_6
-      && SCpnt->data_cmnd[0] != WRITE_FILEMARKS
-#endif
       ) {
     os_scsi_tapes[dev]->recover_count++;
     os_scsi_tapes[dev]->recover_erreg++;
@@ -950,7 +946,8 @@ static int osst_read_back_buffer_and_rewrite(OS_Scsi_Tape * STp, Scsi_Cmnd ** aS
 			 dev, frames, pending?" and one that was pending":"");
 
 	if (pending) {
-		memcpy((p = &buffer[frames * OS_DATA_SIZE]), STp->buffer->b_data, OS_DATA_SIZE);
+		osst_copy_from_buffer(STp->buffer, (p = &buffer[frames * OS_DATA_SIZE]));
+//		memcpy((p = &buffer[frames * OS_DATA_SIZE]), STp->buffer->b_data, OS_DATA_SIZE);
 #if DEBUG
 		if (debugging)
 			printk(OSST_DEB_MSG "osst%d: Pending logical block %d, data %x %x %x %x\n",
@@ -973,7 +970,8 @@ static int osst_read_back_buffer_and_rewrite(OS_Scsi_Tape * STp, Scsi_Cmnd ** aS
 			*aSCpnt = SCpnt;
 			return (-EIO);
 		}
-		memcpy(p, STp->buffer->b_data, OS_DATA_SIZE);
+		osst_copy_from_buffer(STp->buffer, p);
+//		memcpy(p, STp->buffer->b_data, OS_DATA_SIZE);
 #if DEBUG
 		if (debugging)
 			printk(OSST_DEB_MSG "osst%d: Read back logical block %d, data %x %x %x %x\n",
@@ -1017,7 +1015,8 @@ static int osst_read_back_buffer_and_rewrite(OS_Scsi_Tape * STp, Scsi_Cmnd ** aS
 			flag = 0;
 			if ( i >= frames + pending ) break;
 		}
-		memcpy(STp->buffer->b_data, p, OS_DATA_SIZE);
+		osst_copy_to_buffer(STp->buffer, p);
+//		memcpy(STp->buffer->b_data, p, OS_DATA_SIZE);
 		/*
 		 * IMPORTANT: for error recovery to work, _never_ queue frames with mixed frame type!
 		 */
@@ -1104,14 +1103,14 @@ static int osst_read_back_buffer_and_rewrite(OS_Scsi_Tape * STp, Scsi_Cmnd ** aS
 static int osst_reposition_and_retry(OS_Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt,
 					unsigned int block, unsigned int skip, int pending)
 {
-	Scsi_Cmnd * SCpnt     = * aSCpnt;
-	int	    dev       = TAPE_NR(STp->devt);
-	int	    attempts  = 1000 / skip;
-	int	    flag      = 1;
-	long	    startwait = jiffies;
-	unsigned char	    cmd[MAX_COMMAND_SIZE];
+	unsigned char	cmd[MAX_COMMAND_SIZE];
+	Scsi_Cmnd     * SCpnt     = * aSCpnt;
+	int		dev       = TAPE_NR(STp->devt);
+	int		attempts  = 1000 / skip;
+	int		flag      = 1;
+	long		startwait = jiffies;
 #if DEBUG
-	int	    dbg       = debugging;
+	int		dbg       = debugging;
 #endif
 
 	while (attempts && time_before(jiffies, startwait + 60*HZ)) {
@@ -1525,7 +1524,7 @@ static void osst_set_retries(OS_Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int retrie
 	(STp->buffer)->b_data[MODE_HEADER_LENGTH + 3] = retries;
 
 	if (debugging)
-	    printk(ST_DEB_MSG "osst%i: Setting number of retries on OnStream tape to %d\n", dev, retries);
+	    printk(OSST_DEB_MSG "osst%i: Setting number of retries on OnStream tape to %d\n", dev, retries);
 
 	SCpnt = osst_do_scsi(SCpnt, STp, cmd, cmd[4], STp->timeout, 0, TRUE);
 	*aSCpnt = SCpnt;
@@ -1681,7 +1680,8 @@ static int __osst_write_header(OS_Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int bloc
 	STp->write_type = OS_WRITE_HEADER;
 	osst_init_aux(STp, OS_FRAME_TYPE_HEADER, STp->logical_blk_num);
 	while (count--) {
-	    memcpy(STp->buffer->b_data, STp->header_cache, sizeof(os_header_t));
+	    osst_copy_to_buffer(STp->buffer, (unsigned char *)STp->header_cache);
+//	    memcpy(STp->buffer->b_data, STp->header_cache, sizeof(os_header_t));
 	    STp->buffer->buffer_bytes = sizeof(os_header_t);
 	    STp->dirty = 1;
 	    if (osst_flush_write_buffer(STp, aSCpnt, 0)) {
@@ -1809,7 +1809,7 @@ static int __osst_analyze_headers(OS_Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int b
 #endif
 		return 0;
 	}
-	header = (os_header_t *) STp->buffer->b_data;
+	header = (os_header_t *) STp->buffer->b_data;	/* warning: only first segment addressable */
 	aux = STp->buffer->aux;
 	if (aux->frame_type != OS_FRAME_TYPE_HEADER) {
 #if DEBUG
@@ -1876,6 +1876,18 @@ static int __osst_analyze_headers(OS_Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int b
 		printk(OSST_DEB_MSG "osst%i: Frame %d sets update_frame_counter to %d\n",
 				   dev, block, update_frame_cntr);
 #endif
+		if (STp->header_cache == NULL) {
+			if ((STp->header_cache = (os_header_t *)vmalloc(sizeof(os_header_t))) == NULL) {
+				printk(KERN_ERR "osst%i: Failed to allocate header cache\n", dev);
+				return 0;
+			}
+#if DEBUG
+			printk(OSST_DEB_MSG "osst%d: Allocated memory for header cache\n", dev);
+#endif
+		}
+		osst_copy_from_buffer(STp->buffer, (unsigned char *)STp->header_cache);
+		header = STp->header_cache;	/* further accesses from cached (full) copy */
+
 		STp->wrt_pass_cntr     = ntohs(header->partition[0].wrt_pass_cntr);
 		STp->first_data_ppos   = ntohl(header->partition[0].first_frame_ppos);
 		STp->eod_frame_ppos    = ntohl(header->partition[0].eod_frame_ppos);
@@ -1894,15 +1906,6 @@ static int __osst_analyze_headers(OS_Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int b
 	printk(OSST_DEB_MSG "osst%i: first mark on tape = %d, last = %d, eod frame = %d\n", 
 			  dev, STp->first_mark_ppos, STp->last_mark_ppos, STp->eod_frame_ppos);
 #endif
-		if (STp->header_cache == NULL) {
-			if ((STp->header_cache = (os_header_t *)vmalloc(sizeof(os_header_t))) == NULL) {
-				printk(KERN_ERR "osst%i: Failed to allocate header cache\n", dev);
-				return 0;
-			}
-#if DEBUG
-			printk(OSST_DEB_MSG "osst%d: Allocated memory for header cache\n", dev);
-#endif
-		}
 		if (header->minor_rev < 4 && STp->linux_media_version == 4) {
 			printk(OSST_DEB_MSG "osst%i: Moving filemark list to ADR 1.4 location\n", dev);
 			memcpy((void *)header->dat_fm_tab.fm_tab_ent, 
@@ -1930,7 +1933,7 @@ static int __osst_analyze_headers(OS_Scsi_Tape * STp, Scsi_Cmnd ** aSCpnt, int b
 			     htons(STp->filemark_cnt<OS_FM_TAB_MAX?STp->filemark_cnt:OS_FM_TAB_MAX)))
 			printk(KERN_WARNING "osst%i: Failed consistency check ADR 1.4 format\n", dev);
 
-		memcpy(STp->header_cache, header, sizeof(os_header_t));
+//		memcpy(STp->header_cache, header, sizeof(os_header_t));
 	}
 
 	return 1;
@@ -2431,7 +2434,7 @@ static int osst_flush_write_buffer(OS_Scsi_Tape *STp, Scsi_Cmnd ** aSCpnt, int f
   result = 0;
   if (STp->dirty == 1) {
 
-    offset   = (STp->buffer)->buffer_bytes;
+    offset   = STp->buffer->buffer_bytes;
     transfer = OS_FRAME_SIZE;
     blks     = 1;
     
@@ -2441,7 +2444,7 @@ static int osst_flush_write_buffer(OS_Scsi_Tape *STp, Scsi_Cmnd ** aSCpnt, int f
 			 dev, offset, transfer, blks);
 #endif
     if (offset < OS_DATA_SIZE)
-      memset((STp->buffer)->b_data + offset, 0, OS_DATA_SIZE - offset);
+      osst_zero_buffer_tail(STp->buffer);
 
     /* TODO: Error handling! */
     if (OS_NEED_POLL(STp->os_fw_rev))
@@ -3068,15 +3071,13 @@ static void osst_log_options(OS_Scsi_Tape *STp, ST_mode *STm, int dev)
 }
 
 
-static int osst_set_options(struct inode * inode, long options)
+static int osst_set_options(OS_Scsi_Tape *STp, long options)
 {
   int value;
   long code;
-  OS_Scsi_Tape *STp;
   ST_mode *STm;
-  int dev = TAPE_NR(inode->i_rdev);
+  int dev = TAPE_NR(STp->devt);
 
-  STp = os_scsi_tapes[dev];
   STm = &(STp->modes[STp->current_mode]);
   if (!STm->defined) {
     memcpy(STm, &(STp->modes[0]), sizeof(ST_mode));
@@ -4266,7 +4267,7 @@ static int osst_ioctl(struct inode * inode,struct file * file,
 
      if (mtc.mt_op == MTSETDRVBUFFER &&
 	 (mtc.mt_count & MT_ST_OPTIONS) != 0)
-       return osst_set_options(inode, mtc.mt_count);
+       return osst_set_options(STp, mtc.mt_count);
      if (mtc.mt_op == MTSETPART) {
 /*     if (!STp->can_partitions ||
 	   mtc.mt_count < 0 || mtc.mt_count >= ST_NBR_PARTITIONS)
@@ -4328,7 +4329,7 @@ static int osst_ioctl(struct inode * inode,struct file * file,
      if (_IOC_SIZE(cmd_in) != sizeof(struct mtget))
        return (-EINVAL);
 
-     mt_status.mt_type = MT_ISSCSI2;
+     mt_status.mt_type = MT_ISONSTREAM_SC;
      mt_status.mt_erreg = STp->recover_erreg << MT_ST_SOFTERR_SHIFT;
      mt_status.mt_dsreg =
        ((STp->block_size << MT_ST_BLKSIZE_SHIFT) & MT_ST_BLKSIZE_MASK) |
@@ -4656,8 +4657,78 @@ static int from_buffer(OSST_buffer *st_bp, char *ubp, int do_count)
     return 0;
 }
 
+/* Sets the tail of the buffer after fill point to zero.
+   Returns zero (success) or negative error code.        */
+static int osst_zero_buffer_tail(OSST_buffer *st_bp)
+{
+	int	i, offset, do_count, cnt;
+
+	for (i = 0, offset = st_bp->buffer_bytes;
+	     i < st_bp->sg_segs && offset >= st_bp->sg[i].length; i++)
+		offset -= st_bp->sg[i].length;
+	if (i == st_bp->sg_segs) {  /* Should never happen */
+		printk(KERN_WARNING "osst: Zero_buffer offset overflow.\n");
+		return (-EIO);
+	}
+	for (do_count = OS_DATA_SIZE - st_bp->read_pointer;
+	     i < st_bp->sg_segs && do_count > 0; i++) {
+		cnt = st_bp->sg[i].length - offset < do_count ?
+		      st_bp->sg[i].length - offset : do_count ;
+		memset(st_bp->sg[i].address + offset, 0, cnt);
+		do_count -= cnt;
+		offset = 0;
+	}
+	if (do_count) {  /* Should never happen */
+		printk(KERN_WARNING "osst: Zero_buffer overflow (left %d).\n", do_count);
+		return (-EIO);
+	}
+	return 0;
+}
+
+/* Copy a osst 32K block of memory into the buffer.
+   Returns zero (success) or negative error code.  */
+static int osst_copy_to_buffer(OSST_buffer *st_bp, unsigned char *ptr)
+{
+	int	i, cnt, do_count = OS_DATA_SIZE;
+
+	for (i = 0; i < st_bp->sg_segs && do_count > 0; i++) {
+		cnt = st_bp->sg[i].length < do_count ?
+		      st_bp->sg[i].length : do_count ;
+		memcpy(st_bp->sg[i].address, ptr, cnt);
+		do_count -= cnt;
+		ptr      += cnt;
+	}
+	if (do_count || i != st_bp->sg_segs-1) {  /* Should never happen */
+		printk(KERN_WARNING "osst: Copy_to_buffer overflow (left %d at sg %d).\n",
+					 do_count, i);
+		return (-EIO);
+	}
+	return 0;
+}
+
+/* Copy a osst 32K block of memory from the buffer.
+   Returns zero (success) or negative error code.  */
+static int osst_copy_from_buffer(OSST_buffer *st_bp, unsigned char *ptr)
+{
+	int	i, cnt, do_count = OS_DATA_SIZE;
+
+	for (i = 0; i < st_bp->sg_segs && do_count > 0; i++) {
+		cnt = st_bp->sg[i].length < do_count ?
+		      st_bp->sg[i].length : do_count ;
+		memcpy(ptr, st_bp->sg[i].address, cnt);
+		do_count -= cnt;
+		ptr      += cnt;
+	}
+	if (do_count || i != st_bp->sg_segs-1) {  /* Should never happen */
+		printk(KERN_WARNING "osst: Copy_from_buffer overflow (left %d at sg %d).\n",
+					 do_count, i);
+		return (-EIO);
+	}
+	return 0;
+}
+
 
-/* Module housekeeping -- most of this stays with st.c -- osst setup should be simple */
+/* Module housekeeping */
 
 #ifndef MODULE
 /* Set the boot options. Syntax: st=xxx,yyy
@@ -4702,12 +4773,9 @@ static int osst_attach(Scsi_Device * SDp){
    int mode;
 #endif
 
-   if (SDp->type != TYPE_TAPE)
+   if (SDp->type != TYPE_TAPE || !OSST_SUPPORTS(SDp))
        return 1;
 
-   if (! OSST_SUPPORTS (SDp))
-       return 1;
-	
    if (osst_template.nr_dev >= osst_template.dev_max) {
        SDp->attached--;
        return 1;
@@ -4830,8 +4898,8 @@ static int osst_detect(Scsi_Device * SDp)
   /* We are willing to drive OnStream SC-x0 as well as the
    * IDE, ParPort, USB variants, if accessible by emulation
    * layer (ide-scsi, usb-storage, ...) */
-  if (! OSST_SUPPORTS (SDp))
-      return 0;
+  if (!OSST_SUPPORTS(SDp)) return 0;
+
   printk(KERN_WARNING
 	 "Detected OnStream scsi tape osst%d at scsi%d, channel %d, id %d, lun %d\n",
 	 osst_template.dev_noticed++,

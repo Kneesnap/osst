@@ -1,7 +1,7 @@
-diff -uNr linux.onstream/Documentation/Configure.help
---- linux/Documentation/Configure.help	Tue Jun 20 14:54:54 2000
-+++ linux.onstream/Documentation/Configure.help	Wed Jun 21 01:38:50 2000
-@@ -3967,6 +3967,24 @@
+diff -ur linux-2.2.16-ref/Documentation/Configure.help linux-2.2.16/Documentation/Configure.help
+--- linux-2.2.16-ref/Documentation/Configure.help	Wed Jun 21 20:46:04 2000
++++ linux-2.2.16/Documentation/Configure.help	Mon Jun 12 19:19:47 2000
+@@ -3622,6 +3622,24 @@
    module, say M here and read Documentation/modules.txt and
    Documentation/scsi.txt .
  
@@ -13,7 +13,7 @@ diff -uNr linux.onstream/Documentation/Configure.help
 +  For more information, you may have a look at the SCSI-HOWTO
 +  ftp://metalab.unc.edu/pub/Linux/docs/HOWTO  and
 +  drivers/scsi/README.osst  in the kernel source. 
-+  Most info may be found on http://linux.onstream.nl/test/
++  Most info may be found on http://linux1.onstream.nl/test/
 +  Please also have a look at the standard st docu, as most of it
 +  applies to osst as well.
 +
@@ -26,26 +26,26 @@ diff -uNr linux.onstream/Documentation/Configure.help
  SCSI CDROM support
  CONFIG_BLK_DEV_SR
    If you want to use a SCSI CDROM under Linux, say Y and read the
-diff -uNr linux.onstream/MAINTAINERS
---- linux/MAINTAINERS	Tue Jun 20 14:54:54 2000
-+++ linux.onstream/MAINTAINERS	Wed Jun 21 01:38:50 2000
-@@ -725,6 +725,13 @@
+diff -ur linux-2.2.16-ref/MAINTAINERS linux-2.2.16/MAINTAINERS
+--- linux-2.2.16-ref/MAINTAINERS	Wed Jun 21 20:46:04 2000
++++ linux-2.2.16/MAINTAINERS	Mon Jun 12 19:19:47 2000
+@@ -662,6 +662,13 @@
  W:	http://www.linuxtr.net
  S:	Maintained
  
 +ONSTREAM SCSI TAPE DRIVER
 +P:	Willem Riede
 +M:	wriede@monmouth.com
-+L:	osst@linux.onstream.nl
++L:	osst@linux1.onstream.nl
 +L:	linux-scsi@vger.rutgers.edu
 +S:	Maintained
 +
  OPL3-SA2, SA3, and SAx DRIVER
  P:	Scott Murray
  M:	scott@spiteful.org
-diff -uNr linux.onstream/drivers/scsi/Config.in
---- linux/drivers/scsi/Config.in	Sun Jun 18 19:44:51 2000
-+++ linux.onstream/drivers/scsi/Config.in	Wed Jun 21 01:38:50 2000
+diff -ur linux-2.2.16-ref/drivers/scsi/Config.in linux-2.2.16/drivers/scsi/Config.in
+--- linux-2.2.16-ref/drivers/scsi/Config.in	Wed May  3 20:16:44 2000
++++ linux-2.2.16/drivers/scsi/Config.in	Mon Jun 12 19:19:47 2000
 @@ -2,6 +2,7 @@
  
  dep_tristate 'SCSI disk support' CONFIG_BLK_DEV_SD $CONFIG_SCSI
@@ -54,9 +54,9 @@ diff -uNr linux.onstream/drivers/scsi/Config.in
  dep_tristate 'SCSI CD-ROM support' CONFIG_BLK_DEV_SR $CONFIG_SCSI
  if [ "$CONFIG_BLK_DEV_SR" != "n" ]; then
    bool '  Enable vendor-specific extensions (for SCSI CDROM)' CONFIG_BLK_DEV_SR_VENDOR
-diff -uNr linux.onstream/drivers/scsi/Makefile
---- linux/drivers/scsi/Makefile	Sun Jun 18 19:44:46 2000
-+++ linux.onstream/drivers/scsi/Makefile	Wed Jun 21 01:38:50 2000
+diff -ur linux-2.2.16-ref/drivers/scsi/Makefile linux-2.2.16/drivers/scsi/Makefile
+--- linux-2.2.16-ref/drivers/scsi/Makefile	Wed May  3 20:16:44 2000
++++ linux-2.2.16/drivers/scsi/Makefile	Mon Jun 12 19:19:47 2000
 @@ -57,6 +57,14 @@
    endif
  endif
@@ -72,10 +72,10 @@ diff -uNr linux.onstream/drivers/scsi/Makefile
  ifeq ($(CONFIG_BLK_DEV_SD),y)
  L_OBJS += sd.o sd_ioctl.o
  else
-diff -uNr linux.onstream/drivers/scsi/hosts.c
---- linux/drivers/scsi/hosts.c	Tue Jun 20 14:54:56 2000
-+++ linux.onstream/drivers/scsi/hosts.c	Wed Jun 21 01:38:50 2000
-@@ -942,6 +942,9 @@
+diff -ur linux-2.2.16-ref/drivers/scsi/hosts.c linux-2.2.16/drivers/scsi/hosts.c
+--- linux-2.2.16-ref/drivers/scsi/hosts.c	Wed Jun 21 20:46:20 2000
++++ linux-2.2.16/drivers/scsi/hosts.c	Mon Jun 12 19:19:47 2000
+@@ -882,6 +882,9 @@
  #ifdef CONFIG_CHR_DEV_ST
      scsi_register_device(&st_template);
  #endif
@@ -85,10 +85,10 @@ diff -uNr linux.onstream/drivers/scsi/hosts.c
  #ifdef CONFIG_CHR_DEV_SG
      scsi_register_device(&sg_template);
  #endif
-diff -uNr linux.onstream/drivers/scsi/hosts.h
---- linux/drivers/scsi/hosts.h	Tue Jun 20 17:43:17 2000
-+++ linux.onstream/drivers/scsi/hosts.h	Wed Jun 21 01:38:50 2000
-@@ -468,6 +468,7 @@
+diff -ur linux-2.2.16-ref/drivers/scsi/hosts.h linux-2.2.16/drivers/scsi/hosts.h
+--- linux-2.2.16-ref/drivers/scsi/hosts.h	Wed Jun 21 20:46:05 2000
++++ linux-2.2.16/drivers/scsi/hosts.h	Mon Jun 12 19:39:27 2000
+@@ -458,6 +458,7 @@
  
  extern struct Scsi_Device_Template sd_template;
  extern struct Scsi_Device_Template st_template;
@@ -105,10 +105,10 @@ diff -uNr linux.onstream/drivers/scsi/osst_detect.h
 +			       memcmp (SDp->model, "DI-", 3) && \
 +			       memcmp (SDp->model, "DP-", 3) && \
 +			       memcmp (SDp->model, "USB", 3) ) ) )
-diff -uNr linux.onstream/drivers/scsi/scsi.h
---- linux/drivers/scsi/scsi.h	Tue Jun 20 17:43:17 2000
-+++ linux.onstream/drivers/scsi/scsi.h	Wed Jun 21 01:38:50 2000
-@@ -636,7 +636,7 @@
+diff -ur linux-2.2.16-ref/drivers/scsi/scsi.h linux-2.2.16/drivers/scsi/scsi.h
+--- linux-2.2.16-ref/drivers/scsi/scsi.h	Tue Jan  4 13:12:21 2000
++++ linux-2.2.16/drivers/scsi/scsi.h	Mon Jun 12 19:39:27 2000
+@@ -634,7 +634,7 @@
  extern int scsi_mlqueue_finish(struct Scsi_Host * host, Scsi_Device * device);
  
  
@@ -117,10 +117,10 @@ diff -uNr linux.onstream/drivers/scsi/scsi.h
  #include "hosts.h"
  
  static Scsi_Cmnd * end_scsi_request(Scsi_Cmnd * SCpnt, int uptodate, int sectors)
-diff -uNr linux.onstream/drivers/scsi/st.c
---- linux/drivers/scsi/st.c	Tue Jun 20 14:54:56 2000
-+++ linux.onstream/drivers/scsi/st.c	Wed Jun 21 01:42:19 2000
-@@ -57,6 +57,8 @@
+diff -ur linux-2.2.16-ref/drivers/scsi/st.c linux-2.2.16/drivers/scsi/st.c
+--- linux-2.2.16-ref/drivers/scsi/st.c	Wed May  3 20:16:45 2000
++++ linux-2.2.16/drivers/scsi/st.c	Wed Jun 14 19:48:05 2000
+@@ -55,6 +55,8 @@
  
  #include "constants.h"
  
@@ -129,7 +129,7 @@ diff -uNr linux.onstream/drivers/scsi/st.c
  #ifdef MODULE
  MODULE_PARM(buffer_kbs, "i");
  MODULE_PARM(write_threshold_kbs, "i");
-@@ -3359,6 +3361,18 @@
+@@ -3357,6 +3359,18 @@
  #endif
  
  
@@ -148,7 +148,7 @@ diff -uNr linux.onstream/drivers/scsi/st.c
  static struct file_operations st_fops = {
     NULL,            /* lseek - default */
     st_read,         /* read - general block-dev read */
-@@ -3381,6 +3395,8 @@
+@@ -3379,6 +3393,8 @@
  
     if (SDp->type != TYPE_TAPE)
         return 1;
@@ -157,18 +157,18 @@ diff -uNr linux.onstream/drivers/scsi/st.c
  
     if (st_template.nr_dev >= st_template.dev_max) {
         SDp->attached--;
-@@ -3474,6 +3490,8 @@
+@@ -3452,6 +3468,8 @@
  static int st_detect(Scsi_Device * SDp)
  {
    if(SDp->type != TYPE_TAPE) return 0;
 +  if (!st_supported(SDp))
-+       return 0;
++      return 0;
  
    printk(KERN_WARNING
  	 "Detected scsi tape st%d at scsi%d, channel %d, id %d, lun %d\n",
-diff -uNr linux.onstream/include/linux/blk.h
---- linux/include/linux/blk.h	Tue Jun 20 17:23:20 2000
-+++ linux.onstream/include/linux/blk.h	Wed Jun 21 01:38:50 2000
+diff -ur linux-2.2.16-ref/include/linux/blk.h linux-2.2.16/include/linux/blk.h
+--- linux-2.2.16-ref/include/linux/blk.h	Wed Jun 21 20:46:07 2000
++++ linux-2.2.16/include/linux/blk.h	Mon Jun 12 19:38:51 2000
 @@ -193,6 +193,14 @@
  #define DEVICE_ON(device)
  #define DEVICE_OFF(device)
@@ -193,10 +193,10 @@ diff -uNr linux.onstream/include/linux/blk.h
  #if !defined(IDE_DRIVER)
  
  #ifndef CURRENT
-diff -uNr linux.onstream/include/linux/major.h
---- linux/include/linux/major.h	Sun Jun 18 19:44:45 2000
-+++ linux.onstream/include/linux/major.h	Wed Jun 21 01:38:50 2000
-@@ -128,6 +128,8 @@
+diff -ur linux-2.2.16-ref/include/linux/major.h linux-2.2.16/include/linux/major.h
+--- linux-2.2.16-ref/include/linux/major.h	Wed Jun 21 20:46:07 2000
++++ linux-2.2.16/include/linux/major.h	Mon Jun 12 19:19:47 2000
+@@ -121,6 +121,8 @@
  #define UNIX98_PTY_MAJOR_COUNT	8
  #define UNIX98_PTY_SLAVE_MAJOR	(UNIX98_PTY_MASTER_MAJOR+UNIX98_PTY_MAJOR_COUNT)
  
@@ -205,10 +205,30 @@ diff -uNr linux.onstream/include/linux/major.h
  /*
   * Tests for SCSI devices.
   */
-diff -uNr linux.onstream/init/main.c
---- linux/init/main.c	Tue Jun 20 14:54:56 2000
-+++ linux.onstream/init/main.c	Wed Jun 21 01:38:51 2000
-@@ -217,6 +217,7 @@
+diff -ur linux-2.2.16-ref/include/linux/mtio.h linux-2.2.16/include/linux/mtio.h
+--- linux-2.2.16-ref/include/linux/mtio.h	Mon Dec 28 01:18:31 1998
++++ linux-2.2.16/include/linux/mtio.h	Thu Jun 15 19:34:40 2000
+@@ -105,6 +105,8 @@
+ #define MT_ISEVEREX_FT40A	0x32	/* Everex FT40A (QIC-40) */
+ #define MT_ISDDS1		0x51	/* DDS device without partitions */
+ #define MT_ISDDS2		0x52	/* DDS device with partitions */
++#define MT_ISONSTREAM_SC        0x61	/* OnStream SCSI tape drives (SC-x0)
++					   and SCSI emulated (DI, DP, USB) */
+ #define MT_ISSCSI1		0x71	/* Generic ANSI SCSI-1 tape unit */
+ #define MT_ISSCSI2		0x72	/* Generic ANSI SCSI-2 tape unit */
+ 
+@@ -134,6 +136,7 @@
+ 	{MT_ISWT5099EEN24,	"Wangtek 5099-een24, 60MB"}, \
+ 	{MT_ISTEAC_MT2ST,	"Teac MT-2ST 155mb data cassette drive"}, \
+ 	{MT_ISEVEREX_FT40A,	"Everex FT40A, QIC-40"}, \
++	{MT_ISONSTREAM_SC,      "OnStream SC-, DI-, DP-, or USB tape drive"}, \
+ 	{MT_ISSCSI1,		"Generic SCSI-1 tape"}, \
+ 	{MT_ISSCSI2,		"Generic SCSI-2 tape"}, \
+ 	{0, NULL} \
+diff -ur linux-2.2.16-ref/init/main.c linux-2.2.16/init/main.c
+--- linux-2.2.16-ref/init/main.c	Wed Jun 21 20:46:07 2000
++++ linux-2.2.16/init/main.c	Mon Jun 12 19:19:47 2000
+@@ -212,6 +212,7 @@
  #endif
  extern void floppy_setup(char *str, int *ints);
  extern void st_setup(char *str, int *ints);
@@ -216,7 +236,7 @@ diff -uNr linux.onstream/init/main.c
  extern void st0x_setup(char *str, int *ints);
  extern void advansys_setup(char *str, int *ints);
  extern void tmc8xx_setup(char *str, int *ints);
-@@ -859,6 +860,9 @@
+@@ -828,6 +829,9 @@
  #endif
  #ifdef CONFIG_CHR_DEV_ST
  	{ "st=", st_setup },
