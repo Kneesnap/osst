@@ -23,7 +23,7 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.9.4p0";
+const char * osst_version = "0.9.4p1";
 
 /* The "failure to reconnect" firmware bug */
 #define OSST_FW_NEED_POLL_MIN 10602 /*(107A)*/
@@ -2763,22 +2763,46 @@ static ssize_t osst_write(struct file * filp, const char * buf, size_t count, lo
 		STps->rw = ST_IDLE;
 	}
 	else if (STps->rw != ST_WRITING) {
-		if (!STp->header_ok || (STps->drv_file == 0 && STps->drv_block == 0)) {
+		/* Are we totally rewriting this tape? */
+		if (!STp->header_ok || STp->first_frame_position == STp->first_data_ppos ||
+      		            (STps->drv_file == 0 && STps->drv_block == 0)) {
 			STp->wrt_pass_cntr++;
 #if DEBUG
 			printk(OSST_DEB_MSG "osst%d: Allocating next write pass counter: %d\n",
-				  dev, STp->wrt_pass_cntr);
+						  dev, STp->wrt_pass_cntr);
 #endif
 			osst_reset_header(STp, &SRpnt);
 			STps->drv_file = STps->drv_block = STp->logical_blk_num = 0;
-		} else if (STp->fast_open && osst_verify_position(STp, &SRpnt)) {
-			retval = (-EIO);
-			goto out;
-		} else if (STps->drv_file != 0 && STps->drv_file < STp->filemark_cnt) {
-			printk (KERN_WARNING "osst%d: Overwriting data with old write pass counter %d\n",
-				dev, STp->wrt_pass_cntr);
-			printk (KERN_WARNING "osst%d: may lead to stale data being accepted on reading back!\n",
-				dev);
+		}
+		/* Do we know where we'll be writing on the tape? */
+		else {
+			if ((STp->fast_open && osst_verify_position(STp, &SRpnt)) ||
+			  		STps->drv_file < 0 || STps->drv_block < 0) {
+				if (STp->first_frame_position == STp->eod_frame_ppos) {
+			  		STps->drv_file = STp->filemark_cnt;
+			  		STps->drv_block = 0;
+				}
+				else {
+					/* We have no idea where the tape is positioned - give up */
+#if 1 //DEBUG
+					printk(OSST_DEB_MSG "osst%d: Cannot write at indeterminate position.\n", dev);
+#endif
+					retval = (-EIO);
+					goto out;
+				}
+      			}	  
+			if (STps->drv_file > 0 && STps->drv_file < STp->filemark_cnt) {
+				STp->filemark_cnt = STps->drv_file;
+				STp->last_mark_ppos = ntohl(STp->header_cache->dat_fm_tab.fm_tab_ent[STp->filemark_cnt-1]);
+				printk(KERN_WARNING
+					"osst%d: Overwriting file %d with old write pass counter %d\n",
+						dev, STps->drv_file, STp->wrt_pass_cntr);
+				printk(KERN_WARNING
+					"osst%d: may lead to stale data being accepted on reading back!\n",
+						dev);
+printk(OSST_DEB_MSG "osst%d: resetting filemark count to %d and last mark ppos to %d\n",
+      		dev, STp->filemark_cnt, STp->last_mark_ppos);
+			}
 		}
 		STp->fast_open = FALSE;
 	}
@@ -3381,7 +3405,7 @@ static int osst_int_ioctl(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, unsigned i
 	unsigned char cmd[MAX_COMMAND_SIZE];
 	Scsi_Request * SRpnt = * aSRpnt;
 	ST_partstat * STps;
-	int fileno, blkno, at_sm, undone, logical_blk_num;
+	int fileno, blkno, at_sm, logical_blk_num;
 	int datalen = 0, direction = SCSI_DATA_NONE;
 	int dev = TAPE_NR(STp->devt);
 
@@ -3704,78 +3728,18 @@ os_bypass:
 				ioctl_result = 0;
 		}
 
+	} else if (cmd_in == MTBSF || cmd_in == MTBSFM || cmd_in == MTFSF || cmd_in == MTFSFM ||
+		   cmd_in == MTBSR || cmd_in == MTFSR || cmd_in == MTWEOF || cmd_in == MTEOM) {
+		STps->drv_file = STps->drv_block = (-1);
+		STps->eof = ST_NOEOF;
+	} else if (cmd_in == MTERASE) {
+		STp->header_ok = 0;
 	} else if (SRpnt) {  /* SCSI command was not completely successful. */
 		if (SRpnt->sr_sense_buffer[2] & 0x40) {
-			if (cmd_in != MTBSF && cmd_in != MTBSFM &&
-			    cmd_in != MTBSR && cmd_in != MTBSS)
-			    STps->eof = ST_EOM_OK;
+			STps->eof = ST_EOM_OK;
 			STps->drv_block = 0;
 		}
-
-		undone = ((SRpnt->sr_sense_buffer[3] << 24) +
-			  (SRpnt->sr_sense_buffer[4] << 16) +
-			  (SRpnt->sr_sense_buffer[5] << 8) +
-			   SRpnt->sr_sense_buffer[6] );
-		if (cmd_in == MTWEOF &&
-		    (SRpnt->sr_sense_buffer[0] & 0x70) == 0x70 &&
-		    (SRpnt->sr_sense_buffer[2] & 0x4f) == 0x40 &&
-		    ((SRpnt->sr_sense_buffer[0] & 0x80) == 0 || undone == 0)) {
-			ioctl_result = 0;  /* EOF written succesfully at EOM */
-			if (fileno >= 0)
-				fileno++;
-			STps->drv_file = fileno;
-			STps->eof = ST_NOEOF;
-		}
-		else if ( (cmd_in == MTFSF) || (cmd_in == MTFSFM) ) {
-			 if (fileno >= 0)
-			    STps->drv_file = fileno - undone ;
-			 else
-			    STps->drv_file = fileno;
-			 STps->drv_block = 0;
-			 STps->eof = ST_NOEOF;
-		}
-		else if ( (cmd_in == MTBSF) || (cmd_in == MTBSFM) ) {
-			if (fileno >= 0)
-				STps->drv_file = fileno + undone ;
-			else
-				STps->drv_file = fileno;
-			STps->drv_block = 0;
-			STps->eof = ST_NOEOF;
-		}
-		else if (cmd_in == MTFSR) {
-			if (SRpnt->sr_sense_buffer[2] & 0x80) { /* Hit filemark */
-				if (STps->drv_file >= 0)
-					STps->drv_file++;
-				STps->drv_block = 0;
-				STps->eof = ST_FM;
-			}
-			else {
-				if (blkno >= undone)
-					STps->drv_block = blkno - undone;
-				else
-					STps->drv_block = (-1);
-				STps->eof = ST_NOEOF;
-			}
-		}
-		else if (cmd_in == MTBSR) {
-			if (SRpnt->sr_sense_buffer[2] & 0x80) { /* Hit filemark */
-				STps->drv_file--;
-	 			STps->drv_block = (-1);
-			}
-			else {
-				if (blkno >= 0)
-	 				STps->drv_block = blkno + undone;
-	 			else
-	 				STps->drv_block = (-1);
-			}
-			STps->eof = ST_NOEOF;
-		}
-		else if (cmd_in == MTEOM) {
-			STps->drv_file = (-1);
-			STps->drv_block = (-1);
-			STps->eof = ST_EOD;
-		}
-		else if (chg_eof)
+		if (chg_eof)
 			STps->eof = ST_NOEOF;
 
 		if ((SRpnt->sr_sense_buffer[2] & 0x0f) == BLANK_CHECK)
