@@ -19,14 +19,20 @@ driver for the OnStream SC-30/50 tape devices.
 The kernelspace solution to drive the SC-x0 has been created by copying the
 original scsi tape driver <TT>st</TT> of Kai Mikasara to <TT>osst</TT> and
 changing it in order to support the OnStream device. When being loaded, it
-allows to access the OnStream tape via <TT>/dev/st?</TT> just like normal
+allows to access the OnStream tape via <TT>/dev/osst?</TT> just like normal
 tapes using <TT>mt</TT>, <TT>tar</TT>, <TT>amanda</TT>, ... <Br>
 The driver currently supports 2.2.1x kernels. A 2.4 version is also
-available.
+available.<Br>
+The driver also supports the OnStream DI-30 and the USB30 via ide-scsi and
+usb-storage respectively. For the latter, you need a 2.4.0 kernel (or newer)
+and enable the Freecom support in the usb-storage driver.
 
 <H3>Status</H3>
-<P>The driver does not have production quality yet and a few problems are
-known or to be expected.<Br>
+<P>The driver has been used by lots of people and should be considered
+stable. The version with a fxied blocksize of 32k has been integrated into
+the mainstream kernel (2.4.0) and will soon be upgraded to the version that
+supports variable blocksize.
+<Br>
 DISCLAIMER: If you test it, you do it on your own risk. If the driver
 crashes your kernel (unlikely, but possible) and you loose important data,
 you are on your own. If you use the driver to backup your data and need to
