@@ -19,19 +19,20 @@
 <Center><H1>OnStream Linux SCSI tape driver development</H1></Center>
 <A Name="intro"></A>
 <P>This page coordinates the development of a Linux tape driver for the
- OnStream SC-30/SC-50 devices. The target is to create a kernel driver to
- provide an st-like interface to the userspace. The driver will be put under
- GPL and submitted to the kernel folks for inclusion into the mainstream
- kernel.</P>
+ OnStream SC-30/SC-50 and (via the SCSI layer adapters ide-scsi, usb-storage
+ and sbp2) the IDE-30, USB-30 and FW-30 tape devices. A kernel driver has
+ been created to provide an st-like interface to the userspace. The driver
+ is put under GPL and has been accepted into the mainstream Linux kernel
+ as of 2.4.0 / 2.2.20pre.</P>
 <P>This project is a joint effort of indiviuals that try to get their
  OnStream SC-x0 ADR SCSI tape drive to run with Linux. They are supported by
  <A HRef="http://www.onstream.com/">OnStream</A> and <A HRef="http://www.suse.com/">SuSE</A>.
  This machine is dedicated for the support of this and is located in
  Eindhoven, NL. It should be reachable via the IP address
  <TT>195.193.200.24</TT> and 
- -- in a few days -- via the name <TT>linux1.onstream.nl</TT></A>.
+ <TT>linux1.onstream.nl</TT></A>.
 </P>
-<P>This web page is a trial to coordinate this effort. Besides from pointers
+<P>This web page is for coordination of this effort. Besides from pointers
  to relevant information or software, it should also give a short
  summary of the tools for the developers which are used. It does not provide
  software for the end user! As soon as an alpha version is out there, it will

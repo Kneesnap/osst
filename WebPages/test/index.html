@@ -14,7 +14,9 @@
 Back</A>
 <Center><H1>OSST tester's page</H1></Center>
 This page should give some info to potential testers of the kernelspace
-driver for the OnStream SC-30/50 tape devices.
+driver for the OnStream SC-30/50 tape devices. Via ide-tape, usb-storage and
+sbp2, also the DI-30, USB30 and FW-30 can be driven. The latter two require
+a 2.4 kernel.
 <H3>Driver</H3>
 The kernelspace solution to drive the SC-x0 has been created by copying the
 original scsi tape driver <TT>st</TT> of Kai Mikasara to <TT>osst</TT> and
@@ -23,9 +25,6 @@ allows to access the OnStream tape via <TT>/dev/osst?</TT> just like normal
 tapes using <TT>mt</TT>, <TT>tar</TT>, <TT>amanda</TT>, ... <Br>
 The driver currently supports 2.2.1x kernels. A 2.4 version is also
 available.<Br>
-The driver also supports the OnStream DI-30 and the USB30 via ide-scsi and
-usb-storage respectively. For the latter, you need a 2.4.0 kernel (or newer)
-and enable the Freecom support in the usb-storage driver.
 
 <H3>Status</H3>
 <P>The driver has been used by lots of people and should be considered
@@ -151,7 +150,8 @@ Reflected the ability to use multiple blocksizes in READMEs.</DD>
 
 <H3>Known problems as of <B>0.8.13 / 0.9.8</B></H3>
 <UL>
-<LI>Currently none.</LI>
+<LI>Arkeia has its own handling of filemarks which breaks osst. Some patches
+to work around this are tested at the moment.</LI>
 </UL>
 
 <H3>Feedback</H3>
