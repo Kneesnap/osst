@@ -44,6 +44,7 @@
   Changes
   =======
 
+  0.9.13Beta 2000/3/03	Use polling mode only if needed, because of buggy firmware.
   0.9.12Beta 2000/3/01  Changed skip on read to 40.
 	(KG)		Check for Firmware and save revision
 			For new firmware (>=1.06): Use the SkipLocate() function for 
@@ -111,6 +112,10 @@
  * the firmware (mine: 108D) will not reconnect on writes, if this is
  * larger than 50 */
 #define MAX_FILL_BUFF 50
+/* The "failure to reconnect" firmware bug */
+#define OS_NEED_POLL_MIN 10602 /*(107A)*/
+#define OS_NEED_POLL_MAX 10708 /*(108D)*/
+#define OS_NEED_POLL(x) ((x) >= OS_NEED_POLL_MIN && (x) <= OS_NEED_POLL_MAX)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -144,7 +149,7 @@
 #define SG_GET_SG_TABLESIZE  0x227F
 #define SG_SET_COMMAND_Q     0x2271 
 
-#define VERSION "0.9.12Beta"
+#define VERSION "0.9.13Beta"
 #define VENDORID "LINX"
 
 const ssize_t cbSGHeader = sizeof(sg_header);
@@ -310,6 +315,7 @@ public:
 	UINT8 ASCQ(void);
 	
 	OnStreamError GetLastError(void);
+	UINT32 FWRev(void);
 
 private:
 	sg_header SG;
@@ -449,6 +455,7 @@ OnStream::OnStream() {
 	pTempBuffer     = NULL;
 	nPacketID       = 1;
 	nFD             = -1;
+	Firmware	= 0;
 	LastError       = oseNoError;
 
 	memset(&SG, 0, cbSGHeader);
@@ -486,6 +493,10 @@ OnStream::~OnStream() {
 	if (-1 != nFD) {
 		CloseDevice();
 	}
+}
+
+inline UINT32 OnStream::FWRev(void) {
+	return Firmware;
 }
 
 void OnStream::NeedCommandBytes(ssize_t nBytes) {
@@ -1882,7 +1893,8 @@ int main(int argc, char* argv[]) {
 			return 1;
 		}
 		WaitForReady(pOnStream);
-		pOnStream->WaitPosition (CurrentFrame, 300);
+		if (OS_NEED_POLL(pOnStream->FWRev()))
+			pOnStream->WaitPosition (CurrentFrame, 300);
 
 		/* TODO: Check frames 6-9, 2990-2994, if 5 is invalid */
 		if (false == pOnStream->Read(buf)) {
@@ -1982,7 +1994,8 @@ int main(int argc, char* argv[]) {
 			}
 			pOnStream->Flush();
 			WaitForReady(pOnStream);
-			pOnStream->WaitPosition(CurrentFrame, 100, 1);
+			if (OS_NEED_POLL(pOnStream->FWRev()))
+			    pOnStream->WaitPosition(CurrentFrame, 100, 1);
 			
 			Debug(2, "(0x%03x - 0x%03x)...", second_cfg, second_cfg+4);
 			CurrentFrame = second_cfg;
@@ -2005,7 +2018,8 @@ int main(int argc, char* argv[]) {
 			}
 			pOnStream->Flush();
 			WaitForReady(pOnStream);
-			pOnStream->WaitPosition (CurrentFrame, 100, 1);
+			if (OS_NEED_POLL(pOnStream->FWRev()))
+			    pOnStream->WaitPosition (CurrentFrame, 100, 1);
 			Debug(2, "Done.\nRewinding to start of user data (Frame = %d)\n", StartFrame);
 
 			if (false == pOnStream->Locate(StartFrame, true)) {
@@ -2016,7 +2030,8 @@ int main(int argc, char* argv[]) {
 			WaitForReady(pOnStream);
 			pOnStream->ShowPosition(NULL, NULL);
 			CurrentFrame = StartFrame;
-			//pOnStream->WaitPosition (CurrentFrame, 50);
+			//if (OS_NEED_POLL(pOnStream->FWRev()))
+			    // pOnStream->WaitPosition (CurrentFrame, 50);
 
 			// Setup AuxFrame for user data
 			memset(&AuxFrame, 0, sizeof(AuxFrame));
@@ -2079,7 +2094,11 @@ int main(int argc, char* argv[]) {
 					Debug(10, "Read %d bytes\n", rc);
 					Debug(10, "Writing block %ld\n", CurrentFrame);
 				}
-				CurrentSense = pOnStream->WaitPosition (CurrentFrame, 30, MAX_FILL_BUFF);
+							    
+				if (OS_NEED_POLL(pOnStream->FWRev()))
+					CurrentSense = pOnStream->WaitPosition (CurrentFrame, 30, MAX_FILL_BUFF);
+				else
+					CurrentSense = SNoSense;
 				if (CurrentSense == SNoSense) {
 					if (false == pOnStream->Write(buf, 33280)) {
 						Debug(0, "main: write failed: '%s'\n", szOnStreamErrors[pOnStream->GetLastError()]);
@@ -2269,7 +2288,10 @@ int main(int argc, char* argv[]) {
 			CurrentSeqNo = 0;
 
 			while (!eof && !signalled) {
-				CurrentSense = pOnStream->WaitPosition (CurrentFrame);
+				if (OS_NEED_POLL(pOnStream->FWRev()))
+					CurrentSense = pOnStream->WaitPosition (CurrentFrame);
+				else
+					CurrentSense = SNoSense;
 				if (CurrentSense == SNoSense) {
 					if (false == pOnStream->Read(buf)) {
 						Debug(0, "main: Read 0 failed: '%s'\n", szOnStreamErrors[pOnStream->GetLastError()]);

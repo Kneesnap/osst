@@ -27,7 +27,7 @@ DEFS=-D$(HOST)
 
 ifeq ($(DEBUG),yes)
 DEFS+=-DDEBUG
-OPTFLAGS=-g
+OPTFLAGS=-g -O
 WFLAGS=-Wall
 ifeq ($(HOST),LINUX)
 LFLAGS+=-g
