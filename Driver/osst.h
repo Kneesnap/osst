@@ -462,13 +462,14 @@ typedef struct {
   int recover_count;            /* from tape opening */
   int recover_erreg;            /* from last status call */
   /*
-   * OnStream flags
+   * OnStream specific data
    */
   int	   os_fw_rev;			       /* the firmware revision * 10000 */
-  int      raw;                                /* OnStream raw access (32.5KB block size) */
-  int      logical_blk_num;                    /* logical block number */
-  int	   logical_blk_in_buffer;	       /* flag that the black as per logical_blk_num
+  unsigned char  raw;                          /* flag OnStream raw access (32.5KB block size) */
+  unsigned char  poll;                         /* flag that this drive needs polling (IDE|firmware) */
+  unsigned char  logical_blk_in_buffer;	       /* flag that the block as per logical_blk_num
 						* has been read into STp->buffer and is valid */
+  int      logical_blk_num;                    /* logical block number */
   unsigned first_frame_position;               /* physical frame to be transfered to/from host */
   unsigned last_frame_position;                /* physical frame to be transferd to/from tape */
   int      cur_frames;                         /* current number of frames in internal buffer */

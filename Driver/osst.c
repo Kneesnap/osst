@@ -23,12 +23,12 @@
 */
 
 static const char * cvsid = "$Id$";
-const char * osst_version = "0.9.1";
+const char * osst_version = "0.9.2";
 
 /* The "failure to reconnect" firmware bug */
-#define OS_NEED_POLL_MIN 10602 /*(107A)*/
-#define OS_NEED_POLL_MAX 10708 /*(108D)*/
-#define OS_NEED_POLL(x) ((x) <= OS_NEED_POLL_MAX && STp->device->host->this_id <= 5)
+#define OSST_FW_NEED_POLL_MIN 10602 /*(107A)*/
+#define OSST_FW_NEED_POLL_MAX 10708 /*(108D)*/
+#define OSST_FW_NEED_POLL(x,d) ((x) >= OSST_FW_NEED_POLL_MIN && (x) <= OSST_FW_NEED_POLL_MAX && d->host->this_id <= 5)
 
 #include <linux/module.h>
 
@@ -650,10 +650,13 @@ static int osst_flush_drive_buffer(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt)
 static int osst_wait_frame(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, int curr, int minlast, int to)
 {
 	long	startwait     = jiffies;
-#ifdef DEBUG	
 	int	dev	      = TAPE_NR(STp->devt);
+#ifdef DEBUG
 	char	notyetprinted = 1;
 #endif
+	if (STp->ps[STp->partition].rw != ST_READING)
+		printk(KERN_ERR "osst%i: waiting for frame without having initialized read!\n", dev);
+
 	while (time_before (jiffies, startwait + to*HZ))
 	{ 
 		int result;
@@ -662,8 +665,10 @@ static int osst_wait_frame(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, int curr,
 			result = osst_write_error_recovery(STp, aSRpnt, 0);
 		if (result < 0) break;
 		if (STp->first_frame_position == curr &&
-		    (signed)STp->last_frame_position > (signed)curr + minlast &&
-		    result >= 0)
+		    ((minlast < 0 &&
+		      (signed)STp->last_frame_position > (signed)curr + minlast) ||
+		     STp->cur_frames > minlast
+		    ) && result >= 0)
 		{
 #ifdef DEBUG			
 			if (jiffies - startwait >= 2*HZ/OSST_POLL_PER_SEC)
@@ -710,7 +715,7 @@ static int osst_read_block(OS_Scsi_Tape * STp, Scsi_Request ** aSRpnt, int timeo
 #endif
 
 	/* TODO: Error handling */
-	if (OS_NEED_POLL(STp->os_fw_rev))
+	if (STp->poll)
 		retval = osst_wait_frame (STp, aSRpnt, STp->first_frame_position, 0, timeout);
 #if 0// DEBUG
 	printk ("osst_read: wait for frame returned %i\n", retval);
@@ -2396,7 +2401,7 @@ static int osst_set_frame_position(OS_Scsi_Tape *STp, Scsi_Request ** aSRpnt, un
 	unsigned char	scmd[MAX_COMMAND_SIZE];
 	Scsi_Request  * SRpnt;
 	ST_partstat   * STps;
-	int		result;
+	int		result = 0;
 	int		timeout;
 	int		dev = TAPE_NR(STp->devt);
 
@@ -2432,13 +2437,14 @@ static int osst_set_frame_position(OS_Scsi_Tape *STp, Scsi_Request ** aSRpnt, un
 	STp->first_frame_position = STp->last_frame_position = block;
 	STps->eof = ST_NOEOF;
 	if ((STp->buffer)->syscall_result != 0) {
+#if DEBUG
+		printk(OSST_DEB_MSG "osst%d: SEEK command failed.\n", dev);
+#endif
 		result = (-EIO);
 	}
-	else {
-		STps->at_sm = 0;
-		STps->rw = ST_IDLE;
-		result = 0;
-	}
+	STps->at_sm = 0;
+	STps->rw = ST_IDLE;
+	STp->logical_blk_in_buffer = 0;
 	return result;
 }
 
@@ -2497,8 +2503,8 @@ static int osst_flush_write_buffer(OS_Scsi_Tape *STp, Scsi_Request ** aSRpnt, in
 			osst_zero_buffer_tail(STp->buffer);
 
 		/* TODO: Error handling! */
-		if (OS_NEED_POLL(STp->os_fw_rev))
-		result = osst_wait_frame (STp, aSRpnt, STp->first_frame_position, -50, 120);
+		if (STp->poll)
+			result = osst_wait_frame (STp, aSRpnt, STp->first_frame_position, -50, 120);
 
 		memset(cmd, 0, MAX_COMMAND_SIZE);
 		cmd[0] = WRITE_6;
@@ -2798,8 +2804,8 @@ if (SRpnt) printk(KERN_ERR "osst%d: Not supposed to have SRpnt at line %d\n", de
 			osst_position_tape_and_confirm(STp, &SRpnt, 0xbb8);
 	}
 	
-	if (OS_NEED_POLL(STp->os_fw_rev))
-	retval = osst_wait_frame (STp, &SRpnt, STp->first_frame_position, -50, 60);
+	if (STp->poll)
+		retval = osst_wait_frame (STp, &SRpnt, STp->first_frame_position, -50, 60);
 	/* TODO: Check for an error ! */
 	
 	memset(cmd, 0, MAX_COMMAND_SIZE);
@@ -3048,7 +3054,7 @@ static ssize_t osst_read(struct file * filp, char * buf, size_t count, loff_t *p
 		retval = osst_flush_buffer(STp, &SRpnt, 0);
 		if (retval)
 			goto out;
-		STps->rw = ST_READING;
+		STps->rw = ST_IDLE;
 	}
 
 #if DEBUG
@@ -3076,9 +3082,6 @@ static ssize_t osst_read(struct file * filp, char * buf, size_t count, loff_t *p
 		retval = (-EFAULT);
 		goto out;
 	}
-
-	STps->rw = ST_READING;
-
 
 	/* Loop until enough data in buffer or a special condition found */
 	for (total = 0, special = 0; total < count && !special; ) {
@@ -5035,7 +5038,8 @@ static int osst_attach(Scsi_Device * SDp)
 	printk ("osst%i: OnStream tape drive recognized, Model %s\n", i, SDp->model);
 #endif
 	tpnt->omit_blklims = 1;
-	
+
+	tpnt->poll = (strncmp(SDp->model, "DI-", 3) == 0) || OSST_FW_NEED_POLL(tpnt->os_fw_rev,SDp);
 	tpnt->logical_blk_in_buffer = 0;
 	tpnt->header_ok = 0;
 	tpnt->linux_media = 0;
