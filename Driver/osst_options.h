@@ -66,7 +66,7 @@
 
 /* The number of scatter/gather segments to allocate at first try (must be
    smaller or equal to the maximum). */
-#define OSST_FIRST_SG    6
+#define OSST_FIRST_SG    2
 
 /* The size of the first scatter/gather segments (determines the maximum block
    size for SCSI adapters not supporting scatter/gather). The default is set
