@@ -20,8 +20,8 @@ unfortunately not released with source code, but just as binaries, with the
 intention to prevent people from playing with the progam and destroying their
 firmware this way. This is not optimal, but I can confirm that those tools
 do what they are designed for and did work in my tests. At this moment,
-tools are only available for Linux under intel. Feel free to ask Jack or me
-for binaries for other platforms.
+tools are only available for Linux on ix86 platforms. Feel free to ask Jack
+or me for binaries for other platforms.
 </P><P>
 Those tools use the generic SCSI interface (<TT>/dev/sgX</TT>), but via SCSI
 emulation layers they can be used to update IDE (via ide-scsi) and USB (via
@@ -38,7 +38,7 @@ inappropriately or by hitting a bug in them. <Em>Use at your own
 risk!</Em></B>
 </P><P>
 Please start by checking what drive you have. Using <TT>cat
-/proc/scsi/scsi</T>> should give you the most important piece on information.
+/proc/scsi/scsi</TT> should give you the most important piece on information.
 If you can't see your drive there, you chould take care to make it visible
 by loading the appropriate drivers (SCSI low-level driver, ide-scsi or
 usb-storage), otherwise you can't update with Linux anyway.
